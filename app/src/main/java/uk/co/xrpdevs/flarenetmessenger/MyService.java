@@ -17,12 +17,12 @@ public class MyService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    public boolean initWeb3j(){
+    static Web3j initWeb3j(){
 
         Web3j myEtherWallet = Web3j.build(
-                new HttpService("https://api.myetherapi.com/eth"));
+                new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
 
-        return true;
+        return myEtherWallet;
     }
 
 }
