@@ -2,16 +2,21 @@ package uk.co.xrpdevs.flarenetmessenger;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
+import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthBlockNumber;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
+import org.web3j.tx.gas.ContractGasProvider;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.concurrent.ExecutionException;
@@ -22,21 +27,45 @@ public class MainActivity extends AppCompatActivity {
 
     public Web3j FlareConnection;
     private Object TextView;
-
-    public String walletAddress = "0x24423475227b49376d72E863bB6c5b6cB4E60Cea";
-
+    TextView myTV;
+    EthBlockNumber bob;
+    Button refresh;
+    TextView myBalance;
+    public String walletAddress;
+    public String contractAddress;
+    public String walletPrivateKey;
+    Credentials c;
+    ContractGasProvider cgp;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         FlareConnection = MyService.initWeb3j();
-        EthBlockNumber bob = getBlockNumber();
+        bob = getBlockNumber();
         Log.d("TEST", bob.getBlockNumber().toString());
 
+        myBalance = findViewById(R.id.balance);
+        myTV = findViewById(R.id.text1);
 
-        TextView myTV = findViewById(R.id.text1);
+        walletAddress    = "0x24423475227b49376d72E863bB6c5b6cB4E60Cea";
+        walletPrivateKey = "0xc6d66f9d9cd4c607e742d27c5fb9a9140465226c19578c02a13931f1fd0c8ef2";
+        contractAddress  = "0xa49D5f1f6e63406E9dd6BF6BbAC5A9ac085527e7";
+        String account = null;
+        try {
+            account = FlareConnection.ethAccounts().send().getAccounts().get(0);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        c = Credentials.create(account);
+     //   cgp = FlareConnection.ethGasPrice();
 
-        TextView myBalance = findViewById(R.id.balance);
+        refresh = findViewById(R.id.button);
+        refresh.setOnClickListener(new View.OnClickListener() {
+                                       public void onClick(View v) {
+                                           update();
+                                       }
+                                   }
+        );
         myTV.setText("Current Coston\nBlock Number:\n"+bob.getBlockNumber().toString());
         myBalance.setText("FXRP Balance of Flare Testnet Address "+walletAddress+" = "+getMyBalance(walletAddress).toString());
 
@@ -44,6 +73,15 @@ public class MainActivity extends AppCompatActivity {
      //   FlareConnection.
 
     }
+
+    public void update() {
+        myTV.setText("Current Coston\nBlock Number:\n" + bob.getBlockNumber().toString());
+        myBalance.setText("FXRP Balance of Flare Testnet Address " + walletAddress + " = " + getMyBalance(walletAddress).toString());
+        ContractBindings contract = ContractBindings.load(contractAddress, FlareConnection, c, cgp);
+                // //load(String contractAddress, Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider
+
+    }
+
     public BigDecimal getMyBalance(String walletAddress) {
 
         EthGetBalance ethGetBalance = null;
