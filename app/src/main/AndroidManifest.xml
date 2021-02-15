@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="uk.co.xrpdevs.flarenetmessenger">
 
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <uses-feature android:name="android.hardware.type.watch" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -13,7 +17,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FlareNetMessenger">
-        <activity android:name=".qr"></activity>
+        <activity android:name=".pin"></activity>
+
+         <activity android:name=".qr" />
         <activity android:name=".PKeyScanner" />
         <activity
             android:name=".SettingsActivity"
@@ -32,6 +38,7 @@
             android:name=".Wallets"
             android:label="@string/title_activity_wallet"
             android:theme="@style/Theme.FlareNetMessenger.NoActionBar" />
+
         <service
             android:name=".MyService"
             android:enabled="true"

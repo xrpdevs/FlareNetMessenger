@@ -1,7 +1,7 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
-import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -12,9 +12,12 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import org.json.JSONException;
 import org.web3j.abi.datatypes.generated.Bytes32;
@@ -65,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
     TransactionReceipt receipt;
     Spinner addresses;
     Button inbox;
+
     Smstest3 contract;
     BigInteger GAS_LIMIT = BigInteger.valueOf(670025L);
     BigInteger GAS_PRICE = BigInteger.valueOf(200000L);
@@ -79,6 +83,9 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.LAX);
         prefs = this.getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
+      //  EasyLock.checkPassword(this);
+        if(!prefs.contains("pinCode")) {
+        }
         if(!prefs.contains("walletCount")){
             pEdit.putInt("walletCount", 0);
             pEdit.putInt("currentWallet", 0);
