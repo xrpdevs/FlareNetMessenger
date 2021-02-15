@@ -220,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
 
         super.onResume();
 
-        if(prefs.contains("walletCount")) {
+        if(prefs.getInt("walletCount", 0) > 0) {
             try {
                 deets = Utils.getPkey(this, prefs.getInt("currentWallet", 0));
             } catch (JSONException e) {

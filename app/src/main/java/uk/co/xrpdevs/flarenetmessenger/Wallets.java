@@ -86,13 +86,15 @@ public class Wallets extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        c = Credentials.create(deets.get("walletPrvKey"));
-        cgp = new DefaultGasProvider();
 
-        contract = Smstest3.load(contractAddress, FlareConnection, c, GAS_PRICE, GAS_LIMIT );
+        if(prefs.getInt("walletCount", 0) > 0 ) {
+            c = Credentials.create(deets.get("walletPrvKey"));
+            cgp = new DefaultGasProvider();
 
-        readTheFile2();
+            contract = Smstest3.load(contractAddress, FlareConnection, c, GAS_PRICE, GAS_LIMIT);
 
+            readTheFile2();
+        }
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
