@@ -34,13 +34,26 @@
             android:layout_height="51dp"
             android:text="Hello World!" />
 
-        <Button
-            android:id="@+id/button"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="65dp"
-            android:height="32px"
-            android:maxHeight="48dip"
-            android:text="Refresh" />
+            android:layout_height="68dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/button"
+                android:layout_width="192dp"
+                android:layout_height="65dp"
+                android:height="32px"
+                android:maxHeight="48dip"
+                android:text="Refresh" />
+
+            <Button
+                android:id="@+id/Settings"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="Settings" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/textView3"

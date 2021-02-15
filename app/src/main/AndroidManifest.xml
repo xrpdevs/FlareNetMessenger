@@ -3,6 +3,8 @@
     package="uk.co.xrpdevs.flarenetmessenger">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -11,11 +13,25 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FlareNetMessenger">
+        <activity android:name=".qr"></activity>
+        <activity android:name=".PKeyScanner" />
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings" />
+        <activity
+            android:name=".CaptureActivityPortrait"
+            android:screenOrientation="sensorPortrait"
+            android:stateNotNeeded="true"
+            android:theme="@style/zxing_CaptureTheme"
+            android:windowSoftInputMode="stateAlwaysHidden" />
         <activity
             android:name=".Inbox"
             android:label="@string/title_activity_inbox"
-            android:theme="@style/Theme.FlareNetMessenger.NoActionBar"></activity>
-
+            android:theme="@style/Theme.FlareNetMessenger.NoActionBar" />
+        <activity
+            android:name=".Wallets"
+            android:label="@string/title_activity_wallet"
+            android:theme="@style/Theme.FlareNetMessenger.NoActionBar" />
         <service
             android:name=".MyService"
             android:enabled="true"
