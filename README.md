@@ -7,5 +7,8 @@ Our first attempt at building an app using smart contracts on the flare testnet.
 Using Web3j 
 https://github.com/web3j/web3j
 
+[![For information about how to use this app click here]](https://xrpdevs.co.uk/2021/02/15/updates-to-flarenetmessenger/)
+
+
 To generate a wallet on the flare testnet to use with this app please see
 https://github.com/flare-dev/coston
