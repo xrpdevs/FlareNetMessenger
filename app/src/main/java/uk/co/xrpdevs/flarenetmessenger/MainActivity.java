@@ -1,6 +1,9 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
 
+import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -68,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     TransactionReceipt receipt;
     Spinner addresses;
     Button inbox;
-
+    private Intent serviceIntent;
     Smstest3 contract;
     BigInteger GAS_LIMIT = BigInteger.valueOf(670025L);
     BigInteger GAS_PRICE = BigInteger.valueOf(200000L);
@@ -91,6 +94,13 @@ public class MainActivity extends AppCompatActivity {
             pEdit.putInt("currentWallet", 0);
             pEdit.commit();
         }
+        addNewAccount(AccountGeneral.ACCOUNT_TYPE, AccountGeneral.AUTHTOKEN_TYPE_FULL_ACCESS);
+        ContactsManager.addContact(this, new MyContact("sample222", "abasamplee", "457"));
+				if (serviceIntent == null)
+					serviceIntent = new Intent(this, ContactUpdateService.class);
+				stopService(serviceIntent);
+				startService(serviceIntent);
+
         FlareConnection = MyService.initWeb3j();
         bob = getBlockNumber();
         Log.d("TEST", bob.getBlockNumber().toString());
@@ -203,6 +213,19 @@ public class MainActivity extends AppCompatActivity {
 
     public void showToast(String text){
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
+    }
+    private void addNewAccount(String accountType, String authTokenType) {
+        final AccountManagerFuture<Bundle> future = AccountManager.get(this).addAccount(accountType, authTokenType, null, null, this, new AccountManagerCallback<Bundle>() {
+            @Override
+            public void run(AccountManagerFuture<Bundle> future) {
+                try {
+                    Bundle bnd = future.getResult();
+                    Log.i("info" , "Account was created");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }, null);
     }
 
     public static byte[] stringToBytes32(String string) {
