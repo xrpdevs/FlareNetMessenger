@@ -4,14 +4,25 @@ package uk.co.xrpdevs.flarenetmessenger;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
+import android.app.Activity;
 import android.app.FragmentManager;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.util.Pair;
+import android.util.TypedValue;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -20,7 +31,9 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.ContextThemeWrapper;
 
 import org.json.JSONException;
 import org.web3j.abi.datatypes.generated.Bytes32;
@@ -78,6 +91,75 @@ public class MainActivity extends AppCompatActivity {
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
     HashMap<String, String> deets;
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.game_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+            case R.id.add_existing:
+               // TypedValue outValue = new TypedValue();
+               // getBaseContext().getTheme().resolveAttribute(R.style.popupOverlay, outValue, true);
+               // int theme = outValue.resourceId;
+                final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                final View myView = LayoutInflater.from(getApplicationContext()).inflate(R.layout.contacts_dialog, (ViewGroup) findViewById(android.R.id.content), false);
+                final EditText input = (EditText) myView.findViewById(R.id.EditText01);
+                builder.setTitle("Choose Contact");
+                int PICK_CONTACT = 100;
+                builder.setMessage("Enter number or select from contacts");
+                builder.setView(myView);
+                builder.setNegativeButton("Contacts", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
+                        intent.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);  //should filter only contacts with phone numbers
+                        startActivityForResult(intent, PICK_CONTACT);
+                    }
+                });
+                builder.setPositiveButton("Use", new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        Intent i = new Intent(getApplicationContext(),
+                                MainActivity.class);
+
+                        String out = input.getText().toString();
+                        i.putExtra("name", out);
+                        startActivity(i);
+
+
+                    }
+                });
+                final AlertDialog alert = builder.create();
+
+                alert.show();
+                input.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                    @Override
+                    public void onFocusChange(View v, boolean hasFocus) {
+                        if (hasFocus) {
+                            alert.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+                        }
+                    }
+                });
+                input.requestFocus();
+               // newGame();
+                return true;
+            case R.id.create_new:
+            //    showHelp();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -95,7 +177,8 @@ public class MainActivity extends AppCompatActivity {
             pEdit.commit();
         }
         addNewAccount(AccountGeneral.ACCOUNT_TYPE, AccountGeneral.AUTHTOKEN_TYPE_FULL_ACCESS);
-        ContactsManager.addContact(this, new MyContact("sample222", "abasamplee", "457"));
+        //ContactsManager.updateMyContact(this, "Jamie Prince");
+        ContactsManager.addContact(this, new MyContact("Jamie", "Prince", "0x3495230492345092387"));
 				if (serviceIntent == null)
 					serviceIntent = new Intent(this, ContactUpdateService.class);
 				stopService(serviceIntent);
@@ -144,6 +227,7 @@ public class MainActivity extends AppCompatActivity {
             //   cgp = FlareConnection.ethGasPrice();
 
         }
+
         refresh.setOnClickListener(new View.OnClickListener() {
                                        public void onClick(View v) {
                                            try {

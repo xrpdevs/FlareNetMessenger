@@ -21,5 +21,6 @@
 
     <style name="Theme.FlareNetMessenger.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
-    <style name="Theme.FlareNetMessenger.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="Theme.FlareNetMessenger.PopupOverlay" theme="@style/Theme.AppCompat" />
+    <style name="popupOverlay" theme="@style/Theme.AppCompat" />
 </resources>
