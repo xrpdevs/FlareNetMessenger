@@ -6,10 +6,14 @@ import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.ContactsContract;
@@ -91,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
     HashMap<String, String> deets;
+    Context mC = this;
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -98,12 +103,36 @@ public class MainActivity extends AppCompatActivity {
         inflater.inflate(R.menu.game_menu, menu);
         return true;
     }
-
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.d("TEST", String.valueOf(requestCode));
+        if (resultCode == RESULT_OK) {
+            // Check for the request code, we might be usign multiple startActivityForReslut
+            switch (requestCode) {
+                case 100:
+                    Cursor cursor = null;
+                    try {
+                        String phoneNo = null;
+                        String name = null;
+                        Uri uri = data.getData();
+                        cursor = getContentResolver().query(uri, null, null, null, null);
+                        cursor.moveToFirst();
+                        int phoneIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                        phoneNo = cursor.getString(phoneIndex);
+                        Log.d("TEST", phoneNo);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    break;
+            }
+        }
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.add_existing:
+            case R.id.select:
                // TypedValue outValue = new TypedValue();
                // getBaseContext().getTheme().resolveAttribute(R.style.popupOverlay, outValue, true);
                // int theme = outValue.resourceId;
@@ -112,17 +141,20 @@ public class MainActivity extends AppCompatActivity {
                 final EditText input = (EditText) myView.findViewById(R.id.EditText01);
                 builder.setTitle("Choose Contact");
                 int PICK_CONTACT = 100;
-                builder.setMessage("Enter number or select from contacts");
+                builder.setMessage("Enter destination or select from contacts");
                 builder.setView(myView);
                 builder.setNegativeButton("Contacts", new DialogInterface.OnClickListener() {
+
+
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        Intent intent = new Intent(Intent.ACTION_PICK, ContactsContract.Contacts.CONTENT_URI);
-                        intent.setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE);  //should filter only contacts with phone numbers
-                        startActivityForResult(intent, PICK_CONTACT);
+                       Intent intent = new Intent(getApplicationContext(), ContactList.class);
+                        intent.setType("vnd.android.cursor.item/com.sample.profile");  //should filter only contacts with phone numbers
+                        intent.putExtra("lType", 1000);
+                        startActivity(intent);
                     }
                 });
-                builder.setPositiveButton("Use", new DialogInterface.OnClickListener() {
+                builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -231,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
         refresh.setOnClickListener(new View.OnClickListener() {
                                        public void onClick(View v) {
                                            try {
-                                               update();
+                                               new update().start();
                                            } catch (Exception e) {
                                                e.printStackTrace();
                                            }
@@ -262,31 +294,33 @@ public class MainActivity extends AppCompatActivity {
                                  }
         );
         sendMsg.setOnClickListener(new View.OnClickListener() {
-                                       public void onClick(View v) {
-                                           try {
-                                               String rawString = message.getText().toString();
-                                               byte[] bytes = rawString.getBytes(StandardCharsets.UTF_8);
+            public void onClick(View v) {
+                try {
+                    new sendMessage().start();
+                    //String rawString = message.getText().toString();
+                    //byte[] bytes = rawString.getBytes(StandardCharsets.UTF_8);
 
-                                               String utf8EncodedString = new String(bytes, StandardCharsets.UTF_8);
-                                               receipt = contract.sendMessage(addresses.getSelectedItem().toString(), utf8EncodedString).send();
-                                               String text;
-                                               if(receipt.isStatusOK()){
-                                                   text = "Message sent!\n"+receipt.getGasUsed().toString();
-                                               } else {
-                                                   text = "Message sending failed";
-                                               }
-                                               showToast(text.toString());
-                                               update();
-                                           } catch (Exception e) {
-                                               e.printStackTrace();
-                                           }
-                                       }
-                                   }
-        );
+//                                               String utf8EncodedString = new String(bytes, StandardCharsets.UTF_8);
+//                                               receipt = contract.sendMessage(addresses.getSelectedItem().toString(), utf8EncodedString).send();
+//                                               String text;
+//                                               if(receipt.isStatusOK()){
+//                                                   text = "Message sent!\n"+receipt.getGasUsed().toString();
+//                                               } else {
+//                                                   text = "Message sending failed";
+//                                               }
+//                                               showToast(text.toString());
+//                                               update();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+//                                       }
+//                                   }
+            }
+        });
 
         if(deets != null) {
             try {
-                update();
+                new update().start();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -294,6 +328,44 @@ public class MainActivity extends AppCompatActivity {
             //   FlareConnection.
         }
     }
+
+    class sendMessage extends Thread {
+
+        @Override
+        public void run() {
+            Log.d("TEST", "Running SendMSG thread");
+            String rawString = message.getText().toString();
+            byte[] bytes = rawString.getBytes(StandardCharsets.UTF_8);
+
+            String utf8EncodedString = new String(bytes, StandardCharsets.UTF_8);
+            try {
+                receipt = contract.sendMessage(addresses.getSelectedItem().toString(), utf8EncodedString).send();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            String text;
+            if(receipt.isStatusOK()){
+                text = "Message sent!\n"+receipt.getGasUsed().toString();
+            } else {
+                text = "Message sending failed";
+            }
+
+            runOnUiThread(new Runnable() {
+
+                @Override
+                public void run(){
+                    showToast(text.toString());
+                    try {
+                        new update().start();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                };
+            });
+        }
+    }
+
 
     public void showToast(String text){
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
@@ -343,68 +415,80 @@ public class MainActivity extends AppCompatActivity {
             c = Credentials.create(deets.get("walletPrvKey"));
             contract = Smstest3.load(contractAddress, FlareConnection, c, GAS_PRICE, GAS_LIMIT);
             try {
-                update();
+                new update().start();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    public void update() throws Exception {
+    public class update extends Thread {
+        String msgCount;
+        Tuple2<String, List<String>> registeredAddresses;
+        Tuple2<BigInteger, BigInteger> messageCount;
+        String myTvString;
+        String myBalanceS;
 
-        c = Credentials.create(deets.get("walletPrvKey"));
-        contract = Smstest3.load(contractAddress, FlareConnection, c, GAS_PRICE, GAS_LIMIT );
-        try {
-            receipt = contract.registerUser().send();
-        } catch (Exception e) {
-            e.printStackTrace();
+        @Override
+        public void run() {
+            c = Credentials.create(deets.get("walletPrvKey"));
+            contract = Smstest3.load(contractAddress, FlareConnection, c, GAS_PRICE, GAS_LIMIT);
+            try {
+                receipt = contract.registerUser().send();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            myTvString = "Current Coston\nBlock Number:\n" + bob.getBlockNumber().toString() + "  Wallets: " + String.valueOf(prefs.getInt("walletCount", 0) + "  Current: " + String.valueOf(prefs.getInt("currentWallet", 0)));
+            myBalanceS = "FXRP Balance of Flare Testnet Address " + deets.get("walletAddress") + " = " + getMyBalance(deets.get("walletAddress")).toString();
+
+
+            // todo: make sure this is only called after a user adds a wallet.
+            //Boolean isRegistered = contract.checkUserRegistration().send();
+            //if(!isRegistered) {
+            //    try {
+            //        RemoteCall<TransactionReceipt> register = contract.registerUser();
+            //        receipt = register.send();
+            //        Log.d("TEST", "receipt: "+ receipt.isStatusOK());
+            //    } catch (Exception e) {
+            //        e.printStackTrace();
+            //    }
+            //}
+
+
+            try {  // get list of registered addresses
+                registeredAddresses = contract.getContractProperties().send();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            try {
+                messageCount = contract.getMyInboxSize().send();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            //    TransactionReceipt receipt2 = Transfer.sendFunds(FlareConnection,c,"0x6B4b502Dc21Aa25d384B5725610272B596ca88ab",
+            //            BigDecimal.valueOf(1), org.web3j.utils.Convert.Unit.ETHER).send();
+
+            //     Log.d("TEST", "isRrgistered: "+isRegistered);
+            //     Log.d("TEST", "Transaction receipt from registeruser: "+ receipt.toString());
+            //     Log.d("TEST", "Transaction receipt from Transfer: "+ receipt2.toString());
+            // //load(String contractAddress, Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider
+
+            runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    msgCount = messageCount.getValue2().toString();
+                    inbox.setText("Inbox: " + msgCount + " messages");
+                    populateSpinner(registeredAddresses);
+                    Log.d("TEST", "List: " + registeredAddresses);
+                    Log.d("TEST", "Inbox count: " + messageCount);
+                    myTV.setText(myTvString);
+                    myBalance.setText(myBalanceS);
+                }
+            });
         }
-
-        String myTvString = "Current Coston\nBlock Number:\n" + bob.getBlockNumber().toString() + "  Wallets: " + String.valueOf(prefs.getInt("walletCount", 0) +"  Current: " + String.valueOf(prefs.getInt("currentWallet", 0)));
-        String myBalanceS = "FXRP Balance of Flare Testnet Address " + deets.get("walletAddress") + " = " + getMyBalance(deets.get("walletAddress")).toString();
-        myTV.setText(myTvString);
-        myBalance.setText(myBalanceS);
-
-
-
-        // todo: make sure this is only called after a user adds a wallet.
-        //Boolean isRegistered = contract.checkUserRegistration().send();
-        //if(!isRegistered) {
-        //    try {
-        //        RemoteCall<TransactionReceipt> register = contract.registerUser();
-        //        receipt = register.send();
-        //        Log.d("TEST", "receipt: "+ receipt.isStatusOK());
-        //    } catch (Exception e) {
-        //        e.printStackTrace();
-        //    }
-        //}
-
-
-
-        try {
-            Tuple2<String, List<String>> registeredAddresses = contract.getContractProperties().send();
-            populateSpinner(registeredAddresses);
-            Log.d("TEST", "List: "+registeredAddresses);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        try {
-            Tuple2<BigInteger, BigInteger> messageCount = contract.getMyInboxSize().send();
-            Log.d("TEST", "Inbox count: "+messageCount);
-            String msgCount = messageCount.getValue2().toString();
-            inbox.setText("Inbox: "+msgCount+" messages");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-   //    TransactionReceipt receipt2 = Transfer.sendFunds(FlareConnection,c,"0x6B4b502Dc21Aa25d384B5725610272B596ca88ab",
-   //            BigDecimal.valueOf(1), org.web3j.utils.Convert.Unit.ETHER).send();
-
-   //     Log.d("TEST", "isRrgistered: "+isRegistered);
-   //     Log.d("TEST", "Transaction receipt from registeruser: "+ receipt.toString());
-   //     Log.d("TEST", "Transaction receipt from Transfer: "+ receipt2.toString());
-        // //load(String contractAddress, Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider
-
     }
 
     public void populateSpinner(Tuple2<String, List<String>> lista) {

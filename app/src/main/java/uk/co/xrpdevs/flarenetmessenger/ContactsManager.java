@@ -58,7 +58,7 @@ public class ContactsManager {
         ops.add(ContentProviderOperation.newInsert(addCallerIsSyncAdapterParameter(Data.CONTENT_URI, true))
                 .withValueBackReference(Data.RAW_CONTACT_ID, 0)
                 .withValue(ContactsContract.Data.MIMETYPE,ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
-                .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, "12342145")
+                .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, "+447871922227")
                 .build());
 
 
@@ -73,8 +73,8 @@ public class ContactsManager {
                 .withValueBackReference(Data.RAW_CONTACT_ID, 0)
                 .withValue(Data.MIMETYPE, MIMETYPE)
                 .withValue(Data.DATA1, 12345)
-                .withValue(Data.DATA2, "sample")
-                .withValue(Data.DATA3, "sample")
+                .withValue(Data.DATA2, "0x238947239057502374")
+                .withValue(Data.DATA3, "0xdeadbeef0000b00b5666x435739")
                 .build());
         try {
             ContentProviderResult[] results = resolver.applyBatch(ContactsContract.AUTHORITY, ops);

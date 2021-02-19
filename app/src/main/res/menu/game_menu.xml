@@ -8,6 +8,8 @@
                 android:title="Add Contact" />
             <item android:id="@+id/add_existing"
                 android:title="Add Address to Existing" />
+            <item android:id="@+id/select"
+                android:title="Select Contact" />
         </menu>
     </item>
 </menu>

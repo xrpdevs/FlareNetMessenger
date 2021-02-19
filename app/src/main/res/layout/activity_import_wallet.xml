@@ -34,7 +34,7 @@
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="608dp"
                 app:layout_constraintBottom_toBottomOf="@+id/Account_qr_address_imageView"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
@@ -48,9 +48,9 @@
                     android:id="@+id/ImportWallet_name_textInputLayout"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="20dp"
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="8dp"
+                    android:layout_marginEnd="20dp"
                     android:visibility="visible"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="1.0"
@@ -80,16 +80,16 @@
                         android:id="@+id/ImportWallet_priv_key_qr_button"
                         android:layout_width="wrap_content"
                         android:layout_height="50dp"
-                        android:foreground="@color/cardview_light_background"
-                        android:layout_marginEnd="20dp"
                         android:layout_marginTop="8dp"
+                        android:layout_marginEnd="20dp"
+                        android:foreground="@color/cardview_light_background"
                         android:scaleType="centerCrop"
                         android:src="@drawable/ic_qr_white"
                         app:layout_constraintBottom_toBottomOf="@+id/ImportWallet_priv_key_textInputLayout"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintTop_toTopOf="@+id/ImportWallet_priv_key_textInputLayout" />
 
-            <!---        <ImageButton
+                    <!---        <ImageButton
                         android:id="@+id/ImportWallet_pub_address_qr_button"
                         android:layout_width="wrap_content"
                         android:layout_height="50dp"
@@ -106,8 +106,8 @@
                         android:id="@+id/ImportWallet_risks_checkbox"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="20dp"
                         android:layout_marginStart="20dp"
+                        android:layout_marginEnd="20dp"
                         android:text="@string/i_am_aware_of_the_risks"
                         android:visibility="visible"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -118,8 +118,8 @@
                         android:id="@+id/ImportWallet_pub_address_textInputLayout"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
                         android:layout_marginStart="20dp"
+                        android:layout_marginEnd="8dp"
                         android:visibility="gone"
                         app:layout_constraintEnd_toStartOf="@+id/ImportWallet_pub_address_qr_button"
                         app:layout_constraintHorizontal_bias="0.0"
@@ -139,8 +139,8 @@
                         android:id="@+id/ImportWallet_password_textInputLayout"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="20dp"
                         android:layout_marginStart="20dp"
+                        android:layout_marginEnd="20dp"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintHorizontal_bias="0.0"
                         app:layout_constraintStart_toStartOf="parent"
@@ -180,9 +180,9 @@
                         android:id="@+id/ImportWallet_password_info_textView"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="40dp"
                         android:layout_marginStart="40dp"
                         android:layout_marginTop="8dp"
+                        android:layout_marginEnd="40dp"
                         android:text="@string/password_info"
                         app:layout_constraintTop_toBottomOf="@+id/ImportWallet_password_textInputLayout"
                         diagonal:layout_constraintEnd_toEndOf="parent"
@@ -192,9 +192,9 @@
                         android:id="@+id/ImportWallet_priv_key_info_textView"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="40dp"
                         android:layout_marginStart="40dp"
                         android:layout_marginTop="8dp"
+                        android:layout_marginEnd="40dp"
                         android:text="@string/private_key_info"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
@@ -238,10 +238,10 @@
                     android:id="@+id/ImportWallet_create_wallet_button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:layout_marginEnd="20dp"
                     android:layout_marginStart="20dp"
                     android:layout_marginTop="8dp"
+                    android:layout_marginEnd="20dp"
+                    android:layout_marginBottom="8dp"
                     android:backgroundTint="@android:color/white"
 
                     android:text="@string/create_wallet"
@@ -254,9 +254,9 @@
                     android:id="@+id/ImportWallet_import_button"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="50dp"
                     android:layout_marginStart="50dp"
                     android:layout_marginTop="8dp"
+                    android:layout_marginEnd="50dp"
                     android:backgroundTint="@android:color/white"
 
                     android:text="@string/import_wallet"
@@ -292,13 +292,23 @@
                     android:id="@+id/textView5"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginEnd="24dp"
                     android:layout_marginStart="8dp"
+                    android:layout_marginEnd="24dp"
                     android:text="@string/import_pub_address_only_info"
                     android:textSize="12sp"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="@+id/ImportWallet_address_switch"
                     app:layout_constraintTop_toBottomOf="@+id/ImportWallet_address_switch" />
+
+                <ImageView
+                    android:layout_width="193dp"
+                    android:layout_height="103dp"
+                    android:layout_marginStart="132dp"
+                    android:layout_marginTop="16dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_qr_white"
+                    diagonal:layout_constraintStart_toStartOf="parent"
+                    diagonal:layout_constraintTop_toTopOf="parent" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
         </LinearLayout>
@@ -315,27 +325,10 @@
         diagonal:layout_constraintTop_toTopOf="parent"
         android:orientation="horizontal">
 
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="140dp"
-            android:scaleType="centerCrop"
-            android:src="@android:color/black"
-            tools:layout_editor_absoluteX="1dp"
-            tools:layout_editor_absoluteY="379dp" />
-
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
+            android:layout_width="161dp"
             android:layout_height="match_parent">
-
-            <ImageView
-                android:layout_width="193dp"
-                android:layout_height="103dp"
-                android:layout_marginStart="108dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_qr_white"
-                diagonal:layout_constraintStart_toStartOf="parent"
-                diagonal:layout_constraintTop_toTopOf="parent" />
 
             <ImageView
                 android:layout_width="116dp"

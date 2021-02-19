@@ -49,8 +49,8 @@
         </service>
 
         <activity android:name=".pin" />
-        <activity android:name=".qr" />
         <activity android:name=".PKeyScanner" />
+        <activity android:name=".ContactList" />
         <activity
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings" />
@@ -105,16 +105,20 @@
             android:enabled="true"
             android:exported="true" />
 
-        <activity android:name=".MainActivity"
+        <activity android:name="MainActivity"
 
             android:theme="@style/Theme.AppCompat"
             >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
-
             </intent-filter>
+<!--            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="*/*" />-->
+                <!--                <data android:mimeType="vnd.android.cursor.item/com.sample.profile" />-->
+<!--                <action android:name="android.intent.action.PICK" />
+            </intent-filter>-->
         </activity>
     </application>
 
