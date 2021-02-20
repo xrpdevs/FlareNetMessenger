@@ -24,6 +24,7 @@
         android:mimeType="vnd.android.cursor.item/com.sample.profile"
         android:icon="@drawable/ic_launcher_foreground"
         android:summaryColumn="data2"
-        android:detailColumn="data3"
-        />
+        android:detailColumn="data3">
+        <Kind maxOccurs = "20" />
+    </ContactsDataKind>
 </ContactsSource>

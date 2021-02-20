@@ -30,7 +30,7 @@ public class ContactUpdateService extends Service {
 		catch (Exception e) {
 			e.printStackTrace();
 		}*/
-        ContactsManager.addContact(this, new MyContact("Jamie", "Prince", "3489723409827"));
+       // ContactsManager.addContact(this, new MyContact("Jamie", "Prince", "3489723409827"));
     }
 
 }

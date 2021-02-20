@@ -1,6 +1,7 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -29,11 +30,20 @@ import android.webkit.WebChromeClient.CustomViewCallback;
 public class ContactsManager {
     private static final String MIMETYPE = "vnd.android.cursor.item/com.sample.profile";
 
-    public static void addContact(Context context, MyContact contact) {
+    public static String addContact(Context context, MyContact contact) {
         ContentResolver resolver = context.getContentResolver();
         resolver.delete(RawContacts.CONTENT_URI, RawContacts.ACCOUNT_TYPE + " = ?", new String[] { AccountGeneral.ACCOUNT_TYPE });
 
+        String retval = "0";
+
         ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
+
+        int rcID = getRawContactId(context, contact.id);
+
+        Log.d("TEST", "contact vals: "+contact.tag);
+        Log.d("TEST", "contact vals: "+contact.id);
+        Log.d("TEST", "contact vals: "+contact.XRPAddr);
+        Log.d("TEST", "contact vals: "+contact.displayname);
 
         ops.add(ContentProviderOperation.newInsert(addCallerIsSyncAdapterParameter(RawContacts.CONTENT_URI, true))
                 .withValue(RawContacts.ACCOUNT_NAME, AccountGeneral.ACCOUNT_NAME)
@@ -51,39 +61,63 @@ public class ContactsManager {
         ops.add(ContentProviderOperation.newInsert(addCallerIsSyncAdapterParameter(Data.CONTENT_URI, true))
                 .withValueBackReference(Data.RAW_CONTACT_ID, 0)
                 .withValue(Data.MIMETYPE, StructuredName.CONTENT_ITEM_TYPE)
-                .withValue(StructuredName.GIVEN_NAME, contact.name)
-                .withValue(StructuredName.FAMILY_NAME, contact.lastName)
+                .withValue(StructuredName.DISPLAY_NAME, contact.displayname)
                 .build());
 
-        ops.add(ContentProviderOperation.newInsert(addCallerIsSyncAdapterParameter(Data.CONTENT_URI, true))
-                .withValueBackReference(Data.RAW_CONTACT_ID, 0)
+     /*   ops.add(ContentProviderOperation.newInsert(addCallerIsSyncAdapterParameter(Data.CONTENT_URI, true))
+                .withValueBackReference(Data.RAW_CONTACT_ID, rcID)
                 .withValue(ContactsContract.Data.MIMETYPE,ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE)
                 .withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, "+447871922227")
                 .build());
+*/
 
-
-        ops.add(ContentProviderOperation.newInsert(addCallerIsSyncAdapterParameter(Data.CONTENT_URI, true))
+  /*      ops.add(ContentProviderOperation.newInsert(addCallerIsSyncAdapterParameter(Data.CONTENT_URI, true))
                 .withValueBackReference(Data.RAW_CONTACT_ID, 0)
                 .withValue(ContactsContract.Data.MIMETYPE, ContactsContract.CommonDataKinds.Email.CONTENT_ITEM_TYPE)
                 .withValue(ContactsContract.CommonDataKinds.Email.DATA, "sample@email.com")
                 .build());
-
+*/
 
         ops.add(ContentProviderOperation.newInsert(addCallerIsSyncAdapterParameter(Data.CONTENT_URI, true))
                 .withValueBackReference(Data.RAW_CONTACT_ID, 0)
                 .withValue(Data.MIMETYPE, MIMETYPE)
-                .withValue(Data.DATA1, 12345)
-                .withValue(Data.DATA2, "0x238947239057502374")
-                .withValue(Data.DATA3, "0xdeadbeef0000b00b5666x435739")
+                .withValue(Data.DATA1, contact.displayname)
+                .withValue(Data.DATA2, contact.tag)
+                .withValue(Data.DATA3, contact.XRPAddr)
                 .build());
         try {
             ContentProviderResult[] results = resolver.applyBatch(ContactsContract.AUTHORITY, ops);
+            Log.d("TEST", "RAWCONTACT Add "+Arrays.toString(results));
+
+            int contactId = Integer.parseInt(results[results.length-1].uri.getLastPathSegment());
+
+//            final String[] projection = new String[] { ContactsContract.RawContacts.CONTACT_ID };
+//            final Cursor cursor = resolver.query(results[results.length-1].uri, projection, null, null, null);
+//            cursor.moveToNext();
+//            long contactId = cursor.getLong(0);
+            retval = String.valueOf(contactId);
+            Log.d("TEST", "Generated RAWContact ID: "+contactId);
+//            cursor.close();
             if (results.length == 0)
                 ;
         }
         catch (Exception e) {
             e.printStackTrace();
         }
+        return retval;
+    }
+
+    public static int getRawContactId(Context context, int contactId) {
+        Log.d("TEST", "Contact Id: " + contactId);
+        String[] projection = new String[]{ContactsContract.RawContacts._ID};
+        String selection = ContactsContract.RawContacts.CONTACT_ID + "=?";
+        String[] selectionArgs = new String[]{String.valueOf(contactId)};
+        Cursor c = context.getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI, projection, selection, selectionArgs, null);
+        if (c.moveToFirst()) {
+            int rawContactId = c.getInt(c.getColumnIndex(ContactsContract.RawContacts._ID));
+            Log.d("TEST", "Contact Id: " + contactId + " Raw Contact Id: " + rawContactId);
+            return rawContactId;
+        } else return 0;
     }
 
     private static Uri addCallerIsSyncAdapterParameter(Uri uri, boolean isSyncOperation) {
@@ -99,6 +133,26 @@ public class ContactsManager {
         return null;
     }
 
+    public static String deleteRawContactID(Context context, long rcID){
+        ContentResolver resolver = context.getContentResolver();
+        int deleted = resolver.delete(
+                RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(
+                        ContactsContract.CALLER_IS_SYNCADAPTER, "true").build(),
+                RawContacts._ID + " = ?",
+                new String[] {String.valueOf(rcID)});
+        return String.valueOf(deleted);
+    }
+
+    public static String deleteAllAppContacts(Context context){
+        ContentResolver resolver = context.getContentResolver();
+
+        int deleted = resolver.delete(
+                RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(
+                        ContactsContract.CALLER_IS_SYNCADAPTER, "true").build(),
+                ContactsContract.RawContacts.ACCOUNT_TYPE + " = ?",
+                new String[] {AccountGeneral.ACCOUNT_TYPE});
+        return String.valueOf(deleted);
+    }
 
     public static void updateMyContact(Context context, String name) {
         int id = -1;

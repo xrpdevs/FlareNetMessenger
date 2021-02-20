@@ -26,7 +26,7 @@ public class SyncAdapter extends AbstractThreadedSyncAdapter {
     public void onPerformSync(Account account, Bundle extras, String authority,
                               ContentProviderClient provider, SyncResult syncResult) {
         Log.i("info", "Sync adapter called");
-        ContactsManager.addContact(getContext(), new MyContact("sample", "sampleee", "34527"));
+    //    ContactsManager.addContact(getContext(), new MyContact("sample", "sampleee", "34527"));
     }
 
 

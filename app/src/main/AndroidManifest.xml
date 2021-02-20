@@ -15,6 +15,7 @@
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+    <uses-feature android:name="android.hardware.camera" />
 
     <application
         android:allowBackup="true"
@@ -23,6 +24,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FlareNetMessenger">
+        <uses-library android:name="org.apache.http.legacy" android:required="false"/>
         <service
             android:name="uk.co.xrpdevs.flarenetmessenger.ContactUpdateService"
             android:enabled="true"

@@ -2,9 +2,11 @@ package uk.co.xrpdevs.flarenetmessenger;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -28,6 +30,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
     SharedPreferences prefs; SharedPreferences.Editor pEdit;
     private static final int ADDRESS_REQUEST_CODE = 7541;
     public static final int PRIV_KEY_REQUEST_CODE = 9554;
+    public int SCAN_TYPE;
     Button scan;
     Context mThis;
     IntentIntegrator integrator;
@@ -42,8 +45,15 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
 
         @Override
         public void onCreate(Bundle state) {
+
+
             super.onCreate(state);
             setContentView(R.layout.activity_import_wallet);
+
+            if ((checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) || (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED))  {
+                Log.d("TEST", "No camera and storage permission");
+                requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 50);
+            }
 
             prefs = this.getSharedPreferences("fnm", 0);
             pEdit = prefs.edit();

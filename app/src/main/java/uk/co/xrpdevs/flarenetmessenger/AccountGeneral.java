@@ -12,7 +12,7 @@ public class AccountGeneral {
      * Account type id
      */
     public static final String ACCOUNT_TYPE = "uk.co.xrpdevs.flarenetmessenger";
-    public static final String ACCOUNT_NAME = "0x2389457203495782340975309784523";
+    public static final String ACCOUNT_NAME = "FXRP";
     public static final String ACCOUNT_TOKEN = "12345";
     public static final String ACCOUNT_XRPADDR = "4357-23590723-70";
     /**

@@ -183,7 +183,13 @@ public class MainActivity extends AppCompatActivity {
                 input.requestFocus();
                // newGame();
                 return true;
-            case R.id.create_new:
+            case R.id.add_existing:
+                Intent intent = new Intent(getApplicationContext(), ContactList.class);
+                //intent.setType("vnd.android.cursor.item/com.sample.profile");  //should filter only contacts with phone numbers
+                intent.putExtra("lType", 2000);
+                startActivity(intent);
+
+
             //    showHelp();
                 return true;
             default:
@@ -208,13 +214,17 @@ public class MainActivity extends AppCompatActivity {
             pEdit.putInt("currentWallet", 0);
             pEdit.commit();
         }
-        addNewAccount(AccountGeneral.ACCOUNT_TYPE, AccountGeneral.AUTHTOKEN_TYPE_FULL_ACCESS);
+
+      //  final String s = ContactsManager.deleteAllAppContacts(this);
+//        Log.d("TEST", "output "+s);
+
+        //addNewAccount(AccountGeneral.ACCOUNT_TYPE, AccountGeneral.AUTHTOKEN_TYPE_FULL_ACCESS);
         //ContactsManager.updateMyContact(this, "Jamie Prince");
-        ContactsManager.addContact(this, new MyContact("Jamie", "Prince", "0x3495230492345092387"));
-				if (serviceIntent == null)
-					serviceIntent = new Intent(this, ContactUpdateService.class);
-				stopService(serviceIntent);
-				startService(serviceIntent);
+      //  ContactsManager.addContact(this, new MyContact("Jamie", "Prince", "0x3495230492345092387"));
+	//			if (serviceIntent == null)
+	//				serviceIntent = new Intent(this, ContactUpdateService.class);
+		//		stopService(serviceIntent);
+	//			startService(serviceIntent);
 
         FlareConnection = MyService.initWeb3j();
         bob = getBlockNumber();
@@ -297,24 +307,10 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 try {
                     new sendMessage().start();
-                    //String rawString = message.getText().toString();
-                    //byte[] bytes = rawString.getBytes(StandardCharsets.UTF_8);
 
-//                                               String utf8EncodedString = new String(bytes, StandardCharsets.UTF_8);
-//                                               receipt = contract.sendMessage(addresses.getSelectedItem().toString(), utf8EncodedString).send();
-//                                               String text;
-//                                               if(receipt.isStatusOK()){
-//                                                   text = "Message sent!\n"+receipt.getGasUsed().toString();
-//                                               } else {
-//                                                   text = "Message sending failed";
-//                                               }
-//                                               showToast(text.toString());
-//                                               update();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-//                                       }
-//                                   }
             }
         });
 
@@ -442,18 +438,6 @@ public class MainActivity extends AppCompatActivity {
             myTvString = "Current Coston\nBlock Number:\n" + bob.getBlockNumber().toString() + "  Wallets: " + String.valueOf(prefs.getInt("walletCount", 0) + "  Current: " + String.valueOf(prefs.getInt("currentWallet", 0)));
             myBalanceS = "FXRP Balance of Flare Testnet Address " + deets.get("walletAddress") + " = " + getMyBalance(deets.get("walletAddress")).toString();
 
-
-            // todo: make sure this is only called after a user adds a wallet.
-            //Boolean isRegistered = contract.checkUserRegistration().send();
-            //if(!isRegistered) {
-            //    try {
-            //        RemoteCall<TransactionReceipt> register = contract.registerUser();
-            //        receipt = register.send();
-            //        Log.d("TEST", "receipt: "+ receipt.isStatusOK());
-            //    } catch (Exception e) {
-            //        e.printStackTrace();
-            //    }
-            //}
 
 
             try {  // get list of registered addresses

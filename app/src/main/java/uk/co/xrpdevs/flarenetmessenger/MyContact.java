@@ -2,15 +2,15 @@ package uk.co.xrpdevs.flarenetmessenger;
 
 public class MyContact {
 
-    public String name;
-    public String lastName;
-    public String phone;
+    public String tag;
+    public String displayname;
     public String XRPAddr;
-    public long id;
+    public int id;
 
-    public MyContact(String name, String lastName, String XRPAddr) {
-        this.name = name;
-        this.lastName = lastName;
+    public MyContact(String displayname, String XRPAddr, String tag, int id) {
+        this.tag = tag;
+        this.id = id;
         this.XRPAddr  = XRPAddr;
+        this.displayname = displayname;
     }
 }

@@ -1,11 +1,12 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
-import android.content.ContentResolver;
+import android.Manifest;
 import android.content.ContentUris;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -20,32 +21,31 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
 
 import org.json.JSONException;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.EthBlockNumber;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
-import org.web3j.tuples.generated.Tuple2;
-import org.web3j.tuples.generated.Tuple3;
 import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.gas.DefaultGasProvider;
 
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Objects;
 
-public class ContactList extends AppCompatActivity {
+public class ContactList extends AppCompatActivity{
     public Web3j FlareConnection;
     private Object TextView;
     TextView myTV;
@@ -72,20 +72,29 @@ public class ContactList extends AppCompatActivity {
     HashMap<String, String> deets;
     ArrayList<HashMap<String, String>> maplist = new ArrayList<HashMap<String, String>>();
     ListView lv;
-    int ListType;
+    public int ListType;
+    int WITH_ACCOUNTS = 1000;
+    IntentIntegrator integrator;
+    Context mThis = this;
+    HashMap<String, String> contactItem;
     @Override
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contacts);
-//        Toolbar toolbar = findViewById(R.id.toolbar);
-//        setSupportActionBar(toolbar);
+
+
         Intent in = getIntent();
         ListType = in.getIntExtra("lType", 1000);
         prefs = this.getSharedPreferences("fnm", 0);
         FlareConnection = MyService.initWeb3j();
 
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.LAX);
+
+        if ((checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) || (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED))  {
+            Log.d("TEST", "No camera and storage permission");
+            requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 50);
+        }
 
         contractAddress = "0x4a1400220373983f3716D4e899059Dda418Fd08A"; // v1 SMSTest2
 
@@ -120,10 +129,10 @@ public class ContactList extends AppCompatActivity {
         });
     }
 
-    public SimpleAdapter fillListView(final ArrayList lines) {
+    public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) {
         Log.d("TEST", "FillListView");
         ArrayAdapter<String> adapter;
-        simpleAdapter = new SimpleAdapter(this, lines, R.layout.inbox_listitem, new String[]{"name", "numb", "type", "date"}, new int[]{R.id.cName, R.id.olUser, R.id.cStatus, R.id.olLastact}){
+        simpleAdapter = new SimpleAdapter(this, lines, R.layout.inbox_listitem, new String[]{"name", "numb", "type", "id"}, new int[]{R.id.cName, R.id.olUser, R.id.cStatus, R.id.olLastact}){
             @Override
             public View getView (int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
@@ -146,21 +155,52 @@ public class ContactList extends AppCompatActivity {
 
         lv = (ListView) findViewById(R.id.inbox_list);
         lv.setAdapter(InboxAdapter);
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+        lv.setOnItemLongClickListener((parent, v, position, id) -> {
+            HashMap<String, String> theItem = lines.get(position);
+            ContactsManager.deleteRawContactID(this, Long.parseLong(theItem.getOrDefault("id", "0")));
+            Log.d("TEST", "Long Press");
+            maplist = new ArrayList<HashMap<String, String>>();
+            new Contact_thread().start();
+            return true;
+        });
+
+
+        lv.setOnItemClickListener((parent, v, position, id) -> {
+            if(ListType == 1000) {
                 Intent i = new Intent(ContactList.this,
                         MainActivity.class);
                 Bundle b = new Bundle();
-                HashMap<String, String> theItem = (HashMap<String, String>) lines.get(position);
+                HashMap<String, String> theItem = lines.get(position);
 
                 b.putString("name", theItem.get("name"));
                 b.putString("addr", theItem.get("numb"));
+                b.putString("id", theItem.get("id"));
                 i.putExtra("contactInfo", b);
                 String pooo = theItem.get("num");
                 Log.d("smscseeker", "name:" + theItem.toString());
 
                 startActivity(i);
+            }
+            if(ListType == 2000) {
+                Log.d("TEST", "Button Pressed");
+                Bundle b = new Bundle();
+                HashMap<String, String> theItem = lines.get(position);
+                b.putString("name", theItem.get("name"));
+                b.putString("addr", theItem.get("numb"));
+                b.putString("id", theItem.get("id"));
 
+                contactItem = lines.get(position);
+               // mThis.getApplicationContext().getCurrent
+                integrator = new IntentIntegrator(ContactList.this);
+                integrator.setPrompt("Scanning WALLET ADDRESS\nQR code will be scanned automatically on focus");
+                integrator.addExtra("contactInfo", b);
+                integrator.setCameraId(0);
+                integrator.setRequestCode(3000);
+                integrator.setOrientationLocked(true);
+                integrator.setBeepEnabled(true);
+                integrator.setCaptureActivity(CaptureActivityPortrait.class);
+                integrator.setBarcodeImageEnabled(false);
+                integrator.initiateScan();
             }
         });
 
@@ -168,158 +208,105 @@ public class ContactList extends AppCompatActivity {
 
     }
 
-    public int inboxSize() {
-        int mCount = 0;
-        try {
-            Tuple2<BigInteger, BigInteger> messageCount = contract.getMyInboxSize().send();
-
-            Log.d("TEST", "Inbox count: " + messageCount);
-            String msgCount = messageCount.getValue2().toString();
-            mCount = Integer.parseInt(msgCount);
-          //  inbox.setText("Inbox: " + msgCount + " messages");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return mCount;
-    }
-
-    private Cursor getContacts() {
-
-     //   Uri rawContactUri = ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, rawContactId);
-    //    Uri entityUri = Uri.withAppendedPath(rawContactUri, ContactsContract.RawContacts.Entity.CONTENT_DIRECTORY);
-    //    Cursor c = getContentResolver().query(entityUri,
-   //             new String[]{ContactsContract.RawContacts.SOURCE_ID, ContactsContract.RawContacts.Entity.DATA_ID, ContactsContract.RawContacts.Entity.MIMETYPE, ContactsContract.RawContacts.Entity.DATA1},
-   //             null, null, null);
-   //     try {
-   //         while (c.moveToNext()) {
-   //             String sourceId = c.getString(0);
-    //            if (!c.isNull(1)) {
-    //                String mimeType = c.getString(2);
-    //                String data = c.getString(3);
-    //                //decide here based on mimeType, see comment later
-    //            }
-    //        }
-    //    } finally {
-    //        c.close();
-    //    }
 
 
-        // Run query
-        Uri uri = ContactsContract.RawContacts.CONTENT_URI;
-        String[] projection = new String[] {
-
-        };
-        String[] selectionArgs = null;
-        String sortOrder = ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY
-                + " COLLATE LOCALIZED ASC";
-
-
-        return managedQuery(uri, projection, null, selectionArgs, sortOrder);
-    }
 
     class Contact_thread extends Thread {
 
         @Override
         public void run() {
             // TODO Auto-generated method stub
-            // Build adapter with contact entries
-          /*  Cursor cursor = getContacts();
 
-            cursor.moveToFirst();
-            String[] contactName = new String[cursor.getCount()];
-            String[] contactNo = new String[cursor.getCount()];
-            String[] contactMime = new String[cursor.getCount()];
-            String[][] data;
-            boolean[] checkedPosition = new boolean[cursor.getCount()];
+            String yourAccountType = "%";
+            Cursor c; Cursor d;
 
+            int contactNameColumn ;
+            int addressColumnIndex;
+            int addressColumnId;
+            if(ListType == WITH_ACCOUNTS) {
+                Log.d("TEST", "ContactList WITH_ACCOUNTS");
+                yourAccountType = "uk.co.xrpdevs.flarenetmessenger";//ex: "com.whatsapp"
 
+                c = getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI,
+                        null,
+                        ContactsContract.RawContacts.ACCOUNT_TYPE + "= ?",
+                        new String[]{yourAccountType},
+                        ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY);
 
-            ContentResolver contect_resolver = getContentResolver();
-            */
+             //   addressColumnId    = c.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_NAME);
+            } else {
+                Log.d("TEST", "ContactList not WITH_ACCOUNTS");
+                c = getContentResolver().query(
+                        ContactsContract.Contacts.CONTENT_URI,
+                        null,
+                        null,
+                        null,
+                        ContactsContract.Contacts.DISPLAY_NAME);
+          //      contactNameColumn = c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME_PRIMARY);
+           //     addressColumnIndex = c.getColumnIndex(ContactsContract.Contacts._ID);
 
-            String yourAccountType = "uk.co.xrpdevs.flarenetmessenger";//ex: "com.whatsapp"
-            Cursor c = getContentResolver().query(
-                    ContactsContract.RawContacts.CONTENT_URI,
-                    new String[]{},
-                    ContactsContract.RawContacts.ACCOUNT_TYPE + "= ?",
-                    new String[]{yourAccountType},
-                    null);
-
+            }
             ArrayList<String> contactList = new ArrayList<String>();
-            int contactNameColumn = c.getColumnIndex(ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY);
-            int addressColumnIndex = c.getColumnIndex(ContactsContract.RawContacts.ACCOUNT_NAME);
+
+           Log.d("TEST", "Number of results: "+c.getCount());
             while (c.moveToNext()) {
-                Log.d("TEST", DatabaseUtils.dumpCurrentRowToString(c));
-                // You can also read RawContacts.CONTACT_ID to read the
-                // ContactsContract.Contacts table or any of the other related ones.
                 HashMap<String, String> tmp = new HashMap<String, String>();
+                if(ListType == WITH_ACCOUNTS) {
 
-                tmp.put("name", c.getString(contactNameColumn));
-                tmp.put("numb", c.getString(addressColumnIndex));
+                    contactNameColumn = c.getColumnIndex(ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY);
+                    addressColumnIndex = Integer.parseInt(c.getString(c.getColumnIndex(ContactsContract.RawContacts._ID)));
+                    Uri rawContactUri = ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, addressColumnIndex);
+                    Uri entityUri = Uri.withAppendedPath(rawContactUri, ContactsContract.RawContacts.Entity.CONTENT_DIRECTORY);
+                    d = getContentResolver().query(entityUri,
+                            null, "mimetype = 'vnd.android.cursor.item/com.sample.profile'", null, null);
+                    tmp.put("id", String.valueOf(addressColumnIndex));
+                    try {
+                        while (d.moveToNext()) {
+                            String XRPAddress = d.getString(d.getColumnIndex(ContactsContract.RawContacts.Entity.DATA3));
+                            Log.d("TEST", "XRP Address: "+XRPAddress);
+                            Log.d("TEST", "XRP Tag    : "+d.getString(d.getColumnIndex(ContactsContract.RawContacts.Entity.DATA2)));
+                            Log.d("TEST", "XRP Info   : "+d.getString(d.getColumnIndex(ContactsContract.RawContacts.Entity.DATA1)));
+//                            Log.d("TEST", "entityURI: "+ DatabaseUtils.dumpCurrentRowToString(d));
+                            tmp.put("numb", XRPAddress);
+                            tmp.put("name", c.getString(contactNameColumn));
+                        }
+                    } finally {
+                        d.close();
+                    }
+                    String getRawQuery = ContactsContract.RawContacts.CONTACT_ID + "=" + String.valueOf(addressColumnIndex);
+                    /*Log.d("TEST", "getRawQuery: "+getRawQuery);
+                    d = getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI,
+                            null,
+                            getRawQuery,
+                            null,
+                            null);
 
+                    while (d.moveToNext()) {
+                        Log.d("TEST", "RawContacts @ " + addressColumnIndex + " " + DatabaseUtils.dumpCurrentRowToString(d));
+                    }*/
+                } else {
+                    contactNameColumn = c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
+                    addressColumnIndex = c.getColumnIndex(ContactsContract.Contacts._ID);
+                    tmp.put("numb", c.getString(addressColumnIndex));
+                    tmp.put("id", c.getString(addressColumnIndex));
+                    tmp.put("name", c.getString(contactNameColumn));
+                }
+               // Log.d("TEST", "ContactList: "+DatabaseUtils.dumpCurrentRowToString(c));
+
+
+
+
+
+       //         tmp.put("id",   c.getString(addressColumnIndex));
                 maplist.add(tmp);
+
+                Log.d("TEST", "ContactList existing entry: "+tmp.toString());
+
 
                 contactList.add(c.getString(contactNameColumn));
             }
             c.close();
-            /*int i = 0;
-            Log.d("TEST", "Records: "+String.valueOf(cursor.getCount()));
-            if (cursor.getCount() > 0) {
-                do {
-                    String bob = Arrays.toString(cursor.getColumnNames());
-                    Log.d("TEST", "PhoneCur: "+bob);
-Log.d("TEST", DatabaseUtils.dumpCurrentRowToString(cursor));
-                    //String id = cursor
-                     //       .getString(cursor
-                    //                .getColumnIndexOrThrow(ContactsContract.RawContacts.SOURCE_ID));
-
-                    i++;
-
-                    Cursor phoneCur = contect_resolver.query(
-                            ContactsContract.Contacts.CONTENT_URI,
-                            null, null, null, null);
-//                            ContactsContract.CommonDataKinds.Phone.CONTACT_ID
-//                                    + " = ?", new String[] { id }, null);
-
-          //          String[] tdata[i] = new String[phoneCur.getColumnCount()];
-           //         for (int f = 0; f < cursor.getColumnCount(); f++) {
-            //            data[i][f] = cursor.getString(f);
-            //        }
-                    if (phoneCur.moveToFirst()) {
-                        contactName[i] = phoneCur
-                                .getString(phoneCur
-                                        .getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
-                        contactNo[i] = phoneCur
-                                .getString(phoneCur
-                                        .getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-                        contactMime[i] = phoneCur                                .getString(phoneCur
-                                .getColumnIndex(ContactsContract.RawContacts.Entity.MIMETYPE ));
-
-                        Log.d("TEST", "PhoneCur: "+phoneCur.getColumnNames());
-
-                        if(contactMime[i] != null) Log.d("TEST", "Mime: "+contactMime[i]);
-
-                        if (contactName[i] == null) {
-                            contactName[i] = "Unknown";
-                        }
-
-                    } else {
-                        contactName[i] = "Unknown";
-                        contactNo[i] = "";
-                    }
-*/
-
-//                    Object db;
-            // db.AddContact(contactName[i], contactNo[i]);
-
-            //                  i++;
-            //                phoneCur.close();
-            //          } while (cursor.moveToNext());
-
-            Log.d("TEST", maplist.toString());
-
-
-
+        //    Log.d("TEST", maplist.toString());
 
             runOnUiThread(new Runnable() {
 
@@ -344,6 +331,124 @@ Log.d("TEST", DatabaseUtils.dumpCurrentRowToString(cursor));
         Date df = new Date(ts * 1000);
         String rc = new SimpleDateFormat("dd MMM yy").format(df);
         return (rc);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+
+        Toast toasty = Toast.makeText(this, "Content:" +requestCode, Toast.LENGTH_LONG);
+        toasty.show();
+        if (requestCode == 3000) {
+            IntentResult scanningResult = IntentIntegrator.parseActivityResult(resultCode, intent);
+
+            if (resultCode == RESULT_OK) {
+                Toast toasty2 = Toast.makeText(this, "Content:" + scanningResult.toString(), Toast.LENGTH_LONG);
+                toasty2.show();
+                if (scanningResult != null) {
+                    //                        final TextView formatTxt = (TextView)findViewById(R.id.scan_format);
+                    //                      final TextView contentTxt = (TextView)findViewById(R.id.scan_content);
+                    String scanContent = scanningResult.getContents();
+                    String scanFormat = scanningResult.getFormatName();
+                    Toast toast = Toast.makeText(this, "Content:" + scanContent + " Format:" + scanFormat, Toast.LENGTH_LONG);
+                    Log.d("TEST", "OnActivityResult " + scanContent);
+
+                    //Credentials cs = Credentials.create(scanContent);
+
+                    //String privateKey = cs.getEcKeyPair().getPrivateKey().toString(16);
+                    //String publicKey = cs.getEcKeyPair().getPublicKey().toString(16);
+                    String addr = scanContent;
+
+                    int wC = prefs.getInt("walletCount", 0); wC++;
+
+                    //System.out.println("Private key: " + privateKey);
+                    //System.out.println("Public key: " + publicKey);
+                    System.out.println("Address: " + addr);
+
+                    HashMap<String, String> tmp = new HashMap<String, String>();
+                //    tmp.put("walletName", wName.getText().toString());
+                    //tmp.put("walletPrvKey", scanContent);
+                    //tmp.put("walletPubKey", "0x"+publicKey);
+                    tmp.put("walletAddress", addr);
+                    Log.d("TEST", "OnactivityResult Contact Item: "+contactItem.toString());
+
+                    Intent myIntent = getIntent();
+                    Bundle bundle = myIntent.getExtras();
+                //    String action = myIntent.getAction();
+                //    Bundle data = bundle.getBundle("contactInfo");
+                  //  String id = data.getString("id");
+
+                    if (bundle != null) {
+                        for (String key : bundle.keySet()) {
+                            Log.e("TEST", "onActivityResult bundleDump "+key + " : " + (bundle.get(key) != null ? bundle.get(key) : "NULL"));
+                        }
+                    }
+
+                    MyContact newContact = new MyContact(contactItem.get("name"), addr, "0", Integer.parseInt(Objects.requireNonNull(contactItem.get("id"))));
+
+                    String rCID = ContactsManager.addContact(this, newContact);
+                    //ContactsManager.updateMyContact(this, contactItem.get("name"));
+
+                    String uriString = new StringBuilder().append("content://com.android.contacts/data/").append(rCID).toString();
+
+                    Intent abc = new Intent(this, ViewContact.class);
+                    Uri myUri = Uri.parse(uriString);
+                    abc.setData(myUri);
+                    startActivity(abc);
+
+
+                   // abc.setData
+
+        //            pEdit.putString("wallet"+String.valueOf(wC), new JSONObject(tmp).toString());
+        //            pEdit.putInt("walletCount", wC);
+        //            pEdit.putInt("currentWallet", wC);
+
+                    //                        pEdit.putString("walletPrvKey", ""+scanContent);
+//                        pEdit.putString("walletPubKey", "0x"+publicKey);
+//                        pEdit.putString("walletAddress",""+addr);
+        //            pEdit.commit();
+         //           pEdit.apply();
+                    //       formatTxt.setText("FORMAT: " + scanFormat);
+                    //         contentTxt.setText("CONTENT: " + scanContent);
+                    //we have a result
+                } else {
+                    Toast toast = Toast.makeText(getApplicationContext(),
+                            "No scan data received!", Toast.LENGTH_SHORT);
+                    toast.show();
+                    Log.e("TEST", " Scan unsuccessful");
+                }
+            } else { //resultCode == RESULT_CANCELED) {
+                super.onActivityResult(requestCode, resultCode, intent);
+                // Handle cancel
+                Log.i("App", "Scan unsuccessful");
+            }
+        }
+    }
+
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+
+    }
+
+    public void doScan(){
+
+        Log.d("TEST", "Button Pressed");
+        integrator = new IntentIntegrator(this);
+        integrator.setPrompt("QR code will be scanned automatically on focus");
+        integrator.setCameraId(0);
+        integrator.setRequestCode(PKeyScanner.PRIV_KEY_REQUEST_CODE);
+        integrator.setOrientationLocked(true);
+        integrator.setBeepEnabled(true);
+        integrator.setCaptureActivity(CaptureActivityPortrait.class);
+        integrator.setBarcodeImageEnabled(false);
+        integrator.initiateScan();
     }
 
 
