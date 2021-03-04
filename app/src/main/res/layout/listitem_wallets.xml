@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#000000">
+    android:layout_height="match_parent">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:descendantFocusability="blocksDescendants"
-        android:background="#000000">
+        android:descendantFocusability="blocksDescendants">
 
         <ImageView
             android:layout_width="wrap_content"
@@ -18,8 +16,7 @@
             android:layout_alignParentTop="true"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
-            android:background="#000000"
-            android:src="@android:drawable/star_big_on"
+            android:src="@drawable/ic_wallet"
             android:maxWidth="50sp"
             android:maxHeight="50sp"
             android:minHeight="50sp"
@@ -29,15 +26,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text="Jamie Prince"
-            android:id="@+id/cName"
+            android:text=" "
+            android:id="@+id/inboxName"
             android:layout_alignParentTop="true"
             android:layout_toRightOf="@+id/imageView"
             android:textSize="18sp"
             android:maxHeight="25sp"
             android:minHeight="25sp"
-            android:background="#000000"
-            android:textColor="#ffffff"
             android:singleLine="true"
             android:textStyle="bold"
             android:maxWidth="300sp"
@@ -47,18 +42,17 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="dgbdbdfbdfbvdfd df dfdgdfg dfgdg dg dg dfg d"
-            android:id="@+id/olUser"
-            android:layout_below="@+id/cName"
-            android:textColor="#ffffff"
+            android:text=" "
+            android:id="@+id/inboxAddress"
+            android:layout_below="@+id/inboxName"
             android:singleLine="true"
             android:maxHeight="25sp"
             android:textSize="15sp"
             android:layout_toRightOf="@+id/imageView"
             android:maxWidth="300sp"
             android:minHeight="25sp"
-            android:layout_toLeftOf="@+id/olLastact"
-            android:layout_toStartOf="@+id/olLastact"
+            android:layout_toLeftOf="@+id/inboxLastact"
+            android:layout_toStartOf="@+id/inboxLastact"
             android:layout_toEndOf="@id/imageView" />
 
         <TextView
@@ -66,28 +60,26 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="Draft"
-            android:id="@+id/cStatus"
+            android:id="@+id/inboxType"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:layout_above="@+id/olUser"
-            android:layout_toEndOf="@+id/cName"
+            android:layout_above="@+id/inboxAddress"
+            android:layout_toEndOf="@+id/inboxName"
             android:layout_alignParentTop="true"
-            android:textColor="#f97807"
             android:textAlignment="viewEnd"
-            android:layout_toRightOf="@+id/cName" />
+            android:layout_toRightOf="@+id/inboxName" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="17 Aug"
-            android:id="@+id/olLastact"
-            android:layout_below="@+id/cStatus"
-            android:textColor="#36a4f2"
+            android:id="@+id/inboxLastact"
+            android:layout_below="@+id/inboxType"
             android:textAlignment="viewEnd"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:layout_alignBottom="@+id/olUser"
+            android:layout_alignBottom="@+id/inboxAddress"
             android:minWidth="50sp"
             android:width="100sp" />
     </RelativeLayout>

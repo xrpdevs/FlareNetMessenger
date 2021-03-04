@@ -22,7 +22,6 @@ import android.widget.SimpleAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import org.bouncycastle.util.encoders.Hex;
 import org.json.JSONException;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
@@ -33,12 +32,9 @@ import org.web3j.tuples.generated.Tuple3;
 import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.gas.DefaultGasProvider;
 
-import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -116,11 +112,11 @@ public class Inbox extends AppCompatActivity {
 
     public SimpleAdapter fillListView(final ArrayList lines) {
         ArrayAdapter<String> adapter;
-        simpleAdapter = new SimpleAdapter(this, lines, R.layout.inbox_listitem, new String[]{"cnam", "body", "type", "date"}, new int[]{R.id.cName, R.id.olUser, R.id.cStatus, R.id.olLastact}){
+        simpleAdapter = new SimpleAdapter(this, lines, R.layout.listitem_inbox, new String[]{"cnam", "body", "type", "date"}, new int[]{R.id.inboxName, R.id.inboxAddress, R.id.inboxType, R.id.inboxLastact}){
             @Override
             public View getView (int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                TextView cName = (TextView) view.findViewById(R.id.cName);
+                TextView cName = (TextView) view.findViewById(R.id.inboxName);
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
                         HashMap<String, String> item = (HashMap<String, String>) getItem(position);

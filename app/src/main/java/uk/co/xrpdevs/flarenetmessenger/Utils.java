@@ -2,13 +2,25 @@ package uk.co.xrpdevs.flarenetmessenger;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.util.Log;
+import android.util.Pair;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.web3j.abi.datatypes.Int;
+import org.web3j.crypto.Credentials;
+import org.web3j.exceptions.MessageDecodingException;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.response.EthGetBalance;
+import org.web3j.protocol.http.HttpService;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class Utils {
 
@@ -29,6 +41,55 @@ public class Utils {
         return bob;
     }
 
+    public static Credentials getCreds(HashMap<String, String>  deets){
+        return Credentials.create(deets.get("walletPrvKey"));
+    }
+
+    public static Web3j initWeb3j(){
+
+        Web3j myEtherWallet = Web3j.build(
+                new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
+
+        return myEtherWallet;
+    }
+
+    public static Pair<BigDecimal, String> getMyBalance(String walletAddress) {
+        String ErrorMessage = "OK";
+        Web3j FlareConnection = MyService.initWeb3j();
+        BigDecimal wei;
+
+        BigDecimal FXRP = BigDecimal.valueOf(0);
+
+        EthGetBalance ethGetBalance = null;
+        try {
+            ethGetBalance = FlareConnection
+                    .ethGetBalance(walletAddress, DefaultBlockParameterName.LATEST)
+                    .sendAsync()
+                    .get(10, TimeUnit.SECONDS);
+            wei = new BigDecimal(ethGetBalance.getBalance());
+            FXRP = Convert.fromWei(wei, Convert.Unit.ETHER);
+        } catch (MessageDecodingException e) {
+            if(e.toString().contains("Value must be in format")){
+                ErrorMessage = "Not a valid Flare/Coston Adddress";
+            }
+            e.printStackTrace();
+        } catch (Exception e){
+            ErrorMessage = "Error: "+e.toString();
+            e.printStackTrace();
+        }
+
+
+
+        if(!ErrorMessage.equals("OK")){
+            myLog("TEST", ErrorMessage);
+            FXRP=BigDecimal.valueOf(-1);
+        } else {
+
+        }
+
+        return new Pair<BigDecimal, String>(FXRP, ErrorMessage);
+    }
+
     public static HashMap<String, String> jsonToMap(String t) throws JSONException {
 
         HashMap<String, String> map = new HashMap<String, String>();
@@ -45,5 +106,13 @@ public class Utils {
         //System.out.println("json : "+jObject);
      //   System.out.println("map : "+map);
     }
+
+public static void myLog(String tag, String logString){
+        boolean loggingOn = true;
+        if(loggingOn) {
+            String callerClassName = new Exception().getStackTrace()[1].getClassName();
+            Log.d(tag, ">\n" + callerClassName + "\n" + logString);
+        }
+}
 
 }

@@ -430,4 +430,82 @@
     values-round/strings.xml for round devices.
     -->
     <string name="hello_world">Hello Square World!</string>
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">"Welcome!"</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="title_activity_main2">MainActivity</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Contacts</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="todo">TODO</string>
+    <string name="title_messages">Messages</string>
+    <string name="wallets">Wallets</string>
+    <string name="save_wallet">Save Wallet</string>
+    <string name="scan_pubkey">Scan Pubkey</string>
+    <string name="public_key_paste_or_scan_below">Public Key (Paste, or Scan Below)</string>
+    <string name="new_wallet_name">New Wallet Name</string>
+    <string name="send_funds">Send Funds</string>
+    <string name="delete">Delete</string>
+    <string name="change">Change</string>
+    <string name="textview">TextView</string>
+    <string name="amount_to_send">Amount to send</string>
+    <string name="wallet_address">Wallet Address</string>
+    <string name="qr_code">QR Code</string>
+    <string name="export_wallets">Export Wallets</string>
+    <string name="import_wallets">Import Wallets</string>
+    <string name="show_balances">Show Balances</string>
+    <string name="pin_code">PIN code</string>
+    <string name="connect">Connect</string>
+    <string name="connect_pin">Connect with PIN code</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="title_channelId">Channel ID</string>
+    <string name="title_apiKey">API Key</string>
+    <string name="hint_channelId">Enter your Channel ID</string>
+    <string name="hint_apiKey">Enter your API key</string>
+    <string name="hint_pinCode">Enter 6-digit PIN code</string>
+    !--TODO review dialog title and message strings-->
+    <string name="sessionconfig_dialog_message">
+        In order to start a session to a channel, the SDK needs a channel ID and an API key.
+        You can configure channels and generate an API key in the Rescue Admin Center.\n
+        We suggest you to store the channel ID and the API key in your code statically (see Config.java) or fetch it from your servers.\n
+        For testing purposes you can enter them now, and the application will store them as a preference.</string>
+    <string name="apikey_dialog_message">
+        In order to start a session with a PIN code, the SDK needs an API key. You can generate an API key in the Rescue Admin Center.\n
+        We suggest you to store the API key in your code statically (see Config.java) or fetch it from your servers.\n
+        For testing purposes you can enter one now, and the application will store it as a preference.</string>
+    <string name="sessionconfig_dialog_title">Session configuration</string>
+    <string name="pin_code_entry_dialog_title">Connect with PIN code</string>
+    <string name="empty_field">Fill in this field!</string>
+    <string name="error_title">Error</string>
+    <string name="error_no_such_channel">The channel (id: %s) doesn\'t exist!</string>
+    <string name="not_set">not set</string>
+    <string name="api_key_label">API key</string>
+    <string name="pin_mode_label">Start with PIN code</string>
+    <string name="channelid_mode_label">Start with channel ID</string>
+    <string name="channelid_label">Channel ID</string>
+    <string name="channel_name_company_id_mode_label">Start with channel name and company ID</string>
+    <string name="channel_name_label">Channel Name</string>
+    <string name="company_id_label">Company ID</string>
+    <string name="settings_menu_label">Settings</string>
+    <string name="pause">Pause stream</string>
+    <string name="resume">Resume stream</string>
+    <string name="firstRun_noWallet">
+        It appears that you don\'t yet have a wallet set up.\n
+        \n
+        In the next dialog, you will be given the option to either scan a QR code of your private key, or enter it as text or by pasting it into the form.\n
+        \n
+        Please click on \"continue\" below to proceed.</string>
+    <string name="firstRun_noPin">
+        In order to secure your funds, you need to set a PIN code.\n\n
+        When you tap \"continue\" you will be asked to enter your new PIN and then asked to verify it.\n\n
+        You will be asked for this PIN whenever you do something potentially risky with your accounts or funds.
+    </string>
+    <string name="about_this_app">About this App</string>
+    <string name="test_firstrun">Test FirstRun</string>
 </resources>

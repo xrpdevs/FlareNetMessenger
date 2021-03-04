@@ -3,28 +3,25 @@ package uk.co.xrpdevs.flarenetmessenger;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Pair;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
-
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
-
 import org.json.JSONObject;
 import org.web3j.crypto.Credentials;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
-
-
-//import me.dm7.barcodescanner.zxing.ZXingScannerView;
-//import okhttp3.logging.HttpLoggingInterceptor;
 
 public class PKeyScanner extends AppCompatActivity implements View.OnClickListener {
     SharedPreferences prefs; SharedPreferences.Editor pEdit;
@@ -32,35 +29,29 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
     public static final int PRIV_KEY_REQUEST_CODE = 9554;
     public int SCAN_TYPE;
     Button scan;
-    Context mThis;
+    Context mThis = this;
     IntentIntegrator integrator;
     EditText wName;
-    //   @Override
- //   protected void onCreate(Bundle savedInstanceState) {
-//        super.onCreate(savedInstanceState);
- //       setContentView(R.layout.activity_p_key_scanner);
- //   }
-
-   //     private ZXingScannerView mScannerView;
+    PleaseWaitDialog dialogActivity;
 
         @Override
         public void onCreate(Bundle state) {
 
 
             super.onCreate(state);
-            setContentView(R.layout.activity_import_wallet);
+            setContentView(R.layout.activity_importwallet);
 
             if ((checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) || (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED))  {
-                Log.d("TEST", "No camera and storage permission");
-                requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 50);
+                requestPermissions(new String[]{
+                        Manifest.permission.CAMERA,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission_group.CONTACTS}, 50);
             }
 
             prefs = this.getSharedPreferences("fnm", 0);
             pEdit = prefs.edit();
-
-            //integrator.setCaptureActivity(CaptureActivityPortrait.class);
-            wName = findViewById(R.id.ImportWallet_name_editText);
-            scan = findViewById(R.id.ImportWallet_import_button);
+            wName = findViewById(R.id.newWalletName);
+            scan = findViewById(R.id.importPubKeyQR);
             scan.setOnClickListener(this);
         }
 
@@ -68,21 +59,18 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
 
-        Toast toasty = Toast.makeText(this, "Content:" +requestCode, Toast.LENGTH_LONG);
-        toasty.show();
         if (requestCode == PRIV_KEY_REQUEST_CODE) {
             IntentResult scanningResult = IntentIntegrator.parseActivityResult(resultCode, intent);
 
             if (resultCode == RESULT_OK) {
-                Toast toasty2 = Toast.makeText(this, "Content:" + scanningResult.toString(), Toast.LENGTH_LONG);
-                toasty2.show();
+
                     if (scanningResult != null) {
-                        //                        final TextView formatTxt = (TextView)findViewById(R.id.scan_format);
-                        //                      final TextView contentTxt = (TextView)findViewById(R.id.scan_content);
+
                         String scanContent = scanningResult.getContents();
                         String scanFormat = scanningResult.getFormatName();
-                        Toast toast = Toast.makeText(this, "Content:" + scanContent + " Format:" + scanFormat, Toast.LENGTH_LONG);
                         Log.d("TEST", scanContent);
+
+
 
                         Credentials cs = Credentials.create(scanContent);
 
@@ -90,34 +78,39 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
                         String publicKey = cs.getEcKeyPair().getPublicKey().toString(16);
                         String addr = cs.getAddress();
 
-                        int wC = prefs.getInt("walletCount", 0); wC++;
+                        //Pair<BigDecimal, String> testAddr = Utils.getMyBalance(addr);
 
-                        System.out.println("Private key: " + privateKey);
-                        System.out.println("Public key: " + publicKey);
-                        System.out.println("Address: " + addr);
 
-                        HashMap<String, String> tmp = new HashMap<String, String>();
-                        tmp.put("walletName", wName.getText().toString());
-                        tmp.put("walletPrvKey", scanContent);
-                        tmp.put("walletPubKey", "0x"+publicKey);
-                        tmp.put("walletAddress", addr);
+                        if(scanContent.substring(0,2).equals("0x") && scanContent.length() == 66){
+                            int wC = prefs.getInt("walletCount", 0);
+                            wC++;
 
-                        pEdit.putString("wallet"+String.valueOf(wC), new JSONObject(tmp).toString());
-                        pEdit.putInt("walletCount", wC);
-                        pEdit.putInt("currentWallet", wC);
+                            System.out.println("Private key: " + privateKey);
+                            System.out.println("Public key: " + publicKey);
+                            System.out.println("Address: " + addr);
 
-                        //                        pEdit.putString("walletPrvKey", ""+scanContent);
-//                        pEdit.putString("walletPubKey", "0x"+publicKey);
-//                        pEdit.putString("walletAddress",""+addr);
-                        pEdit.commit();
-                        pEdit.apply();
-                        //       formatTxt.setText("FORMAT: " + scanFormat);
-                        //         contentTxt.setText("CONTENT: " + scanContent);
-                        //we have a result
+                            HashMap<String, String> tmp = new HashMap<String, String>();
+                            if(wName.getText().toString().equals("")){
+                                tmp.put("walletName", "Wallet "+String.valueOf(wC));
+                            } else {
+                                tmp.put("walletName", wName.getText().toString());
+                            }
+                            tmp.put("walletPrvKey", scanContent);
+                            tmp.put("walletPubKey", "0x" + publicKey);
+                            tmp.put("walletAddress", addr);
+
+                            pEdit.putString("wallet" + String.valueOf(wC), new JSONObject(tmp).toString());
+                            pEdit.putInt("walletCount", wC);
+                            pEdit.putInt("currentWallet", wC);
+                            pEdit.commit();
+                            pEdit.apply();
+                            Intent i = new Intent(PKeyScanner.this, MainActivity.class);
+                            startActivity(i);
+                        } else {
+                            showDialog("Error: Not a valid private key", true);
+                        }
                     } else {
-                        Toast toast = Toast.makeText(getApplicationContext(),
-                                "No scan data received!", Toast.LENGTH_SHORT);
-                        toast.show();
+                        showDialog("No scan data received, please try again!", true);
                         Log.e("TEST", " Scan unsuccessful");
                     }
                 } else { //resultCode == RESULT_CANCELED) {
@@ -127,8 +120,6 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
                 }
             }
         }
-
-
 
         @Override
         public void onResume() {
@@ -154,6 +145,16 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         integrator.setCaptureActivity(CaptureActivityPortrait.class);
         integrator.setBarcodeImageEnabled(false);
         integrator.initiateScan();
+    }
+
+    private boolean showDialog(String prompt, Boolean cancelable) {
+        FragmentManager manager = getFragmentManager();
+
+        dialogActivity = new PleaseWaitDialog();
+        dialogActivity.prompt = prompt;
+        dialogActivity.cancelable = cancelable;
+        dialogActivity.show(manager, "DialogActivity");
+        return true;
     }
 
 

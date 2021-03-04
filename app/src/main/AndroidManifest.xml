@@ -15,6 +15,7 @@
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+
     <uses-feature android:name="android.hardware.camera" />
 
     <application
@@ -24,16 +25,33 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.FlareNetMessenger">
-        <uses-library android:name="org.apache.http.legacy" android:required="false"/>
+        <activity android:name=".FirstRun"></activity>
+        <activity
+            android:name=".MainActivity2"
+            android:label="@string/title_activity_main2" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false" />
+
         <service
-            android:name="uk.co.xrpdevs.flarenetmessenger.ContactUpdateService"
+            android:name=".ContactUpdateService"
             android:enabled="true"
             android:exported="true" />
-        <service android:name="uk.co.xrpdevs.flarenetmessenger.AuthenticationService">
+        <service android:name=".AuthenticationService">
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
-            <meta-data android:name="android.accounts.AccountAuthenticator" android:resource="@xml/authenticator" />
+
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/authenticator" />
         </service>
         <service
             android:name=".SyncService"
@@ -50,7 +68,6 @@
                 android:resource="@xml/contacts" />
         </service>
 
-        <activity android:name=".pin" />
         <activity android:name=".PKeyScanner" />
         <activity android:name=".ContactList" />
         <activity
@@ -80,11 +97,6 @@
                 android:name="android.accounts.AccountAuthenticator"
                 android:resource="@xml/authenticator" />
         </service>
-        <!--
- IMPORTANT: this activity is mandatory since it will not show your app icon in contact details if you ommit this
-        Actually omiting this made me lose a lot ot time
-        -->
-        <!-- MimeType must be the same you defined in contacts.xml -->
         <activity
             android:name=".ViewContact"
             android:exported="true"
@@ -98,29 +110,17 @@
                 <!-- <data android:mimeType="vnd.android.cursor.item/com.sample.profile" /> -->
             </intent-filter>
         </activity>
-
-        <activity android:name=".AuthenticatorActivity"
-            android:label="Authenticator"
-             />
+        <activity
+            android:name=".AuthenticatorActivity"
+            android:label="Authenticator" />
         <service
             android:name=".MyService"
             android:enabled="true"
             android:exported="true" />
+        <activity
+            android:name=".MainActivity"
+            android:theme="@style/Theme.AppCompat">
 
-        <activity android:name="MainActivity"
-
-            android:theme="@style/Theme.AppCompat"
-            >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-<!--            <intent-filter>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="*/*" />-->
-                <!--                <data android:mimeType="vnd.android.cursor.item/com.sample.profile" />-->
-<!--                <action android:name="android.intent.action.PICK" />
-            </intent-filter>-->
         </activity>
     </application>
 

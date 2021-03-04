@@ -1,12 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scrollView"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.wallets.WalletsFragment">
-
-
+    tools:context=".ui.messages.MessagesFragment">
 
     <include layout="@layout/content_inbox" />
 
@@ -16,6 +20,8 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@android:drawable/ic_dialog_email" />
+        app:srcCompat="@android:drawable/ic_dialog_email"
+        android:contentDescription="@string/todo" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
+</ScrollView>

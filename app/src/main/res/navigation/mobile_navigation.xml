@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="uk.co.xrpdevs.flarenetmessenger.ui.home.HomeFragment"
+        android:label="@string/title_home"
+        tools:layout="@layout/fragment_home" >
+        <action
+            android:id="@+id/action_navigation_home_to_navigation_contacts"
+            app:destination="@id/navigation_contacts" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_contacts"
+        android:name="uk.co.xrpdevs.flarenetmessenger.ui.contacts.ContactsFragment"
+        android:label="@string/title_dashboard"
+        tools:layout="@layout/fragment_contacts" >
+        <action
+            android:id="@+id/action_navigation_contacts_to_navigation_wallets"
+            app:destination="@id/navigation_wallets" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_wallets"
+        android:name="uk.co.xrpdevs.flarenetmessenger.ui.wallets.WalletsFragment"
+        android:label="Wallets"
+        tools:layout="@layout/fragment_wallets" >
+        <action
+            android:id="@+id/action_navigation_wallets_to_navigation_messages"
+            app:destination="@id/navigation_messages" />
+    </fragment>
+    <fragment
+        android:id="@+id/navigation_messages"
+        android:name="uk.co.xrpdevs.flarenetmessenger.ui.messages.MessagesFragment"
+        android:label="Messages"
+        tools:layout="@layout/fragment_messages" >
+        <action
+            android:id="@+id/action_navigation_messages_to_navigation_home"
+            app:destination="@id/navigation_home" />
+    </fragment>
+</navigation>

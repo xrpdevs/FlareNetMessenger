@@ -1,8 +1,13 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
 
+import android.app.Activity;
+import android.app.FragmentManager;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.graphics.Bitmap;
@@ -10,9 +15,11 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.SyncStateContract;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -21,11 +28,34 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
-public class ViewContact extends AppCompatActivity {
+import org.json.JSONException;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.tx.Transfer;
+
+import java.math.BigDecimal;
+import java.util.HashMap;
+
+import jnr.ffi.Struct;
+
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
+public class ViewContact extends AppCompatActivity implements PinCodeDialogFragment.OnResultListener {
     TextView contactName;
     TextView xrpAddress;
     Button deleteContact;
     Long rawContactID = 0L;
+    SharedPreferences prefs;
+    SharedPreferences.Editor pEdit;
+    HashMap<String, String> deets;
+    PleaseWaitDialog dialogActivity;
+    TextView balancesInfo;
+    Activity mThis = this;
+    String to, from, theirWallet, myWallet, cNameText;
+    BigDecimal amount;
+    EditText XRPAmount;
+    PinCodeDialogFragment pinDialog;
+    private String pinCode;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,10 +64,28 @@ public class ViewContact extends AppCompatActivity {
         Intent myIntent = getIntent();
         Bundle bundle = myIntent.getExtras();
         String action = myIntent.getAction();
+    //    final String myWallet, theirWallet, cNameText;
+        String info;
+        BigDecimal myBalance, theirBalance;
 
-        contactName   = findViewById(R.id.textView7);
-        xrpAddress    = findViewById(R.id.textView8);
+
+        //contactName   = findViewById(R.id.viewContactName);
+        xrpAddress    = findViewById(R.id.viewContactWalletAddress);
         deleteContact = findViewById(R.id.button7);
+        balancesInfo = findViewById(R.id.balancesInfo);
+        XRPAmount = findViewById(R.id.editTextNumberDecimal);
+        Button sendFunds = findViewById(R.id.viewContactSendFunds);
+        prefs = this.getSharedPreferences("fnm", 0);
+        pEdit = prefs.edit();
+        pinCode = prefs.getString("pinCode", "abcd");
+
+        try {
+            deets = Utils.getPkey(this, prefs.getInt("currentWallet", 0));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
 
         deleteContact.setOnClickListener((View.OnClickListener) v -> {
             Log.d("TEST", "Deleted: "+ContactsManager.deleteRawContactID(this, rawContactID));
@@ -71,11 +119,33 @@ public class ViewContact extends AppCompatActivity {
             Log.d("TEST", "RAWCONTACTID "+rawContactID);
 
             String XRPAddress = contactsCursor.getString(addressColumnIndex);
-            String cNameText = contactsCursor.getString(cNameIndex);
+            cNameText = contactsCursor.getString(cNameIndex);
 
             Log.d("TEST", "XRP Address: " + XRPAddress + " Cname: " + cNameText);
             xrpAddress.setText(XRPAddress);
-            contactName.setText(cNameText);
+
+            myWallet = deets.get("walletAddress");
+            myBalance = Utils.getMyBalance(myWallet).first;
+            theirWallet = XRPAddress;
+            theirBalance = Utils.getMyBalance(theirWallet).first;
+
+            info = "Your balance: "+String.valueOf(myBalance)+"\n"+
+                    "Their balance: "+String.valueOf(theirBalance)+"\n";
+
+            balancesInfo.setText(info);
+
+            sendFunds.setOnClickListener((View.OnClickListener) v -> {
+
+                FragmentManager manager = getFragmentManager();
+                pinDialog = new PinCodeDialogFragment().newInstance(this, "Enter PIN:");
+                pinDialog.show(manager, "1");
+
+
+
+            });
+
+            // contactName.setText(cNameText);
+            this.getSupportActionBar().setTitle(cNameText);
             QRCodeWriter writer = new QRCodeWriter();
             if (XRPAddress != null) {
                 try {
@@ -96,5 +166,81 @@ public class ViewContact extends AppCompatActivity {
             }
         }
 
+    }
+
+
+
+    @Override
+    public void onResult(String pinCode) {
+        myLog("PIN", "Onresult called - PINCODE = "+pinCode);
+        if(pinCode.equals(prefs.getString("pinCode", "abcd"))) {
+            pinDialog.dismiss();
+
+            to = theirWallet;
+            from = myWallet;
+            amount = BigDecimal.valueOf(Double.parseDouble(XRPAmount.getText().toString()));
+            ViewContact.sendFunds bob = new sendFunds();
+            bob.cNameText = cNameText;
+            bob.start();
+        } else {
+            showDialog("Incorrect PIN", true);
+        }
+    }
+
+    class sendFunds extends Thread  {
+
+        String cNameText;
+        Boolean isReplaced = false;
+
+        @Override
+        public void run() {
+            //String myWallet, String theirWallet, BigDecimal XRPAmount) {
+            showDialog("Sending "+amount+" FXRP to \n"+cNameText+"\nPlease wait for transaction completion.", false);
+            try {
+                TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
+                        amount, org.web3j.utils.Convert.Unit.ETHER).send();
+            } catch (Exception e) {
+                e.printStackTrace();
+                dialogActivity.dismiss();
+                isReplaced = true;
+                showDialog("Transaction to "+cNameText+" failed.\n"+e.getMessage(), true);
+            }
+
+            String info2 = "Your balance: " + String.valueOf(Utils.getMyBalance(from).first) + "\n" +
+                    "Their balance: " + String.valueOf(Utils.getMyBalance(to).first) + "\n";
+
+
+
+
+
+            runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    // TODO Auto-generated method stub
+                    // mContactList.setAdapter(cursorAdapter);
+                    if(!isReplaced){
+                        dialogActivity.dismiss();
+
+                    }
+                    balancesInfo.setText(info2);
+
+                    Log.d("TEST", "Running UI thread");
+
+
+                }
+            });
+
+        }
+    }
+
+    private boolean showDialog(String prompt, Boolean cancelable) {
+        FragmentManager manager = getFragmentManager();
+
+        dialogActivity = new PleaseWaitDialog();
+        dialogActivity.prompt = prompt;
+        dialogActivity.cancelable = cancelable;
+        dialogActivity.show(manager, "DialogActivity");
+        return true;
     }
 }

@@ -32,7 +32,7 @@ public class ContactsManager {
 
     public static String addContact(Context context, MyContact contact) {
         ContentResolver resolver = context.getContentResolver();
-        resolver.delete(RawContacts.CONTENT_URI, RawContacts.ACCOUNT_TYPE + " = ?", new String[] { AccountGeneral.ACCOUNT_TYPE });
+      //  resolver.delete(RawContacts.CONTENT_URI, RawContacts.ACCOUNT_TYPE + " = ?", new String[] { AccountGeneral.ACCOUNT_TYPE });
 
         String retval = "0";
 

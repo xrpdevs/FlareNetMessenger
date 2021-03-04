@@ -1,17 +1,15 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
 
+import android.Manifest;
 import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
-import android.app.Activity;
-import android.app.FragmentManager;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -19,7 +17,6 @@ import android.os.StrictMode;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.util.Pair;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -30,41 +27,29 @@ import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.view.ContextThemeWrapper;
 
 import org.json.JSONException;
-import org.web3j.abi.datatypes.generated.Bytes32;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.DefaultBlockParameterName;
-import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.methods.response.EthBlockNumber;
-import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tuples.generated.Tuple2;
-import org.web3j.tx.Transfer;
 import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.gas.DefaultGasProvider;
 
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import java9.util.concurrent.CompletableFuture;
 
 public class MainActivity extends AppCompatActivity {
     // NOTE: The credentials here are from the testnet.. this is also VERY hacky at the moment!
@@ -97,10 +82,11 @@ public class MainActivity extends AppCompatActivity {
     HashMap<String, String> deets;
     Context mC = this;
 
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.game_menu, menu);
+        inflater.inflate(R.menu.fragment_menu_home, menu);
         return true;
     }
     @Override
@@ -132,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.select:
+            /*case R.id.select:
                // TypedValue outValue = new TypedValue();
                // getBaseContext().getTheme().resolveAttribute(R.style.popupOverlay, outValue, true);
                // int theme = outValue.resourceId;
@@ -192,10 +178,22 @@ public class MainActivity extends AppCompatActivity {
 
             //    showHelp();
                 return true;
+            case R.id.theNav:
+                Intent intent2 = new Intent(getApplicationContext(), FirstRun.class);
+                //intent.setType("vnd.android.cursor.item/com.sample.profile");  //should filter only contacts with phone numbers
+                //intent.putExtra("lType", 2000);
+                startActivity(intent2);
+            case R.id.ma2:
+                Intent intent3 = new Intent(getApplicationContext(), MainActivity2.class);
+                //intent.setType("vnd.android.cursor.item/com.sample.profile");  //should filter only contacts with phone numbers
+                //intent.putExtra("lType", 2000);
+                startActivity(intent3);
+*/
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
+
 
 
     @Override
@@ -204,6 +202,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.LAX);
+
         prefs = this.getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
       //  EasyLock.checkPassword(this);
@@ -402,6 +401,15 @@ public class MainActivity extends AppCompatActivity {
 
         super.onResume();
 
+        if ((checkSelfPermission(Manifest.permission.WRITE_CONTACTS) != PackageManager.PERMISSION_GRANTED) || (checkSelfPermission(Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) || (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) || (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED))  {
+            Log.d("TEST", "Requesting permissions...");
+            requestPermissions(new String[]{
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.WRITE_CONTACTS}, 50);
+        }
+
         if(prefs.getInt("walletCount", 0) > 0) {
             try {
                 deets = Utils.getPkey(this, prefs.getInt("currentWallet", 0));
@@ -415,6 +423,9 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        } else {
+            Intent i = new Intent(this, FirstRun.class);
+            startActivity(i);
         }
     }
 
@@ -435,8 +446,10 @@ public class MainActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
+            //Pair<BigDecimal, String> gmb = Utils.getMyBalance(deets.get("walletAddress"));
+
             myTvString = "Current Coston\nBlock Number:\n" + bob.getBlockNumber().toString() + "  Wallets: " + String.valueOf(prefs.getInt("walletCount", 0) + "  Current: " + String.valueOf(prefs.getInt("currentWallet", 0)));
-            myBalanceS = "FXRP Balance of Flare Testnet Address " + deets.get("walletAddress") + " = " + getMyBalance(deets.get("walletAddress")).toString();
+            myBalanceS = "FXRP Balance of Flare Testnet Address " + deets.get("walletAddress") + " = " + Utils.getMyBalance(deets.get("walletAddress")).first.toString();
 
 
 
@@ -489,29 +502,7 @@ public class MainActivity extends AppCompatActivity {
        addresses.setAdapter(dataAdapter);
     }
 
-    public BigDecimal getMyBalance(String walletAddress) {
 
-        EthGetBalance ethGetBalance = null;
-        try {
-            ethGetBalance = FlareConnection
-                    .ethGetBalance(walletAddress, DefaultBlockParameterName.LATEST)
-                    .sendAsync()
-                    .get(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        }
-
-        BigDecimal wei = new BigDecimal(ethGetBalance.getBalance());
-
-        BigDecimal FXRP;
-        FXRP = Convert.fromWei(wei, Convert.Unit.ETHER);
-
-        return FXRP;
-    }
     public EthBlockNumber getBlockNumber() {
         EthBlockNumber result = new EthBlockNumber();
 

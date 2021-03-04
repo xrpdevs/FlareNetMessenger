@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/export_wallets"
+        android:title="@string/export_wallets" />
+    <item android:id="@+id/import_wallets"
+        android:title="@string/import_wallets" />
+    <item android:id="@+id/show_balances"
+        android:title="@string/show_balances" />
+</menu>
