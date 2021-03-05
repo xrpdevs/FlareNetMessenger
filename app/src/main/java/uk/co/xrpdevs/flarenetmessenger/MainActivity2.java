@@ -1,6 +1,7 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -24,6 +25,8 @@ import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 public class MainActivity2 extends AppCompatActivity {
     Fragment currentFragment;
     FragmentTransaction ft;
+    SharedPreferences prefs;
+    SharedPreferences.Editor pEdit;
 
     public void setActionBarTitle(String title) {
         this.getActionBar().setTitle("title");
@@ -44,7 +47,22 @@ public class MainActivity2 extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(navView, navController);
+        prefs = this.getSharedPreferences("fnm", 0);
+        pEdit = prefs.edit();
+        //  EasyLock.checkPassword(this);
+        if(!prefs.contains("walletCount")){
+            pEdit.putInt("walletCount", 0);
+            pEdit.putInt("currentWallet", 0);
+            pEdit.commit();
+        }
+
+        if(!prefs.contains("pinCode") || prefs.getInt("walletCount", 0) == 0){
+            Intent firstRun = new Intent(this, FirstRun.class);
+            startActivity(firstRun);
+        }
+
         Intent incoming = getIntent();
+
         if (incoming.hasExtra("selectFragment")) {
 
             if (incoming.getStringExtra("selectFragment").equals("contacts")) {
