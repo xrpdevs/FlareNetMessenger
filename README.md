@@ -1,5 +1,9 @@
 # Android-FLARE-Coston-Messenger
 
+05/03/2021
+I have noticed that people are cloning this project. If you like what you see and would like me to continue to develop this as
+an open source project, please leave me some feedback, or start contributing.
+
 [![Join the chat at https://gitter.im/xrpdevs/FlareNetMessenger](https://badges.gitter.im/xrpdevs/FlareNetMessenger.svg)](https://gitter.im/xrpdevs/FlareNetMessenger?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Our first attempt at building an app using smart contracts on the flare testnet. Using Android as host OS.
