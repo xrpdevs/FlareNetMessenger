@@ -11,6 +11,8 @@ import android.widget.EditText;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
+import net.lingala.zip4j.exception.ZipException;
+
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 /**
@@ -23,7 +25,7 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
     String prompt;
 
     public interface OnResultListener {
-        void onResult(String pinCode);
+        void onResult(String pinCode) throws ZipException;
     }
 
     /**
@@ -96,7 +98,11 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
                         myLog("PIN", "ifv: "+isFieldValid(pinCode));
                         if (onResultListener != null) {
                             myLog("PIN", "oRL: "+(onResultListener != null));
-                            onResultListener.onResult(pinCode);
+                            try {
+                                onResultListener.onResult(pinCode);
+                            } catch (ZipException e) {
+                                e.printStackTrace();
+                            }
                             //dialog.dismiss();
                         }
                     } else {

@@ -1,9 +1,9 @@
 package uk.co.xrpdevs.flarenetmessenger.ui.wallets;
 
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -20,25 +20,27 @@ import androidx.fragment.app.Fragment;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import net.lingala.zip4j.exception.ZipException;
+
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
-import uk.co.xrpdevs.flarenetmessenger.ContactList;
-import uk.co.xrpdevs.flarenetmessenger.FirstRun;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.PKeyScanner;
+import uk.co.xrpdevs.flarenetmessenger.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Smstest3;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
+import uk.co.xrpdevs.flarenetmessenger.Zipper;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
-public class WalletsFragment extends Fragment {
+public class WalletsFragment extends Fragment implements PinCodeDialogFragment.OnResultListener {
 
-    public SimpleAdapter InboxAdapter;
+    public SimpleAdapter WalletsAdaptor;
     public SimpleAdapter simpleAdapter;
     Smstest3 contract;
     BigInteger GAS_LIMIT = BigInteger.valueOf(670025L);
@@ -50,6 +52,8 @@ public class WalletsFragment extends Fragment {
     private NotificationsViewModel notificationsViewModel;
     WalletsFragment mThis = this;
     ListView lv;
+    PinCodeDialogFragment pinDialog;
+    private String pinCode;
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
@@ -63,19 +67,8 @@ public class WalletsFragment extends Fragment {
         setHasOptionsMenu(true);
         View root = inflater.inflate(R.layout.fragment_wallets, container, false);
         lv = root.findViewById(R.id.wallets_list);
-       // myLog("LV", lv.getParent().getParent().getParent().getParent().getClass().getName());
-        lv.setAdapter(InboxAdapter);
-   /*     notificationsViewModel =
-                new ViewModelProvider(this).get(NotificationsViewModel.class);
+        lv.setAdapter(WalletsAdaptor);
 
-        final TextView textView = root.findViewById(R.id.text_notifications);
-        notificationsViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String s) {
-                textView.setText(s);
-            }
-        });
-*/
         prefs = this.getActivity().getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
       //  super.onCreate(savedInstanceState);
@@ -84,7 +77,7 @@ public class WalletsFragment extends Fragment {
         if(prefs.getInt("walletCount", 0) > 0 ) {
             myLog("FRAG", "Wallet count is non zero");
 
-            readTheFile2();
+            getWalletList();
         }
 
        FloatingActionButton fab = root.findViewById(R.id.fab);
@@ -93,11 +86,6 @@ public class WalletsFragment extends Fragment {
             public void onClick(View view) {
                 Intent intent = new Intent(mThis.getActivity(), PKeyScanner.class);
                 startActivity(intent);
-               // try {
-               //     contract.clearInbox().send();
-              //  } catch (Exception e) {
-             //       e.printStackTrace();
-              //  }
             }
         });
 
@@ -116,22 +104,13 @@ myLog("Lines", lines.toString());
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
                         HashMap<String, String> item = (HashMap<String, String>) getItem(position);
-                //myLog("DNSJNI", "item: "+item.toString());
-               // int unread = inboxSize();
-                // int unread = 0;
                 int unread = lines.size();
                 myLog("TEST", "Number of contaxts: "+unread);
-               // if(unread>0) {
-             //       cNtext += " (" + String.valueOf(unread) + ")";
-               //     cName.setText(cNtext);
-               //     view.invalidate();
-             //   }
+
                 return view;
             }
         };
 
-     //   ListView lv = (ListView) this.getActivity().findViewById(R.id.inbox_list);
-       // lv.setAdapter(InboxAdapter);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
                 Intent i = new Intent(mThis.getActivity(),
@@ -141,11 +120,7 @@ myLog("Lines", lines.toString());
                 myLog("smscseeker", "name:" + theItem.toString());
                 pEdit.putInt("currentWallet", (position +1 ));
                 pEdit.commit();
-                //dumper(theItem);
-                //   if (session.loggedin) {
-                //                  i.putExtra("sid", 0);
-                //    }
-//                i.putExtra("name", pooo.toString());
+
                 startActivity(i);
 
             }
@@ -156,7 +131,7 @@ myLog("Lines", lines.toString());
     }
 
 
-    public void readTheFile2() {
+    public void getWalletList() {
         feedList.clear();
 
         ArrayList<HashMap<String, String>> maplist = new ArrayList<HashMap<String, String>>();
@@ -199,8 +174,8 @@ myLog("Lines", lines.toString());
                 // TODO Auto-generated method stub
                 // mContactList.setAdapter(cursorAdapter);
 
-                InboxAdapter = fillListView(feedList);
-                lv.setAdapter(InboxAdapter);
+                WalletsAdaptor = fillListView(feedList);
+                lv.setAdapter(WalletsAdaptor);
                 myLog("TEST", "Running UI thread");
 
 
@@ -209,7 +184,7 @@ myLog("Lines", lines.toString());
         });
         myLog("feedList", feedList.toString());
 //        Collections.reverse(feedList);
-        InboxAdapter = fillListView(feedList);
+        WalletsAdaptor = fillListView(feedList);
     }
 
     public String getDate(Long ts) {
@@ -223,6 +198,9 @@ myLog("Lines", lines.toString());
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
+            case R.id.export_wallets:
+                exportWallets();
+                return true;
 
      /*       case R.id.theNav:
                 Intent intent2 = new Intent(mThis.getContext(), FirstRun.class);
@@ -237,6 +215,23 @@ myLog("Lines", lines.toString());
 */
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public void exportWallets(){
+        FragmentManager manager = mThis.getActivity().getFragmentManager();
+        pinDialog = new PinCodeDialogFragment().newInstance(this, "Enter PIN:");
+        pinDialog.show(manager, "1");
+    }
+
+    @Override
+    public void onResult(String pinCode) throws ZipException {
+        if(pinCode.equals(prefs.getString("pinCode", "asas"))){
+            pinDialog.dismiss();
+            Zipper zipArchive = new Zipper(prefs.getString("pinCode", "0000"), mThis.getContext());
+            zipArchive.pack("/sdcard/Downloads/wallets.zip");
+
+            // TODO: Save as a passworded ZIP file in default location on phone.
         }
     }
 }
