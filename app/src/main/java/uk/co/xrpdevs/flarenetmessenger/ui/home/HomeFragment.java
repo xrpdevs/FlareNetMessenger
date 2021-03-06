@@ -57,8 +57,7 @@ public class HomeFragment extends Fragment {
         });
 
 
-        WebView webview = (WebView) root.findViewById(R.id.home_web_view);
-       webview.getSettings().setJavaScriptEnabled(true);
+
         //webview.loadUrl("https://xrpdevs.co.uk/");
 
         return root;

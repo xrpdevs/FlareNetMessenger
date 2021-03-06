@@ -7,6 +7,14 @@ import android.util.Pair;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.spongycastle.jce.provider.BouncyCastleProvider;
+import org.spongycastle.openpgp.PGPException;
+import org.spongycastle.openpgp.PGPObjectFactory;
+import org.spongycastle.openpgp.PGPPublicKey;
+import org.spongycastle.openpgp.PGPPublicKeyRing;
+import org.spongycastle.openpgp.PGPUtil;
+import org.spongycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
+import org.spongycastle.openpgp.operator.jcajce.JcaPGPKeyConverter;
 import org.web3j.abi.datatypes.Int;
 import org.web3j.crypto.Credentials;
 import org.web3j.exceptions.MessageDecodingException;
@@ -15,7 +23,12 @@ import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.http.HttpService;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
+import java.security.Provider;
+import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
@@ -23,6 +36,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class Utils {
+
+    public static PublicKey publicKeyParse(byte[] publicKeyBytes) throws IOException, PGPException {
+        InputStream pgpIn = PGPUtil.getDecoderStream(new ByteArrayInputStream(publicKeyBytes));
+        PGPObjectFactory pgpFact = new PGPObjectFactory(pgpIn, new JcaKeyFingerprintCalculator());
+        PGPPublicKeyRing pgpSecRing = (PGPPublicKeyRing) pgpFact.nextObject();
+        PGPPublicKey publicKey = pgpSecRing.getPublicKey();
+        JcaPGPKeyConverter converter = new JcaPGPKeyConverter();
+        Provider bcProvider = new BouncyCastleProvider();
+        converter.setProvider(bcProvider);
+        return converter.getPublicKey(publicKey);
+    }
 
     public static HashMap<String, String> getPkey(Context mC, int wN) throws JSONException {
         SharedPreferences prefs = mC.getSharedPreferences("fnm", 0);

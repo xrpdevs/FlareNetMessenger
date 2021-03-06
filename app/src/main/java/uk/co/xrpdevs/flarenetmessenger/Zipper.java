@@ -65,12 +65,12 @@ public class Zipper
                 contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
                 contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "application/zip");
                 contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
-                Uri imageUri = resolver.insert(MediaStore.Downloads.getContentUri("external"), contentValues);
-                fos = resolver.openOutputStream(Objects.requireNonNull(imageUri));
+                Uri zipUri = resolver.insert(MediaStore.Downloads.getContentUri("external"), contentValues);
+                fos = resolver.openOutputStream(Objects.requireNonNull(zipUri));
             } else {
                 String imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString();
-                File image = new File(imagesDir, fileName);
-                fos = new FileOutputStream(image);
+                File zipfile = new File(imagesDir, fileName);
+                fos = new FileOutputStream(zipfile);
             }
 
 
@@ -84,12 +84,8 @@ public class Zipper
                 wallets.put(prefs.getString("wallet"+String.valueOf(i), ""));
             }
 
-          //  byte[] walletBytes = wallets.toString().getBytes();
-
-            myLog("Zipper", "wallets: "+wallets.toString());
-
             ZipOutputStream zout = new ZipOutputStream(fos, new ZipModel() );
-            String[] filenames = new String[]{"1.txt"};
+            String[] filenames = new String[]{"wallets.json"};
             for (int i = 0; i < filenames.length; i++) {
                 zipParameters.setFileNameInZip(filenames[0]);
                 zout.putNextEntry(null, zipParameters);
@@ -99,7 +95,6 @@ public class Zipper
             zout.finish();
             zout.close();
 
-            myLog("zipBytes", "bytes: "+new String(wallets.toString().getBytes(), StandardCharsets.UTF_8));
 
             Objects.requireNonNull(fos).close();
         }catch (IOException e) {

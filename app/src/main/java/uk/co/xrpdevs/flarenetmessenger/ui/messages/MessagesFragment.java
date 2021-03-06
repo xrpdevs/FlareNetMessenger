@@ -17,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import org.json.JSONException;
+import org.spongycastle.util.encoders.Base64;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.tuples.generated.Tuple2;
@@ -101,13 +102,35 @@ public class MessagesFragment extends Fragment {
         return root;
     }
 
+    public Boolean IsBase64Encoded(String str)
+    {
+        try
+        {
+            // If no exception is caught, then it is possibly a base64 encoded string
+            byte[] data = Base64.decode(str);
+            // The part that checks if the string was properly padded to the
+            // correct length was borrowed from d@anish's solution
+            return (str.replace(" ","").length() % 4 == 0);
+        }
+        catch (Exception e)
+        {
+            // If exception is caught, then it is not a base64 encoded string
+            return false;
+        }
+    }
     public SimpleAdapter fillListView(final ArrayList lines) {
+
+        /* todo: hashmap of wallet addresses vs contact names in order to prevent repeated cursor lookups.
+                 if hashmap empty, check cursor, if not, check cursor and if match add to hashmap
+         */
+
         //ArrayAdapter<String> adapter;
         simpleAdapter = new SimpleAdapter(mThis.getContext(), lines, R.layout.listitem_inbox, new String[]{"cnam", "body", "type", "date"}, new int[]{R.id.inboxName, R.id.inboxAddress, R.id.inboxType, R.id.inboxLastact}){
             @Override
             public View getView (int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
                 TextView cName = (TextView) view.findViewById(R.id.inboxName);
+                TextView inboxAddress = (TextView) view.findViewById(R.id.inboxAddress);
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
                         HashMap<String, String> item = (HashMap<String, String>) getItem(position);
@@ -115,6 +138,10 @@ public class MessagesFragment extends Fragment {
                 int unread = inboxSize();
                 // int unread = 0;
                 if(unread>0) {
+                    String bob = inboxAddress.getText().toString();
+                    if(IsBase64Encoded(bob)){
+                        inboxAddress.setText("* Encrypted *");
+                    }
                     cNtext += " (" + String.valueOf(unread) + ")";
                     cName.setText(cNtext);
                     view.invalidate();

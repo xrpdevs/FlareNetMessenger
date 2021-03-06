@@ -6,7 +6,6 @@ import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -17,13 +16,10 @@ import android.os.StrictMode;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.util.Pair;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -31,10 +27,27 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import org.bouncycastle.crypto.params.ECPublicKeyParameters;
+import org.bouncycastle.crypto.util.PublicKeyFactory;
+import org.bouncycastle.crypto.util.SubjectPublicKeyInfoFactory;
+import org.bouncycastle.jcajce.provider.asymmetric.util.EC5Util;
+import org.bouncycastle.jcajce.provider.asymmetric.x509.KeyFactory;
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.ECPointUtil;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
+import org.bouncycastle.jce.spec.ECParameterSpec;
+import org.bouncycastle.jce.spec.ECPrivateKeySpec;
+import org.bouncycastle.jce.spec.ECPublicKeySpec;
+import org.bouncycastle.math.ec.ECCurve;
+import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.encoders.Base64;
 import org.json.JSONException;
+import org.spongycastle.jce.interfaces.ECPublicKey;
+import org.spongycastle.openpgp.PGPException;
+import org.spongycastle.util.encoders.Hex;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.EthBlockNumber;
@@ -43,13 +56,37 @@ import org.web3j.tuples.generated.Tuple2;
 import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.gas.DefaultGasProvider;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+
+import java.security.AlgorithmParameters;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.Provider;
+import java.security.PublicKey;
+import java.security.Security;
+import java.security.spec.ECGenParameterSpec;
+import java.security.spec.ECPoint;
+import java.security.spec.EllipticCurve;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.InvalidParameterSpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 public class MainActivity extends AppCompatActivity {
     // NOTE: The credentials here are from the testnet.. this is also VERY hacky at the moment!
@@ -81,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
     SharedPreferences.Editor pEdit;
     HashMap<String, String> deets;
     Context mC = this;
+    Provider secP;
 
 
     @Override
@@ -199,8 +237,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Security.addProvider(new BouncyCastleProvider());
+        Security.addProvider(new org.spongycastle.jce.provider.BouncyCastleProvider());
+   //     Security.addProvider(new BouncyCastleProvider)
         setContentView(R.layout.activity_main);
-
+        secP = new org.spongycastle.jce.provider.BouncyCastleProvider();
+        //     Security.addProvider(new org.spongycastle.jce.provider.BouncyCastleProvider());
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.LAX);
 
         prefs = this.getSharedPreferences("fnm", 0);
@@ -323,6 +365,31 @@ public class MainActivity extends AppCompatActivity {
             //   FlareConnection.
         }
     }
+    public static byte[] toByte(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i+1), 16));
+        }
+        return data;
+    }
+
+    public ECPublicKey rawToEncodedECPublicKey(String curveName, byte[] rawBytes) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidParameterSpecException, NoSuchProviderException {
+        java.security.KeyFactory kf = java.security.KeyFactory.getInstance("EC", secP);
+//        KeyFactory kf = KeyFactory.getInstance("EC");
+        byte[] x = Arrays.copyOfRange(rawBytes, 0, rawBytes.length/2);
+        byte[] y = Arrays.copyOfRange(rawBytes, rawBytes.length/2, rawBytes.length);
+       // ECPoint w = new ECPoint(new BigInteger(1,x), new BigInteger(1,y));
+        ECPoint w = new ECPoint(new BigInteger(1,x), new BigInteger(1,y));
+        return (ECPublicKey) kf.generatePublic(new java.security.spec.ECPublicKeySpec(w, ecParameterSpecForCurve(curveName)));
+    }
+
+    public java.security.spec.ECParameterSpec ecParameterSpecForCurve(String curveName) throws NoSuchAlgorithmException, InvalidParameterSpecException, NoSuchProviderException {
+        AlgorithmParameters params = AlgorithmParameters.getInstance("EC", secP);
+        params.init(new ECGenParameterSpec(curveName));
+        return params.getParameterSpec(java.security.spec.ECParameterSpec.class);
+    }
 
     class sendMessage extends Thread {
 
@@ -331,25 +398,60 @@ public class MainActivity extends AppCompatActivity {
             Log.d("TEST", "Running SendMSG thread");
             String rawString = message.getText().toString();
             byte[] bytes = rawString.getBytes(StandardCharsets.UTF_8);
+            String wpk = deets.get("walletPubKey");
+            wpk = wpk.replace("0x", "");
+            PublicKey x509key;
+            myLog("walletPubKey", wpk);
+            //wpk="6RLj4k7CmA7RLsphpi/LwyXNaSsc1MbYmCa3iPcIzLk8jgaPCq3EqeyhJcmpOzzeHjnXnwbK6J9yF8RozFiuvQ==";
+            byte[] wpkBytes = toByte(wpk);
+           // wpk=Base64.decode()
 
-            String utf8EncodedString = new String(bytes, StandardCharsets.UTF_8);
-            try {
-                receipt = contract.sendMessage(addresses.getSelectedItem().toString(), utf8EncodedString).send();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            String b="";byte[] ciphertext;
             String text;
-            if(receipt.isStatusOK()){
+
+            try {
+                x509key = rawToEncodedECPublicKey("secp256k1", wpkBytes); //.decode(wpk));
+                myLog("KeyInfo:", x509key.getFormat());
+
+                Cipher iesCipher = Cipher.getInstance("ECIES");
+                Cipher iesDecipher = Cipher.getInstance("ECIES");
+                iesCipher.init(Cipher.ENCRYPT_MODE, x509key);
+
+                String message = rawString;
+
+                ciphertext = iesCipher.doFinal(message.getBytes());
+                //b = new String(ciphertext, StandardCharsets.UTF_8);
+                String hexStr = Hex.toHexString(ciphertext);
+                String hexStr2 = hexStr.substring(2);
+                byte[] hexByt = toByte(hexStr2);
+                b = new String(Base64.toBase64String(ciphertext).getBytes(), StandardCharsets.UTF_8);
+                myLog("Ciphered: ",
+                        "Hex: "+hexStr+"\nDrp: "+Hex.toHexString(hexByt)+"\n"+
+                        "B64: "+Base64.toBase64String(ciphertext)+"\n"+
+                        "Len: "+b.length());
+                b = new String(Base64.toBase64String(ciphertext).getBytes(), StandardCharsets.UTF_8);
+//                receipt = contract.sendMessage(addresses.getSelectedItem().toString(), utf8EncodedString).send();
+                receipt = contract.sendMessage(addresses.getSelectedItem().toString(), b).send();
+                text = "Message sent!\n\nGas used:"+receipt.getGasUsed().toString();
+            } catch (Exception e) {
+
+                text = "FAILED\n\nReason:\n"+e.getMessage()+"\n\n"+receipt.getGasUsed().toString();
+//                e.printStackTrace();
+
+            }
+
+     /*       if(receipt.isStatusOK()){
                 text = "Message sent!\n"+receipt.getGasUsed().toString();
             } else {
                 text = "Message sending failed";
             }
-
+*/
+            String finalText = text;
             runOnUiThread(new Runnable() {
 
                 @Override
                 public void run(){
-                    showToast(text.toString());
+                    showToast(finalText.toString());
                     try {
                         new update().start();
                     } catch (Exception e) {
