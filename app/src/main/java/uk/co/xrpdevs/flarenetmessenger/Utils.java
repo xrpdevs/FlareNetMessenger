@@ -83,13 +83,6 @@ public class Utils {
         return data;
     }
 
-/*    public static PrivateKey gPK(byte[] a) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        KeyFactory keyFactory = KeyFactory.getInstance("EC", secP);
-
-        PrivateKey X509_priv = keyFactory.generatePrivate(new java.security.spec.ECPrivateKeySpec());
-        return X509_priv;
-    }
-*/
     public static PrivateKey getPrivateKeyFromECBigIntAndCurve(BigInteger s, String curveName) {
         Security.addProvider(new BouncyCastleProvider());
         Security.addProvider(new org.spongycastle.jce.provider.BouncyCastleProvider());

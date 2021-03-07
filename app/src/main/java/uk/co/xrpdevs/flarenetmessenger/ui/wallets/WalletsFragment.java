@@ -72,7 +72,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
         lv.setAdapter(WalletsAdaptor);
 
         prefs = this.getActivity().getSharedPreferences("fnm", 0);
-   //     pEdit = prefs.edit();
+        pEdit = prefs.edit();
       //  super.onCreate(savedInstanceState);
 
 

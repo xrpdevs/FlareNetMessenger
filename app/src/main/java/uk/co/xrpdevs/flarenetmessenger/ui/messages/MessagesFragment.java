@@ -1,9 +1,13 @@
 package uk.co.xrpdevs.flarenetmessenger.ui.messages;
 
+import android.content.ContentUris;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.provider.ContactsContract;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -67,6 +71,7 @@ public class MessagesFragment extends Fragment {
     Credentials c;
     DefaultGasProvider cgp;
     int ibSize = 0;
+    HashMap<String, String> namesCache;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -141,8 +146,38 @@ public class MessagesFragment extends Fragment {
                 View view = super.getView(position, convertView, parent);
                 TextView cName = view.findViewById(R.id.inboxName);
                 TextView inboxAddress = view.findViewById(R.id.inboxAddress);
+                if(namesCache==null){
+                    namesCache = new HashMap<>();
+                }
+                String listName = cName.getText().toString();
+                if(namesCache.containsKey(listName)){
+                    cName.setText(namesCache.get(listName));
+                } else {
+//myLog("fuckoff", "listname: "+listName);
+                    String filter = ContactsContract.Data.DATA3 + "=?";
+                    Uri uri = ContactsContract.Data.CONTENT_URI;
+                    String[] projection    = new String[] {ContactsContract.Contacts.DISPLAY_NAME,
+                            ContactsContract.Data.DATA3,
+                            ContactsContract.Data.MIMETYPE};
+                    String[] filterParams = new String[]{listName};
+                    Cursor cursor = getContext().getContentResolver().query(uri, projection, filter, filterParams, null);
+                    if (cursor != null) {
+                        while (cursor.moveToNext()) {
+                            String name = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DISPLAY_NAME));
+                            String data3 = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA3));
+                            String mimetype = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
+                            myLog("temp", name + " " + data3 + " " + mimetype);
+                            cName.setText(name);
+                            namesCache.put(listName, name);
+                        }
+                        cursor.close();
+                    } else {
+                        myLog("temp", "Cursor = null");
+                    }
+                }
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
+
                         HashMap<String, String> item = (HashMap<String, String>) getItem(position);
                 //myLog("DNSJNI", "item: "+item.toString());
 
