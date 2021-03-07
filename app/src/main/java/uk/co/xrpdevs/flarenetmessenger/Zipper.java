@@ -33,8 +33,8 @@ import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 public class Zipper
 {
     Context context;
-    private String password;
-    private SharedPreferences prefs;
+    private final String password;
+    private final SharedPreferences prefs;
     private static final String EXTENSION = "zip";
 
     public Zipper(String password, Context context)
@@ -81,7 +81,7 @@ public class Zipper
             int wC = prefs.getInt("walletCount", 0);
 
             for(int i = 0 ; i< wC; i++){
-                wallets.put(prefs.getString("wallet"+String.valueOf(i), ""));
+                wallets.put(prefs.getString("wallet"+ i, ""));
             }
 
             ZipOutputStream zout = new ZipOutputStream(fos, new ZipModel() );

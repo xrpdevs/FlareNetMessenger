@@ -17,6 +17,7 @@ import org.spongycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
 import org.spongycastle.openpgp.operator.jcajce.JcaPGPKeyConverter;
 import org.web3j.abi.datatypes.Int;
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.ECKeyPair;
 import org.web3j.exceptions.MessageDecodingException;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
@@ -29,23 +30,80 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.security.Provider;
 import java.security.PublicKey;
+import java.security.Security;
+import java.security.spec.EncodedKeySpec;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.math.BigInteger;
+import java.security.KeyFactory;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.spec.InvalidKeySpecException;
+
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.spec.ECParameterSpec;
+import org.bouncycastle.jce.spec.ECPrivateKeySpec;
+
+import javax.crypto.Cipher;
 
 public class Utils {
 
-    public static PublicKey publicKeyParse(byte[] publicKeyBytes) throws IOException, PGPException {
-        InputStream pgpIn = PGPUtil.getDecoderStream(new ByteArrayInputStream(publicKeyBytes));
-        PGPObjectFactory pgpFact = new PGPObjectFactory(pgpIn, new JcaKeyFingerprintCalculator());
-        PGPPublicKeyRing pgpSecRing = (PGPPublicKeyRing) pgpFact.nextObject();
-        PGPPublicKey publicKey = pgpSecRing.getPublicKey();
-        JcaPGPKeyConverter converter = new JcaPGPKeyConverter();
-        Provider bcProvider = new BouncyCastleProvider();
-        converter.setProvider(bcProvider);
-        return converter.getPublicKey(publicKey);
+    static Provider secP = new org.bouncycastle.jce.provider.BouncyCastleProvider();
+
+    public static String deCipherText(Credentials c, byte[] ciphertext) {
+        Security.addProvider(new BouncyCastleProvider());
+        Security.addProvider(new org.spongycastle.jce.provider.BouncyCastleProvider());
+        try {
+            Cipher iesDecipher = Cipher.getInstance("ECIES");
+           ECKeyPair pair = c.getEcKeyPair();
+            PrivateKey X509_priv = Utils.getPrivateKeyFromECBigIntAndCurve(pair.getPrivateKey(), "secp256k1");
+            iesDecipher.init(Cipher.DECRYPT_MODE, X509_priv);
+            String deCipheredText = new String(iesDecipher.doFinal(ciphertext));
+            myLog("DECIPHERED TEXT", "" + deCipheredText);
+            return deCipheredText;
+        } catch (Exception e) {
+            myLog("DECRYPTION FAILED", e.getMessage());
+            e.printStackTrace();
+            return "DECRYPTION FAILED: "+e.getMessage();
+        }
+    }
+
+    public static byte[] toByte(String s) {
+        int len = s.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i+1), 16));
+        }
+        return data;
+    }
+
+/*    public static PrivateKey gPK(byte[] a) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        KeyFactory keyFactory = KeyFactory.getInstance("EC", secP);
+
+        PrivateKey X509_priv = keyFactory.generatePrivate(new java.security.spec.ECPrivateKeySpec());
+        return X509_priv;
+    }
+*/
+    public static PrivateKey getPrivateKeyFromECBigIntAndCurve(BigInteger s, String curveName) {
+        Security.addProvider(new BouncyCastleProvider());
+        Security.addProvider(new org.spongycastle.jce.provider.BouncyCastleProvider());
+
+        ECParameterSpec ecParameterSpec = ECNamedCurveTable.getParameterSpec(curveName);
+
+        ECPrivateKeySpec privateKeySpec = new ECPrivateKeySpec(s, ecParameterSpec);
+        try {
+            KeyFactory keyFactory = KeyFactory.getInstance("EC", secP);
+            return keyFactory.generatePrivate(privateKeySpec);
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public static HashMap<String, String> getPkey(Context mC, int wN) throws JSONException {
@@ -53,7 +111,7 @@ public class Utils {
         String pKey;
 
         int wC = prefs.getInt("walletCount", 0);
-        String wD = prefs.getString("wallet"+String.valueOf(wN), "");
+        String wD = prefs.getString("wallet"+ wN, "");
 
         HashMap<String, String> bob = jsonToMap(wD);
 

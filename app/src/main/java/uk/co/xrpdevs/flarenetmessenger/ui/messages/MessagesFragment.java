@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.StrictMode;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,7 +15,10 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.util.Arrays;
 import org.json.JSONException;
+import org.spongycastle.jce.interfaces.ECPublicKey;
 import org.spongycastle.util.encoders.Base64;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
@@ -25,6 +27,11 @@ import org.web3j.tuples.generated.Tuple3;
 import org.web3j.tx.gas.DefaultGasProvider;
 
 import java.math.BigInteger;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.interfaces.ECPrivateKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.InvalidParameterSpecException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -38,6 +45,7 @@ import uk.co.xrpdevs.flarenetmessenger.Smstest3;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
 
+import static uk.co.xrpdevs.flarenetmessenger.Utils.deCipherText;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 public class MessagesFragment extends Fragment {
@@ -58,6 +66,7 @@ public class MessagesFragment extends Fragment {
     View root;
     Credentials c;
     DefaultGasProvider cgp;
+    int ibSize = 0;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -79,6 +88,7 @@ public class MessagesFragment extends Fragment {
         c = Credentials.create(deets.get("walletPrvKey"));
         contract = Smstest3.load(contractAddress, FlareConnection, c, GAS_PRICE, GAS_LIMIT );
 
+        //ibSize = inboxSize();
         if(prefs.getInt("walletCount", 0) > 0 ) {
             myLog("FRAG", "Wallet count is non zero");
 
@@ -129,28 +139,28 @@ public class MessagesFragment extends Fragment {
             @Override
             public View getView (int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                TextView cName = (TextView) view.findViewById(R.id.inboxName);
-                TextView inboxAddress = (TextView) view.findViewById(R.id.inboxAddress);
+                TextView cName = view.findViewById(R.id.inboxName);
+                TextView inboxAddress = view.findViewById(R.id.inboxAddress);
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
                         HashMap<String, String> item = (HashMap<String, String>) getItem(position);
                 //myLog("DNSJNI", "item: "+item.toString());
-                int unread = inboxSize();
+
                 // int unread = 0;
-                if(unread>0) {
+                if(ibSize>0) {
                     String bob = inboxAddress.getText().toString();
                     if(IsBase64Encoded(bob)){
                         inboxAddress.setText("* Encrypted *");
                     }
-                    cNtext += " (" + String.valueOf(unread) + ")";
-                    cName.setText(cNtext);
+                    //cNtext += " (" + String.valueOf(unread) + ")";
+                    //cName.setText(cNtext);
                     view.invalidate();
                 }
                 return view;
             }
         };
 
-        ListView lv = (ListView) root.findViewById(R.id.inbox_list);
+        ListView lv = root.findViewById(R.id.inbox_list);
         lv.setAdapter(simpleAdapter);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
@@ -160,14 +170,46 @@ public class MessagesFragment extends Fragment {
                 String pooo = theItem.get("num");
                 myLog("smscseeker", "name:" + theItem.toString());
 
-                startActivity(i);
+                //startActivity(i);
 
+            }
+        });
+        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            public boolean onItemLongClick(AdapterView<?> parent, View v, int position, long id) {
+                //Intent i = new Intent(mThis.getActivity(),
+               //         Inbox.class);
+                HashMap<String, String> theItem = (HashMap<String, String>) lines.get(position);
+
+                TextView inboxAddress = v.findViewById(R.id.inboxAddress);
+                String b64 = theItem.get("body");
+
+                if(IsBase64Encoded(b64)){
+                    byte[] barr = Base64.decode(b64);
+                    inboxAddress.setText(deCipherText(c, barr));
+                }
+
+
+                String pooo = theItem.get("num");
+                myLog("smscseeker", "name:" + theItem.toString());
+
+                //startActivity(i);
+
+                return true;
             }
         });
 
         return simpleAdapter;
 
     }
+
+    public String decryptWithPrivateKey(String... inputs){
+
+        return "";
+    }
+
+
+
+
     public int inboxSize() {
         int mCount = 0;
         try {
@@ -186,6 +228,8 @@ public class MessagesFragment extends Fragment {
     public void readTheFile2() {
         feedList.clear();
 
+        ibSize = inboxSize();
+
         ArrayList<HashMap<String, String>> maplist = new ArrayList<HashMap<String, String>>();
         try {
             //Tuple3<List<byte[]>, List<BigInteger>, List<String>> inbox = contract.receiveMessages().send(); // old contract
@@ -194,7 +238,7 @@ public class MessagesFragment extends Fragment {
             List list1 = inbox.component1(); // timestamp
             List list2 = inbox.component2(); // "ethereum" address
             List list3 = inbox.component3(); // message text
-            for(int i=0;i<inboxSize();i++){
+            for(int i=0;i<ibSize;i++){
                 HashMap<String, String> map = new HashMap<String, String>();
                 map.put("body", (String) list3.get(i));
                 map.put("ts", list1.get(i).toString());

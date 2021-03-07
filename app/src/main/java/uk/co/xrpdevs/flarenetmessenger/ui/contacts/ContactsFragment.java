@@ -162,7 +162,7 @@ public class ContactsFragment extends Fragment {
             @Override
             public View getView (int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                TextView cName = (TextView) view.findViewById(R.id.inboxName);
+                TextView cName = view.findViewById(R.id.inboxName);
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
                         HashMap<String, String> item = (HashMap<String, String>) getItem(position);
@@ -171,7 +171,7 @@ public class ContactsFragment extends Fragment {
                 myLog("TEST", "Number of contaxts: "+unread);
                 // int unread = 0;
                 if(unread>0) {
-                    cNtext += " (" + String.valueOf(unread) + ")";
+                    cNtext += " (" + unread + ")";
                     cName.setText(cNtext);
                     view.invalidate();
                 }
@@ -321,7 +321,7 @@ public class ContactsFragment extends Fragment {
                     } finally {
                         d.close();
                     }
-                    String getRawQuery = ContactsContract.RawContacts.CONTACT_ID + "=" + String.valueOf(addressColumnIndex);
+                    String getRawQuery = ContactsContract.RawContacts.CONTACT_ID + "=" + addressColumnIndex;
                 } else {
                     contactNameColumn = c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
                     addressColumnIndex = c.getColumnIndex(ContactsContract.Contacts._ID);

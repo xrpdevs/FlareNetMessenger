@@ -49,6 +49,7 @@ import org.spongycastle.jce.interfaces.ECPublicKey;
 import org.spongycastle.openpgp.PGPException;
 import org.spongycastle.util.encoders.Hex;
 import org.web3j.crypto.Credentials;
+import org.web3j.crypto.ECKeyPair;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.EthBlockNumber;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
@@ -61,9 +62,12 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 
 import java.security.AlgorithmParameters;
+import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
+import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
@@ -72,6 +76,7 @@ import java.security.spec.ECPoint;
 import java.security.spec.EllipticCurve;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.InvalidParameterSpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.HashMap;
 import java.util.List;
@@ -87,6 +92,7 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+import static uk.co.xrpdevs.flarenetmessenger.Utils.toByte;
 
 public class MainActivity extends AppCompatActivity {
     // NOTE: The credentials here are from the testnet.. this is also VERY hacky at the moment!
@@ -248,12 +254,12 @@ public class MainActivity extends AppCompatActivity {
         prefs = this.getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
       //  EasyLock.checkPassword(this);
-        if(!prefs.contains("pinCode")) {
-        }
+     //  if(!prefs.contains("pinCode")) {
+     //   }
         if(!prefs.contains("walletCount")){
             pEdit.putInt("walletCount", 0);
             pEdit.putInt("currentWallet", 0);
-            pEdit.commit();
+            pEdit.apply();
         }
 
       //  final String s = ContactsManager.deleteAllAppContacts(this);
@@ -298,7 +304,7 @@ public class MainActivity extends AppCompatActivity {
         sendMsg = findViewById(R.id.button2);
         settings = findViewById(R.id.Settings);
 
-        addresses = (Spinner) findViewById(R.id.spinner);
+        addresses = findViewById(R.id.spinner);
         cgp = new DefaultGasProvider();
 
 
@@ -311,47 +317,39 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        refresh.setOnClickListener(new View.OnClickListener() {
-                                       public void onClick(View v) {
-                                           try {
-                                               new update().start();
-                                           } catch (Exception e) {
-                                               e.printStackTrace();
-                                           }
-                                       }
-                                   }
+        refresh.setOnClickListener(v -> {
+            try {
+                new update().start();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         );
-        inbox.setOnClickListener(new View.OnClickListener() {
-                                       public void onClick(View v) {
-                                           try {
-                                               Intent intent = new Intent(MainActivity.this, Inbox.class);
-                                               startActivity(intent);
-                                           } catch (Exception e) {
-                                               e.printStackTrace();
-                                           }
-                                       }
-                                   }
+        inbox.setOnClickListener(v -> {
+            try {
+                Intent intent = new Intent(MainActivity.this, Inbox.class);
+                startActivity(intent);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         );
-        settings.setOnClickListener(new View.OnClickListener() {
-                                     public void onClick(View v) {
-                                         try {
+        settings.setOnClickListener(v -> {
+            try {
 //                                             Intent intent = new Intent(MainActivity.this, PKeyScanner.class);
-                                             Intent intent = new Intent(MainActivity.this, Wallets.class);
-                                             startActivity(intent);
-                                         } catch (Exception e) {
-                                             e.printStackTrace();
-                                         }
-                                     }
-                                 }
+                Intent intent = new Intent(MainActivity.this, Wallets.class);
+                startActivity(intent);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         );
-        sendMsg.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                try {
-                    new sendMessage().start();
+        sendMsg.setOnClickListener(v -> {
+            try {
+                new sendMessage().start();
 
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
 
@@ -365,17 +363,9 @@ public class MainActivity extends AppCompatActivity {
             //   FlareConnection.
         }
     }
-    public static byte[] toByte(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i+1), 16));
-        }
-        return data;
-    }
 
-    public ECPublicKey rawToEncodedECPublicKey(String curveName, byte[] rawBytes) throws NoSuchAlgorithmException, InvalidKeySpecException, InvalidParameterSpecException, NoSuchProviderException {
+
+    public ECPublicKey rawToEncodedECPublicKey(String curveName, byte[] rawBytes) throws GeneralSecurityException {
         java.security.KeyFactory kf = java.security.KeyFactory.getInstance("EC", secP);
 //        KeyFactory kf = KeyFactory.getInstance("EC");
         byte[] x = Arrays.copyOfRange(rawBytes, 0, rawBytes.length/2);
@@ -385,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
         return (ECPublicKey) kf.generatePublic(new java.security.spec.ECPublicKeySpec(w, ecParameterSpecForCurve(curveName)));
     }
 
-    public java.security.spec.ECParameterSpec ecParameterSpecForCurve(String curveName) throws NoSuchAlgorithmException, InvalidParameterSpecException, NoSuchProviderException {
+    public java.security.spec.ECParameterSpec ecParameterSpecForCurve(String curveName) throws java.security.GeneralSecurityException {
         AlgorithmParameters params = AlgorithmParameters.getInstance("EC", secP);
         params.init(new ECGenParameterSpec(curveName));
         return params.getParameterSpec(java.security.spec.ECParameterSpec.class);
@@ -398,28 +388,31 @@ public class MainActivity extends AppCompatActivity {
             Log.d("TEST", "Running SendMSG thread");
             String rawString = message.getText().toString();
             byte[] bytes = rawString.getBytes(StandardCharsets.UTF_8);
-            String wpk = deets.get("walletPubKey");
-            wpk = wpk.replace("0x", "");
+            String walletPrvKey = deets.get("walletPrvKey");
+            String walletPubKey = deets.get("walletPubKey");
+            //walletPrvKey = walletPrvKey.replace("0x", "");
+            walletPubKey = walletPubKey.replace("0x", "");
             PublicKey x509key;
-            myLog("walletPubKey", wpk);
+            myLog("walletPubKey", walletPubKey);
             //wpk="6RLj4k7CmA7RLsphpi/LwyXNaSsc1MbYmCa3iPcIzLk8jgaPCq3EqeyhJcmpOzzeHjnXnwbK6J9yF8RozFiuvQ==";
-            byte[] wpkBytes = toByte(wpk);
+            byte[] wpkBytes = toByte(walletPubKey);
            // wpk=Base64.decode()
 
-            String b="";byte[] ciphertext;
+            String b;byte[] ciphertext = new byte[]{0}; //ciphertext[0]=0;
             String text;
 
             try {
                 x509key = rawToEncodedECPublicKey("secp256k1", wpkBytes); //.decode(wpk));
                 myLog("KeyInfo:", x509key.getFormat());
-
                 Cipher iesCipher = Cipher.getInstance("ECIES");
-                Cipher iesDecipher = Cipher.getInstance("ECIES");
                 iesCipher.init(Cipher.ENCRYPT_MODE, x509key);
 
-                String message = rawString;
+                ciphertext = iesCipher.doFinal(rawString.getBytes());
 
-                ciphertext = iesCipher.doFinal(message.getBytes());
+
+
+
+
                 //b = new String(ciphertext, StandardCharsets.UTF_8);
                 String hexStr = Hex.toHexString(ciphertext);
                 String hexStr2 = hexStr.substring(2);
@@ -440,25 +433,43 @@ public class MainActivity extends AppCompatActivity {
 
             }
 
+
+    /*        try {
+                myLog("PRIVATE KEY", "Len (Hex ) "+walletPrvKey.length()+"\nLen (Byte) "+(walletPrvKey.length()/2)+"\nKey: "+walletPrvKey);
+                Cipher iesDecipher = Cipher.getInstance("ECIES");
+
+                //BigInteger s = new BigInteger(walletPrvKey, 16);
+                //PrivateKey X509_priv = Utils.getPrivateKeyFromECBigIntAndCurve(s, "secp256k1");
+
+                ECKeyPair pair = c.getEcKeyPair();
+
+                PrivateKey X509_priv = Utils.getPrivateKeyFromECBigIntAndCurve(pair.getPrivateKey(), "secp256k1");
+                //PrivateKey X509_priv = (PrivateKey) pair.getPublicKey();
+
+                //java.security.KeyFactory keyFactory = KeyFactory.getInstance("EC", secP);
+                //PrivateKey X509_priv = Utils.gPK(toByte(walletPrvKey));
+                iesDecipher.init(Cipher.DECRYPT_MODE, X509_priv);
+                myLog("DECIPHERED TEXT", "" + new String(iesDecipher.doFinal(ciphertext)));
+            } catch (Exception e){
+                myLog("DECRYPTION FAILED", e.getMessage());
+                e.printStackTrace();
+            }
      /*       if(receipt.isStatusOK()){
                 text = "Message sent!\n"+receipt.getGasUsed().toString();
             } else {
                 text = "Message sending failed";
             }
 */
+            String poo = Utils.deCipherText(c, ciphertext);
             String finalText = text;
-            runOnUiThread(new Runnable() {
+            runOnUiThread(() -> {
+                showToast(finalText);
+                try {
+                    new update().start();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
 
-                @Override
-                public void run(){
-                    showToast(finalText.toString());
-                    try {
-                        new update().start();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-                };
             });
         }
     }
@@ -468,12 +479,12 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
     }
     private void addNewAccount(String accountType, String authTokenType) {
-        final AccountManagerFuture<Bundle> future = AccountManager.get(this).addAccount(accountType, authTokenType, null, null, this, new AccountManagerCallback<Bundle>() {
+        AccountManager.get(this).addAccount(accountType, authTokenType, null, null, this, new AccountManagerCallback<Bundle>() {
             @Override
             public void run(AccountManagerFuture<Bundle> future) {
                 try {
                     Bundle bnd = future.getResult();
-                    Log.i("info" , "Account was created");
+                    Log.i("info", "Account was created");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -490,7 +501,7 @@ public class MainActivity extends AppCompatActivity {
 
     public HashMap<String, String> getPkey() {
         String pKey;
-        HashMap<String, String> bob = new HashMap<String, String>();
+        HashMap<String, String> bob = new HashMap<>();
         Pair<String, String> tmp;
         bob.put("walletPrvKey", prefs.getString("walletPrvKey", null));
         bob.put("walletPubKey", prefs.getString("walletPubKey", null));
@@ -550,7 +561,7 @@ public class MainActivity extends AppCompatActivity {
 
             //Pair<BigDecimal, String> gmb = Utils.getMyBalance(deets.get("walletAddress"));
 
-            myTvString = "Current Coston\nBlock Number:\n" + bob.getBlockNumber().toString() + "  Wallets: " + String.valueOf(prefs.getInt("walletCount", 0) + "  Current: " + String.valueOf(prefs.getInt("currentWallet", 0)));
+            myTvString = "Current Coston\nBlock Number:\n" + bob.getBlockNumber().toString() + "  Wallets: " + prefs.getInt("walletCount", 0) + "  Current: " + prefs.getInt("currentWallet", 0);
             myBalanceS = "FXRP Balance of Flare Testnet Address " + deets.get("walletAddress") + " = " + Utils.getMyBalance(deets.get("walletAddress")).first.toString();
 
 
@@ -574,18 +585,14 @@ public class MainActivity extends AppCompatActivity {
             //     Log.d("TEST", "Transaction receipt from Transfer: "+ receipt2.toString());
             // //load(String contractAddress, Web3j web3j, Credentials credentials, ContractGasProvider contractGasProvider
 
-            runOnUiThread(new Runnable() {
-
-                @Override
-                public void run() {
-                    msgCount = messageCount.getValue2().toString();
-                    inbox.setText("Inbox: " + msgCount + " messages");
-                    populateSpinner(registeredAddresses);
-                    Log.d("TEST", "List: " + registeredAddresses);
-                    Log.d("TEST", "Inbox count: " + messageCount);
-                    myTV.setText(myTvString);
-                    myBalance.setText(myBalanceS);
-                }
+            runOnUiThread(() -> {
+                msgCount = messageCount.component2().toString();
+                inbox.setText("Inbox: " + msgCount + " messages");
+                populateSpinner(registeredAddresses);
+                Log.d("TEST", "List: " + registeredAddresses);
+                Log.d("TEST", "Inbox count: " + messageCount);
+                myTV.setText(myTvString);
+                myBalance.setText(myBalanceS);
             });
         }
     }

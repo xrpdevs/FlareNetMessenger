@@ -100,7 +100,7 @@ public class ContactList extends AppCompatActivity{
         contractAddress = "0x4a1400220373983f3716D4e899059Dda418Fd08A"; // v1 SMSTest2
 
         contractAddress = MyService.contractAddress;
-        addresses = (Spinner) findViewById(R.id.spinner);
+        addresses = findViewById(R.id.spinner);
         try {
             deets = Utils.getPkey(this, prefs.getInt("currentWallet", 0));
         } catch (JSONException e) {
@@ -137,7 +137,7 @@ public class ContactList extends AppCompatActivity{
             @Override
             public View getView (int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                TextView cName = (TextView) view.findViewById(R.id.inboxName);
+                TextView cName = view.findViewById(R.id.inboxName);
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
                         HashMap<String, String> item = (HashMap<String, String>) getItem(position);
@@ -146,7 +146,7 @@ public class ContactList extends AppCompatActivity{
                 Log.d("TEST", "Number of contaxts: "+unread);
                 // int unread = 0;
                 if(unread>0) {
-                    cNtext += " (" + String.valueOf(unread) + ")";
+                    cNtext += " (" + unread + ")";
                     cName.setText(cNtext);
                     view.invalidate();
                 }
@@ -154,7 +154,7 @@ public class ContactList extends AppCompatActivity{
             }
         };
 
-        lv = (ListView) findViewById(R.id.inbox_list);
+        lv = findViewById(R.id.inbox_list);
         lv.setAdapter(InboxAdapter);
         lv.setOnItemLongClickListener((parent, v, position, id) -> {
             HashMap<String, String> theItem = lines.get(position);
@@ -285,7 +285,7 @@ public class ContactList extends AppCompatActivity{
                     } finally {
                         d.close();
                     }
-                    String getRawQuery = ContactsContract.RawContacts.CONTACT_ID + "=" + String.valueOf(addressColumnIndex);
+                    String getRawQuery = ContactsContract.RawContacts.CONTACT_ID + "=" + addressColumnIndex;
                 } else {
                     contactNameColumn = c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
                     addressColumnIndex = c.getColumnIndex(ContactsContract.Contacts._ID);

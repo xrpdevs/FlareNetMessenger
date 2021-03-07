@@ -22,6 +22,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import net.lingala.zip4j.exception.ZipException;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -47,7 +49,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
     BigInteger GAS_PRICE = BigInteger.valueOf(200000L);
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
-    public ArrayList<HashMap<String, String>> feedList = new ArrayList<HashMap<String, String>>();
+    public ArrayList<HashMap<String, String>> feedList = new ArrayList<>();
     HashMap<String, String> deets;
     private NotificationsViewModel notificationsViewModel;
     WalletsFragment mThis = this;
@@ -56,7 +58,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
     private String pinCode;
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.fragment_menu_wallets, menu);
         super.onCreateOptionsMenu(menu,inflater);
     }
@@ -70,7 +72,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
         lv.setAdapter(WalletsAdaptor);
 
         prefs = this.getActivity().getSharedPreferences("fnm", 0);
-        pEdit = prefs.edit();
+   //     pEdit = prefs.edit();
       //  super.onCreate(savedInstanceState);
 
 
@@ -98,8 +100,8 @@ myLog("Lines", lines.toString());
             @Override
             public View getView (int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                TextView cName = (TextView) view.findViewById(R.id.inboxName);
-                TextView cType = (TextView) view.findViewById(R.id.inboxType);
+                TextView cName = view.findViewById(R.id.inboxName);
+                TextView cType = view.findViewById(R.id.inboxType);
                 cType.setText("Coston");
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
@@ -141,7 +143,7 @@ myLog("Lines", lines.toString());
 
             for(int i=0;i<prefs.getInt("walletCount", 0);i++){
                 HashMap<String, String> map = Utils.getPkey(this.getContext(), (i+1));
-                if(!map.containsKey("walletName")){ map.put("walletName", "Wallet "+String.valueOf(i+1));}
+                if(!map.containsKey("walletName")){ map.put("walletName", "Wallet "+ (i + 1));}
 
                 maplist.add(map);
             }

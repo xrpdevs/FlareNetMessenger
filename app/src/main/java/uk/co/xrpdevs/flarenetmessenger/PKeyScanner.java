@@ -81,7 +81,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
                         //Pair<BigDecimal, String> testAddr = Utils.getMyBalance(addr);
 
 
-                        if(scanContent.substring(0,2).equals("0x") && scanContent.length() == 66){
+                        if(scanContent.startsWith("0x") && scanContent.length() == 66){
                             int wC = prefs.getInt("walletCount", 0);
                             wC++;
 
@@ -91,7 +91,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
 
                             HashMap<String, String> tmp = new HashMap<String, String>();
                             if(wName.getText().toString().equals("")){
-                                tmp.put("walletName", "Wallet "+String.valueOf(wC));
+                                tmp.put("walletName", "Wallet "+ wC);
                             } else {
                                 tmp.put("walletName", wName.getText().toString());
                             }
@@ -99,7 +99,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
                             tmp.put("walletPubKey", "0x" + publicKey);
                             tmp.put("walletAddress", addr);
 
-                            pEdit.putString("wallet" + String.valueOf(wC), new JSONObject(tmp).toString());
+                            pEdit.putString("wallet" + wC, new JSONObject(tmp).toString());
                             pEdit.putInt("walletCount", wC);
                             pEdit.putInt("currentWallet", wC);
                             pEdit.commit();

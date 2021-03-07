@@ -19,6 +19,8 @@ import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import org.jetbrains.annotations.NotNull;
+
 import uk.co.xrpdevs.flarenetmessenger.BuildConfig;
 import uk.co.xrpdevs.flarenetmessenger.ContactList;
 import uk.co.xrpdevs.flarenetmessenger.FirstRun;
@@ -30,13 +32,12 @@ import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 public class HomeFragment extends Fragment {
 
-    private HomeViewModel homeViewModel;
     PleaseWaitDialog notify;
 
     HomeFragment mThis = this;
 
     @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+    public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.fragment_menu_home, menu);
         super.onCreateOptionsMenu(menu,inflater);
     }
@@ -45,16 +46,10 @@ public class HomeFragment extends Fragment {
                              ViewGroup container, Bundle savedInstanceState) {
         setHasOptionsMenu(true);
         Log.d("FRAG", "HomeFragment");
-        homeViewModel =
-                new ViewModelProvider(this).get(HomeViewModel.class);
+        HomeViewModel homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
         View root = inflater.inflate(R.layout.fragment_home, container, false);
         final TextView textView = root.findViewById(R.id.text_home);
-        homeViewModel.getText().observe(getViewLifecycleOwner(), new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String s) {
-                textView.setText(s);
-            }
-        });
+        homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
 
 
 

@@ -53,7 +53,7 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         final View content = getActivity().getLayoutInflater().inflate(R.layout.pin_code_entry_dialog, null);
 
-        editPinCode = (EditText) content.findViewById(R.id.editPinCode);
+        editPinCode = content.findViewById(R.id.editPinCode);
         editPinCode.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -89,25 +89,22 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
         final AlertDialog dialog = (AlertDialog) getDialog();
         if (dialog != null) {
             Button positiveButton = dialog.getButton(Dialog.BUTTON_POSITIVE);
-            positiveButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    final String pinCode = editPinCode.getText().toString();
-                    myLog("PIN", pinCode);
-                    if (isFieldValid(pinCode)) {
-                        myLog("PIN", "ifv: "+isFieldValid(pinCode));
-                        if (onResultListener != null) {
-                            myLog("PIN", "oRL: "+(onResultListener != null));
-                            try {
-                                onResultListener.onResult(pinCode);
-                            } catch (ZipException e) {
-                                e.printStackTrace();
-                            }
-                            //dialog.dismiss();
+            positiveButton.setOnClickListener(v -> {
+                final String pinCode = editPinCode.getText().toString();
+                myLog("PIN", pinCode);
+                if (isFieldValid(pinCode)) {
+                    myLog("PIN", "ifv: "+isFieldValid(pinCode));
+                    if (onResultListener != null) {
+                        myLog("PIN", "oRL: "+(onResultListener != null));
+                        try {
+                            onResultListener.onResult(pinCode);
+                        } catch (ZipException e) {
+                            e.printStackTrace();
                         }
-                    } else {
-                        editPinCode.setError(getString(R.string.empty_field));
+                        //dialog.dismiss();
                     }
+                } else {
+                    editPinCode.setError(getString(R.string.empty_field));
                 }
             });
         }

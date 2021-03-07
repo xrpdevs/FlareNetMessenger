@@ -14,7 +14,7 @@ import androidx.preference.PreferenceScreen;
 import org.xmlpull.v1.XmlPullParser;
 
 public class SettingsActivity extends AppCompatActivity {
-    static Context bob;
+    static Context bob; // moo
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,7 +39,7 @@ public class SettingsActivity extends AppCompatActivity {
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
-            Preference myPref = (Preference) findPreference("myKey");
+            Preference myPref = findPreference("myKey");
             assert myPref != null;
             myPref.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 public boolean onPreferenceClick(Preference preference) {

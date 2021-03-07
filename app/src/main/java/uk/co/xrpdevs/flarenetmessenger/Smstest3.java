@@ -71,23 +71,23 @@ public class Smstest3 extends Contract {
 
     public RemoteFunctionCall<Boolean> checkUserRegistration() {
         final Function function = new Function(FUNC_CHECKUSERREGISTRATION,
-                Arrays.<Type>asList(),
-                Arrays.<TypeReference<?>>asList(new TypeReference<Bool>() {}));
+                Arrays.asList(),
+                Arrays.asList(new TypeReference<Bool>() {}));
         return executeRemoteCallSingleValueReturn(function, Boolean.class);
     }
 
     public RemoteFunctionCall<TransactionReceipt> clearInbox() {
         final Function function = new Function(
                 FUNC_CLEARINBOX,
-                Arrays.<Type>asList(),
-                Collections.<TypeReference<?>>emptyList());
+                Arrays.asList(),
+                Collections.emptyList());
         return executeRemoteCallTransaction(function);
     }
 
     public RemoteFunctionCall<Tuple2<String, List<String>>> getContractProperties() {
         final Function function = new Function(FUNC_GETCONTRACTPROPERTIES,
-                Arrays.<Type>asList(),
-                Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}, new TypeReference<DynamicArray<Address>>() {}));
+                Arrays.asList(),
+                Arrays.asList(new TypeReference<Address>() {}, new TypeReference<DynamicArray<Address>>() {}));
         return new RemoteFunctionCall<Tuple2<String, List<String>>>(function,
                 new Callable<Tuple2<String, List<String>>>() {
                     @Override
@@ -102,8 +102,8 @@ public class Smstest3 extends Contract {
 
     public RemoteFunctionCall<Tuple2<BigInteger, BigInteger>> getMyInboxSize() {
         final Function function = new Function(FUNC_GETMYINBOXSIZE,
-                Arrays.<Type>asList(),
-                Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}, new TypeReference<Uint256>() {}));
+                Arrays.asList(),
+                Arrays.asList(new TypeReference<Uint256>() {}, new TypeReference<Uint256>() {}));
         return new RemoteFunctionCall<Tuple2<BigInteger, BigInteger>>(function,
                 new Callable<Tuple2<BigInteger, BigInteger>>() {
                     @Override
@@ -118,8 +118,8 @@ public class Smstest3 extends Contract {
 
     public RemoteFunctionCall<Tuple3<List<BigInteger>, List<String>, List<String>>> receiveMessages() {
         final Function function = new Function(FUNC_RECEIVEMESSAGES,
-                Arrays.<Type>asList(),
-                Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {}, new TypeReference<DynamicArray<Address>>() {}, new TypeReference<DynamicArray<Utf8String>>() {}));
+                Arrays.asList(),
+                Arrays.asList(new TypeReference<DynamicArray<Uint256>>() {}, new TypeReference<DynamicArray<Address>>() {}, new TypeReference<DynamicArray<Utf8String>>() {}));
         return new RemoteFunctionCall<Tuple3<List<BigInteger>, List<String>, List<String>>>(function,
                 new Callable<Tuple3<List<BigInteger>, List<String>, List<String>>>() {
                     @Override
@@ -136,17 +136,17 @@ public class Smstest3 extends Contract {
     public RemoteFunctionCall<TransactionReceipt> registerUser() {
         final Function function = new Function(
                 FUNC_REGISTERUSER,
-                Arrays.<Type>asList(),
-                Collections.<TypeReference<?>>emptyList());
+                Arrays.asList(),
+                Collections.emptyList());
         return executeRemoteCallTransaction(function);
     }
 
     public RemoteFunctionCall<TransactionReceipt> sendMessage(String _receiver, String _content) {
         final Function function = new Function(
                 FUNC_SENDMESSAGE,
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _receiver),
+                Arrays.asList(new org.web3j.abi.datatypes.Address(160, _receiver),
                         new org.web3j.abi.datatypes.Utf8String(_content)),
-                Collections.<TypeReference<?>>emptyList());
+                Collections.emptyList());
         return executeRemoteCallTransaction(function);
     }
 

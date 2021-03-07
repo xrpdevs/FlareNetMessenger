@@ -13,6 +13,8 @@ package uk.co.xrpdevs.flarenetmessenger;
         * specific language governing permissions and limitations under the License.
         */
 
+import org.jetbrains.annotations.NotNull;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -48,8 +50,8 @@ public final class Convert {
         METHER("mether", 24),
         GETHER("gether", 27);
 
-        private String name;
-        private BigDecimal weiFactor;
+        private final String name;
+        private final BigDecimal weiFactor;
 
         Unit(String name, int factor) {
             this.name = name;
@@ -60,6 +62,7 @@ public final class Convert {
             return weiFactor;
         }
 
+        @NotNull
         @Override
         public String toString() {
             return name;

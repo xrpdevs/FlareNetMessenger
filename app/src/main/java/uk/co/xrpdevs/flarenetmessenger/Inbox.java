@@ -79,7 +79,7 @@ public class Inbox extends AppCompatActivity {
         contractAddress = "0x4a1400220373983f3716D4e899059Dda418Fd08A"; // v1 SMSTest2
 
         contractAddress = MyService.contractAddress;
-        addresses = (Spinner) findViewById(R.id.spinner);
+        addresses = findViewById(R.id.spinner);
         try {
             deets = Utils.getPkey(this, prefs.getInt("currentWallet", 0));
         } catch (JSONException e) {
@@ -116,7 +116,7 @@ public class Inbox extends AppCompatActivity {
             @Override
             public View getView (int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                TextView cName = (TextView) view.findViewById(R.id.inboxName);
+                TextView cName = view.findViewById(R.id.inboxName);
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
                         HashMap<String, String> item = (HashMap<String, String>) getItem(position);
@@ -124,7 +124,7 @@ public class Inbox extends AppCompatActivity {
                 int unread = inboxSize();
                 // int unread = 0;
                 if(unread>0) {
-                    cNtext += " (" + String.valueOf(unread) + ")";
+                    cNtext += " (" + unread + ")";
                     cName.setText(cNtext);
                     view.invalidate();
                 }
@@ -132,7 +132,7 @@ public class Inbox extends AppCompatActivity {
             }
         };
 
-        ListView lv = (ListView) findViewById(R.id.inbox_list);
+        ListView lv = findViewById(R.id.inbox_list);
         lv.setAdapter(simpleAdapter);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {

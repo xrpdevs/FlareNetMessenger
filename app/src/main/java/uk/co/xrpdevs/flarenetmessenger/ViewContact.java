@@ -54,7 +54,6 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
     BigDecimal amount;
     EditText XRPAmount;
     PinCodeDialogFragment pinDialog;
-    private String pinCode;
 
 
     @Override
@@ -77,7 +76,7 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
         Button sendFunds = findViewById(R.id.viewContactSendFunds);
         prefs = this.getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
-        pinCode = prefs.getString("pinCode", "abcd");
+        String pinCode = prefs.getString("pinCode", "abcd");
 
         try {
             deets = Utils.getPkey(this, prefs.getInt("currentWallet", 0));
@@ -87,7 +86,7 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
 
 
 
-        deleteContact.setOnClickListener((View.OnClickListener) v -> {
+        deleteContact.setOnClickListener(v -> {
             Log.d("TEST", "Deleted: "+ContactsManager.deleteRawContactID(this, rawContactID));
         });
 
@@ -129,12 +128,12 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
             theirWallet = XRPAddress;
             theirBalance = Utils.getMyBalance(theirWallet).first;
 
-            info = "Your balance: "+String.valueOf(myBalance)+"\n"+
-                    "Their balance: "+String.valueOf(theirBalance)+"\n";
+            info = "Your balance: "+ myBalance +"\n"+
+                    "Their balance: "+ theirBalance +"\n";
 
             balancesInfo.setText(info);
 
-            sendFunds.setOnClickListener((View.OnClickListener) v -> {
+            sendFunds.setOnClickListener(v -> {
 
                 FragmentManager manager = getFragmentManager();
                 pinDialog = new PinCodeDialogFragment().newInstance(this, "Enter PIN:");
@@ -206,8 +205,8 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
                 showDialog("Transaction to "+cNameText+" failed.\n"+e.getMessage(), true);
             }
 
-            String info2 = "Your balance: " + String.valueOf(Utils.getMyBalance(from).first) + "\n" +
-                    "Their balance: " + String.valueOf(Utils.getMyBalance(to).first) + "\n";
+            String info2 = "Your balance: " + Utils.getMyBalance(from).first + "\n" +
+                    "Their balance: " + Utils.getMyBalance(to).first + "\n";
 
 
 
