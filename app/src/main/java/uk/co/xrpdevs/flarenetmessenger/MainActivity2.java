@@ -74,6 +74,15 @@ public class MainActivity2 extends AppCompatActivity {
                 ft.replace(R.id.nav_host_fragment, currentFragment);
                 ft.commit();
             }
+            if (incoming.getStringExtra("selectFragment").equals("home")) {
+                myLog("FRAG", "Has selectFragment = " + incoming.getStringExtra("selectFragment"));
+
+                navView.setSelectedItemId(R.id.navigation_home);
+                currentFragment = new ContactsFragment();
+                ft = getSupportFragmentManager().beginTransaction();
+                ft.replace(R.id.nav_host_fragment, currentFragment);
+                ft.commit();
+            }
         }
 
     }

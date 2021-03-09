@@ -508,4 +508,12 @@
     </string>
     <string name="about_this_app">About this App</string>
     <string name="test_firstrun">Test FirstRun</string>
+    <string name="currently_selected_wallet">Currently Selected Wallet:</string>
+    <string name="my_new_wallet_1">My New Wallet #1</string>
+    <string name="homeQR_share">Share</string>
+    <string name="homeQR_copy">Copy</string>
+    <string name="your_reply">Your reply</string>
+    <string name="old_mainactivity">Old Mainactivity</string>
+    <string name="enc_max_len">Encrypted Msg Max 153 Chars!</string>
+
 </resources>

@@ -13,6 +13,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Entity;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.net.Uri;
 import android.provider.Contacts;
 import android.provider.ContactsContract;
@@ -27,8 +28,68 @@ import android.provider.ContactsContract.Settings;
 import android.util.Log;
 import android.webkit.WebChromeClient.CustomViewCallback;
 
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
 public class ContactsManager {
     private static final String MIMETYPE = "vnd.android.cursor.item/com.sample.profile";
+
+    public static String updatePubKey(Context context, String walletAddress, String pubkey){
+        ContentResolver resolver = context.getContentResolver();
+        String retval ="";
+        ArrayList<ContentProviderOperation> ops = new ArrayList<ContentProviderOperation>();
+        ops.add(ContentProviderOperation.newUpdate(Data.CONTENT_URI)
+                .withSelection(Data.DATA3+" LIKE ?", new String[]{walletAddress})
+                .withValue(Data.MIMETYPE, MIMETYPE)
+                .withValue(Data.DATA4, pubkey)
+                .build());
+        try {
+            Log.d("DATABASE", ops.toString());
+            ContentProviderResult[] results = resolver.applyBatch(ContactsContract.AUTHORITY, ops);
+            Log.d("TEST", "RAWCONTACT UPDATE (count = "+results.length+") "+Arrays.toString(results));
+
+
+         //   int contactId = Integer.parseInt(results[results.length-1].uri.getLastPathSegment());
+
+//            final String[] projection = new String[] { ContactsContract.RawContacts.CONTACT_ID };
+//            final Cursor cursor = resolver.query(results[results.length-1].uri, projection, null, null, null);
+//            cursor.moveToNext();
+//            long contactId = cursor.getLong(0);
+
+
+            retval = "1";//String.valueOf(contactId);
+           // Log.d("TEST", "Generated RAWContact ID: "+contactId);
+//            cursor.close();
+            if (results.length == 0)
+                ;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        return retval;
+
+    }
+
+    public static String getPubKey(Context context, String walletAddress){
+        String filter = ContactsContract.Data.DATA3 + "=?";
+        Uri uri = ContactsContract.Data.CONTENT_URI;
+        String[] projection    = new String[] {ContactsContract.Data.DATA4};
+        String[] filterParams = new String[] {walletAddress};
+        String pubkey = null;
+        Cursor cursor = context.getContentResolver().query(uri, projection, filter, filterParams, null);
+        if (cursor != null) {
+            while (cursor.moveToFirst()) {
+                String pubKey = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA4));
+                myLog("temp", DatabaseUtils.dumpCurrentRowToString(cursor));
+                return pubKey;
+            }
+            cursor.close();
+        } else {
+            myLog("temp", "Cursor = null");
+            return pubkey;
+        }
+        return pubkey;
+    }
+
 
     public static String addContact(Context context, MyContact contact) {
         ContentResolver resolver = context.getContentResolver();

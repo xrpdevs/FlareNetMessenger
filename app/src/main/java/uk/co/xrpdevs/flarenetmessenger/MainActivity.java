@@ -237,9 +237,6 @@ public class MainActivity extends AppCompatActivity {
                 return super.onOptionsItemSelected(item);
         }
     }
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -402,7 +399,7 @@ public class MainActivity extends AppCompatActivity {
             String text;
 
             try {
-                x509key = rawToEncodedECPublicKey("secp256k1", wpkBytes); //.decode(wpk));
+                x509key = Utils.rawToEncodedECPublicKey("secp256k1", wpkBytes); //.decode(wpk));
                 myLog("KeyInfo:", x509key.getFormat());
                 Cipher iesCipher = Cipher.getInstance("ECIES");
                 iesCipher.init(Cipher.ENCRYPT_MODE, x509key);
@@ -429,12 +426,12 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
 
                 text = "FAILED\n\nReason:\n"+e.getMessage()+"\n\n"+receipt.getGasUsed().toString();
-//                e.printStackTrace();
+                e.printStackTrace();
 
             }
 
 
-    /*        try {
+            try {
                 myLog("PRIVATE KEY", "Len (Hex ) "+walletPrvKey.length()+"\nLen (Byte) "+(walletPrvKey.length()/2)+"\nKey: "+walletPrvKey);
                 Cipher iesDecipher = Cipher.getInstance("ECIES");
 

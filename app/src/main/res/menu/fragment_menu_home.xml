@@ -4,4 +4,8 @@
         android:title="@string/test_firstrun" />
     <item android:id="@+id/version"
         android:title="@string/about_this_app" />
+    <item android:id="@+id/ma1"
+        android:title="@string/old_mainactivity" />
+    <item android:id="@+id/pks"
+        android:title="Show PubKey" />
 </menu>

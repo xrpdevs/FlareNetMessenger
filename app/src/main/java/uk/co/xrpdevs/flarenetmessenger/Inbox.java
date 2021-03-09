@@ -112,11 +112,11 @@ public class Inbox extends AppCompatActivity {
 
     public SimpleAdapter fillListView(final ArrayList lines) {
         ArrayAdapter<String> adapter;
-        simpleAdapter = new SimpleAdapter(this, lines, R.layout.listitem_inbox, new String[]{"cnam", "body", "type", "date"}, new int[]{R.id.inboxName, R.id.inboxAddress, R.id.inboxType, R.id.inboxLastact}){
+        simpleAdapter = new SimpleAdapter(this, lines, R.layout.listitem_inbox, new String[]{"cnam", "body", "type", "date"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}){
             @Override
             public View getView (int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                TextView cName = view.findViewById(R.id.inboxName);
+                TextView cName = view.findViewById(R.id.inboxAddress);
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
                         HashMap<String, String> item = (HashMap<String, String>) getItem(position);

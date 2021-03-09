@@ -45,6 +45,7 @@ import uk.co.xrpdevs.flarenetmessenger.MyContact;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.ViewContact;
+import uk.co.xrpdevs.flarenetmessenger.ui.messages.MessagesFragment;
 
 import static android.app.Activity.RESULT_OK;
 import static java.lang.Long.getLong;
@@ -64,6 +65,7 @@ public class ContactsFragment extends Fragment {
     HashMap<String, String> contactItem;
     public View rootView;
     private DashboardViewModel dashboardViewModel;
+    Boolean SendMessage = false;
 
     @Override
     public void onStart() {
@@ -83,6 +85,10 @@ public class ContactsFragment extends Fragment {
         if(ListType == 2000){
 
             getActionBar().setTitle("Add to Contact");
+        }
+        if (ListType == 3000) {
+            ListType = 1000;
+            SendMessage = true;
         }
         if(ListType == 1000){
 
@@ -158,11 +164,11 @@ public class ContactsFragment extends Fragment {
     public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) {
         myLog("TEST", "FillListView");
       //  ArrayAdapter<String> adapter;
-        simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_contacts, new String[]{"name", "numb", "type", "id"}, new int[]{R.id.inboxName, R.id.inboxAddress, R.id.inboxType, R.id.inboxLastact}){
+        simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_contacts, new String[]{"name", "numb", "type", "id"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}){
             @Override
             public View getView (int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                TextView cName = view.findViewById(R.id.inboxName);
+                TextView cName = view.findViewById(R.id.inboxAddress);
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
                         HashMap<String, String> item = (HashMap<String, String>) getItem(position);
@@ -191,30 +197,54 @@ public class ContactsFragment extends Fragment {
 
 
         lv.setOnItemClickListener((parent, v, position, id) -> {
+            HashMap<String, String> theItem = lines.get(position);
             if(ListType == 1000) {
-                Intent i = new Intent(this.getActivity(),
-                        ViewContact.class);
-                Bundle b = new Bundle();
-                HashMap<String, String> theItem = lines.get(position);
+                if(SendMessage){
+                    TextView cNam = v.findViewById(R.id.inboxAddress);     // todo: refactor to InboxAddress
+                    TextView cAddr = v.findViewById(R.id.inboxContent);  // todo: refactor to InboxContent
 
-                b.putString("name", theItem.get("name"));
-                b.putString("addr", theItem.get("numb"));
-                b.putString("id", theItem.get("id"));
-                i.putExtra("contactInfo", b);
-                String uriString = new StringBuilder().append("content://com.android.contacts/data/").append(theItem.get("id")).toString();
 
-                Uri myUri = Uri.parse(uriString);
-                i.setData(myUri);
-                String pooo = theItem.get("num");
-                myLog("smscseeker", "name:" + theItem.toString());
+//                fragmentTransaction.setCustomAnimations(R.animator.
+//                        R.anim.slide_in,  // enter
+//                        R.anim.slide_out // exi
+                    //fragmentTransaction.remove(currentFragment);
+                    Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
+                    FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                    fragmentTransaction.remove(currentFragment);
+                    MessagesFragment f = new MessagesFragment();
+                    Bundle args = new Bundle();
+                    args.putInt("SendMsg", 3000);
+                    args.putString("addrTo", cAddr.getText().toString());
+                    args.putString("nameTo", cNam.getText().toString());
+                    args.putString("selectFragment", "home");
+                    f.setArguments(args);
 
-                startActivity(i);
+                    fragmentTransaction.replace(R.id.nav_host_fragment, f);
+                    fragmentTransaction.commit();
+                } else {
+                    Intent i = new Intent(this.getActivity(),
+                            ViewContact.class);
+                    Bundle b = new Bundle();
+
+
+                    b.putString("name", theItem.get("name"));
+                    b.putString("addr", theItem.get("numb"));
+                    b.putString("id", theItem.get("id"));
+                    i.putExtra("contactInfo", b);
+                    String uriString = new StringBuilder().append("content://com.android.contacts/data/").append(theItem.get("id")).toString();
+
+                    Uri myUri = Uri.parse(uriString);
+                    i.setData(myUri);
+                    String pooo = theItem.get("num");
+                    myLog("smscseeker", "name:" + theItem.toString());
+
+                    startActivity(i);
+                }
             }
             if(ListType == 2000) {
                 myLog("TEST", "Button Pressed");
                 Bundle b = new Bundle();
-                HashMap<String, String> theItem = lines.get(position);
-                b.putString("name", theItem.get("name"));
+                  b.putString("name", theItem.get("name"));
                 b.putString("addr", theItem.get("numb"));
                 b.putString("id", theItem.get("id"));
 

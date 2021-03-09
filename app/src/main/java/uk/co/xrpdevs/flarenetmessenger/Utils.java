@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.util.Log;
 import android.util.Pair;
 
+import org.bouncycastle.util.encoders.Hex;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.spongycastle.jce.provider.BouncyCastleProvider;
@@ -15,6 +16,7 @@ import org.spongycastle.openpgp.PGPPublicKeyRing;
 import org.spongycastle.openpgp.PGPUtil;
 import org.spongycastle.openpgp.operator.jcajce.JcaKeyFingerprintCalculator;
 import org.spongycastle.openpgp.operator.jcajce.JcaPGPKeyConverter;
+import org.spongycastle.util.Arrays;
 import org.web3j.abi.datatypes.Int;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
@@ -28,9 +30,14 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.security.AlgorithmParameters;
+import java.security.GeneralSecurityException;
 import java.security.Provider;
 import java.security.PublicKey;
 import java.security.Security;
+import java.security.interfaces.ECPublicKey;
+import java.security.spec.ECGenParameterSpec;
+import java.security.spec.ECPoint;
 import java.security.spec.EncodedKeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
@@ -51,13 +58,54 @@ import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 
 import javax.crypto.Cipher;
 
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
 public class Utils {
 
     static Provider secP = new org.bouncycastle.jce.provider.BouncyCastleProvider();
 
+    public static byte[] encryptTextWithPubKey(String text, String pubKeyHexString) throws GeneralSecurityException {
+        Security.addProvider(new BouncyCastleProvider());
+        Security.addProvider(new org.spongycastle.jce.provider.BouncyCastleProvider());
+        pubKeyHexString = pubKeyHexString.replace("0x", "");
+        myLog("KEYKEY", pubKeyHexString);
+        byte[] wpkBytes = toByte(pubKeyHexString);
+        byte[] ciphertext = new byte[]{0};
+        try {
+            PublicKey x509key = rawToEncodedECPublicKey("secp256k1", wpkBytes); //.decode(wpk));
+            myLog("KeyInfo:", x509key.getFormat());
+            Cipher iesCipher = Cipher.getInstance("ECIES");
+            iesCipher.init(Cipher.ENCRYPT_MODE, x509key);
+
+            ciphertext = iesCipher.doFinal(text.getBytes());
+
+            return ciphertext;
+        } catch (Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static ECPublicKey rawToEncodedECPublicKey(String curveName, byte[] rawBytes) throws GeneralSecurityException {
+        java.security.KeyFactory kf = java.security.KeyFactory.getInstance("EC", secP);
+//        KeyFactory kf = KeyFactory.getInstance("EC");
+        byte[] x = Arrays.copyOfRange(rawBytes, 0, rawBytes.length/2);
+        byte[] y = Arrays.copyOfRange(rawBytes, rawBytes.length/2, rawBytes.length);
+        // ECPoint w = new ECPoint(new BigInteger(1,x), new BigInteger(1,y));
+        ECPoint w = new ECPoint(new BigInteger(1,x), new BigInteger(1,y));
+        return (java.security.interfaces.ECPublicKey) kf.generatePublic(new java.security.spec.ECPublicKeySpec(w, ecParameterSpecForCurve(curveName)));
+    }
+
+    public static java.security.spec.ECParameterSpec ecParameterSpecForCurve(String curveName) throws java.security.GeneralSecurityException {
+        AlgorithmParameters params = AlgorithmParameters.getInstance("EC", secP);
+        params.init(new ECGenParameterSpec(curveName));
+        return params.getParameterSpec(java.security.spec.ECParameterSpec.class);
+    }
+
     public static String deCipherText(Credentials c, byte[] ciphertext) {
         Security.addProvider(new BouncyCastleProvider());
         Security.addProvider(new org.spongycastle.jce.provider.BouncyCastleProvider());
+        myLog("PRIVATEKEY--", c.getEcKeyPair().getPrivateKey().toString(16));
         try {
             Cipher iesDecipher = Cipher.getInstance("ECIES");
            ECKeyPair pair = c.getEcKeyPair();
@@ -73,14 +121,23 @@ public class Utils {
         }
     }
 
-    public static byte[] toByte(String s) {
+    public static byte[] toByte2(String s) {
+        Log.d("TOBYTE", s+" len: "+s.length());
+
         int len = s.length();
+        if ( (len & 1) == 1 ) s="0"+s;
+        Log.d("TOBYTE", s+" len: "+s.length());
+
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
             data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
                     + Character.digit(s.charAt(i+1), 16));
         }
         return data;
+    }
+
+    public static byte[] toByte(String s){
+        return Hex.decode(s);
     }
 
     public static PrivateKey getPrivateKeyFromECBigIntAndCurve(BigInteger s, String curveName) {
@@ -180,6 +237,38 @@ public class Utils {
         return map;
         //System.out.println("json : "+jObject);
      //   System.out.println("map : "+map);
+    }
+
+    public static Pair<BigInteger, String> xorStrings(BigInteger pKey, String messageText){
+
+        String XORpKey;
+        String pKeyTmpHEX = pKey.toString(16);
+        int pkLen = pKeyTmpHEX.length();
+
+        String hexMessage = new BigInteger(messageText.getBytes()).toString(16);
+        int msgLen = hexMessage.length();
+        String XORStringTmp = "";
+        while(XORStringTmp.length() < pkLen){
+            XORStringTmp = XORStringTmp+hexMessage;
+        }
+        Log.d("XOR", "Exited for loop");
+        XORStringTmp = XORStringTmp.substring(0,pkLen);
+        Log.d("XOR", "pkeyTmp: "+pKeyTmpHEX);
+        Log.d("XOR", " msgTmp: "+hexMessage);
+        Log.d("XOR", " XORMsg: "+XORStringTmp);
+        //XORStringTmp = XORStringTmp.substring(0,pkLen);
+
+        BigInteger a = new BigInteger(XORStringTmp, 16);
+        BigInteger b = pKey;
+        BigInteger c;
+
+            c = b.xor(a);
+
+        Log.d("XOR", " PUBKEY: "+c.toString(16));
+        Pair<BigInteger, String> rv;
+        rv=new Pair<>(c, c.toString(16));
+
+        return(rv);
     }
 
 public static void myLog(String tag, String logString){

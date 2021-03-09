@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:text="Jamie Prince"
-            android:id="@+id/inboxName"
+            android:id="@+id/inboxAddress"
             android:layout_alignParentTop="true"
             android:layout_toRightOf="@+id/imageView"
             android:textSize="18sp"
@@ -43,8 +43,8 @@
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:text="dgbdbdfbdfbvdfd\ndf\ndfdgdfg\ndfgdg\ndg\ndg\ndfg\nd"
-            android:id="@+id/inboxAddress"
-            android:layout_below="@+id/inboxName"
+            android:id="@+id/inboxContent"
+            android:layout_below="@+id/inboxAddress"
             android:singleLine="false"
             android:textSize="15sp"
             android:layout_toRightOf="@+id/imageView"
@@ -62,11 +62,11 @@
             android:id="@+id/inboxType"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:layout_above="@+id/inboxAddress"
-            android:layout_toEndOf="@+id/inboxName"
+            android:layout_above="@+id/inboxContent"
+            android:layout_toEndOf="@+id/inboxAddress"
             android:layout_alignParentTop="true"
             android:textAlignment="viewEnd"
-            android:layout_toRightOf="@+id/inboxName" />
+            android:layout_toRightOf="@+id/inboxAddress" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -78,7 +78,7 @@
             android:textAlignment="viewEnd"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:layout_alignBottom="@+id/inboxAddress"
+            android:layout_alignBottom="@+id/inboxContent"
             android:minWidth="50sp"
             android:width="100sp" />
     </RelativeLayout>

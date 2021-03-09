@@ -37,7 +37,8 @@ public class FirstRun extends AppCompatActivity implements PinCodeDialogFragment
 
         cButton = findViewById(R.id.frContinue);
 myLog("FirstRUN", "OnCreate()");
-       checkState();
+setPIN("0");
+//       checkState();
 
 
     }

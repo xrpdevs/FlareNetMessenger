@@ -128,8 +128,14 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
             theirWallet = XRPAddress;
             theirBalance = Utils.getMyBalance(theirWallet).first;
 
+            String pubkey = ContactsManager.getPubKey(mThis.getApplicationContext(), theirWallet);
+
             info = "Your balance: "+ myBalance +"\n"+
                     "Their balance: "+ theirBalance +"\n";
+
+            if(pubkey != null){
+                info=info+"Pubkey Present";
+            }
 
             balancesInfo.setText(info);
 
@@ -204,6 +210,8 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
                 isReplaced = true;
                 showDialog("Transaction to "+cNameText+" failed.\n"+e.getMessage(), true);
             }
+
+
 
             String info2 = "Your balance: " + Utils.getMyBalance(from).first + "\n" +
                     "Their balance: " + Utils.getMyBalance(to).first + "\n";

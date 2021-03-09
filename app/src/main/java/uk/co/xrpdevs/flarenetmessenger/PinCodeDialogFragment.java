@@ -1,12 +1,16 @@
 package uk.co.xrpdevs.flarenetmessenger;
 import android.app.Dialog;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -22,7 +26,7 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
 
     public static final String TAG = "PinCodeEntryDialog";
     PinCodeDialogFragment mThis = this;
-    String prompt;
+    String prompt = "Enter Pin Code";
 
     public interface OnResultListener {
         void onResult(String pinCode) throws ZipException;
@@ -33,7 +37,9 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
      */
     public PinCodeDialogFragment newInstance(final OnResultListener listener, String prompt) {
         mThis.prompt = prompt;
-        final PinCodeDialogFragment fragment = new PinCodeDialogFragment();
+        this.prompt = prompt;
+        PinCodeDialogFragment fragment = new PinCodeDialogFragment();
+        fragment.prompt = prompt;
         fragment.setOnResultListener(listener);
         return fragment;
     }
@@ -54,6 +60,8 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
         final View content = getActivity().getLayoutInflater().inflate(R.layout.pin_code_entry_dialog, null);
 
         editPinCode = content.findViewById(R.id.editPinCode);
+        int inputType = InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD;
+        editPinCode.setInputType(inputType);
         editPinCode.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -74,13 +82,30 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
         });
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle(mThis.prompt)
-                .setView(content)
+        builder.setView(content)
                 // Button clicks are handled by the DialogFragment!
                 .setPositiveButton(R.string.connect, null);
 
+        TextView title = new TextView(builder.getContext());
+// You Can Customise your Title here
+        title.setText(prompt);
+        title.setBackgroundColor(Color.BLACK);
+        title.setPadding(10, 10, 10, 10);
+        title.setGravity(Gravity.CENTER);
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(20);
+
+        builder.setCustomTitle(title);
+
         setCancelable(true);
         return builder.create();
+    }
+
+    @Override
+    public void onActivityCreated(Bundle arg0) {
+        super.onActivityCreated(arg0);
+        getDialog().getWindow()
+                .getAttributes().windowAnimations = R.style.DialogAnimation;
     }
 
     @Override

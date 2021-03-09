@@ -44,14 +44,14 @@
 
     <Button
         android:id="@+id/importPubKeyQR"
+        android:text="@string/scan_pubkey"
         android:layout_width="205dp"
         android:layout_height="49dp"
         android:layout_marginTop="32dp"
-        android:background="@android:color/black"
         android:drawableLeft="@drawable/ic_qr_white"
         android:drawablePadding="10dp"
+        android:background="@android:color/black"
         android:drawableTint="@android:color/white"
-        android:text="@string/scan_pubkey"
         android:textColor="@android:color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

@@ -17,6 +17,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -37,6 +38,7 @@ import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Smstest3;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.Zipper;
+import uk.co.xrpdevs.flarenetmessenger.ui.home.HomeFragment;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
@@ -96,11 +98,11 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
 
     public SimpleAdapter fillListView(final ArrayList lines) {
 myLog("Lines", lines.toString());
-        simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_wallets, new String[]{"walletName", "walletAddress", "type", "lastval"}, new int[]{R.id.inboxName, R.id.inboxAddress, R.id.inboxType, R.id.inboxLastact}){
+        simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_wallets, new String[]{"walletName", "walletAddress", "type", "lastval"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}){
             @Override
             public View getView (int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                TextView cName = view.findViewById(R.id.inboxName);
+                TextView cName = view.findViewById(R.id.inboxAddress);
                 TextView cType = view.findViewById(R.id.inboxType);
                 cType.setText("Coston");
                 String cNtext = cName.getText().toString();
@@ -123,7 +125,22 @@ myLog("Lines", lines.toString());
                 pEdit.putInt("currentWallet", (position +1 ));
                 pEdit.commit();
 
-                startActivity(i);
+                //Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
+                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+//                fragmentTransaction.setCustomAnimations(R.animator.
+//                        R.anim.slide_in,  // enter
+//                        R.anim.slide_out // exi
+                //fragmentTransaction.remove(currentFragment);
+                HomeFragment f = new HomeFragment();
+                Bundle args = new Bundle();
+                args.putInt("ltype", 2000);
+                args.putString("selectFragment", "home");
+                f.setArguments(args);
+
+                fragmentTransaction.replace(R.id.nav_host_fragment, f);
+                fragmentTransaction.commit();
+
+               // startActivity(i);
 
             }
         });
