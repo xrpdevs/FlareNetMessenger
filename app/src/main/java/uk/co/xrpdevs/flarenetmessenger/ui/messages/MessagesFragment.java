@@ -11,6 +11,9 @@ import android.os.StrictMode;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -24,6 +27,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
@@ -35,7 +39,6 @@ import org.web3j.tuples.generated.Tuple3;
 import org.web3j.tx.gas.DefaultGasProvider;
 
 import java.math.BigInteger;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
@@ -53,19 +56,17 @@ import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Smstest3;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.ui.contacts.ContactsFragment;
-import uk.co.xrpdevs.flarenetmessenger.ui.home.HomeFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
 
 import static uk.co.xrpdevs.flarenetmessenger.ContactsManager.getPubKey;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.deCipherText;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
-import static uk.co.xrpdevs.flarenetmessenger.Utils.toByte;
 
 public class MessagesFragment extends Fragment implements EnterMsgDialogFragment.OnResultListener {
     public SimpleAdapter InboxAdapter;
     public SimpleAdapter simpleAdapter;
     Smstest3 contract;
-    BigInteger GAS_LIMIT = BigInteger.valueOf(670025L);
+    BigInteger GAS_LIMIT = BigInteger.valueOf(1670025L);
     BigInteger GAS_PRICE = BigInteger.valueOf(200000L);
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
@@ -104,9 +105,16 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
            TODO: Perhaps the XOR can be rotated, or based on a the hash of the content of the first
                  message a user sends to another.
                  We can use one of the DATA[n] fields in the contacts to store the pubkey for the user
+                 ^^^ this is the implementation that this version of the app is currently using.
+
+           TODO: Better yet, create a new KeyPair based on a hash of the wallet's Pub or Prv key and
+                 use those instead.
+
+           TODO: Out-of-band public key sharing?
          */
 
         getMessagesThread = new getInbox();
+        setHasOptionsMenu(true);
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.LAX);
         myLog("FRAG", "MessagesFragment");
         root = inflater.inflate(R.layout.fragment_messages, container, false);
@@ -186,7 +194,11 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
             // The part that checks if the string was properly padded to the
             // correct length was borrowed from d@anish's solution
             Boolean isDiv4 = str.replace(" ","").length() % 4 == 0;
-            //myLog("B64", new String(data, StandardCharsets.UTF_8));
+
+
+            // Anything thats B64 encoded is going to be longer than 50 chars due to the
+            // crypto data overhead
+
             return (isDiv4 & (data.length>50));
         }
         catch (Exception e)
@@ -197,13 +209,6 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
     }
     public SimpleAdapter fillListView(final ArrayList lines) {
 
-        /* todo: hashmap of wallet addresses vs contact names in order to prevent repeated cursor lookups.
-                 if hashmap empty, check cursor, if not, check cursor and if match add to hashmap
-
-           todo: done
-         */
-
-        //ArrayAdapter<String> adapter;
         simpleAdapter = new SimpleAdapter(mThis.getContext(), lines, R.layout.listitem_inbox, new String[]{"cnam", "body", "type", "date"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}){
             @Override
             public View getView (int position, View convertView, ViewGroup parent) {
@@ -314,9 +319,6 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
         return "";
     }
 
-
-
-
     public int inboxSize() {
         int mCount = 0;
         try {
@@ -342,7 +344,6 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
             int pkPos = -1;
             ArrayList<HashMap<String, String>> maplist = new ArrayList<HashMap<String, String>>();
             try {
-                //Tuple3<List<byte[]>, List<BigInteger>, List<String>> inbox = contract.receiveMessages().send(); // old contract
                 Tuple3<List<BigInteger>, List<String>, List<String>> inbox = contract.receiveMessages().send();
                 myLog("TEST", inbox.toString());
                 List list1 = inbox.component1(); // timestamp
@@ -363,14 +364,12 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                             String XORpKey = new String(Base64.decode(pubKeyTmp.substring(2)));
                             Log.d("RXOR", XORpKey);
 
-                            //if(ContactsManager.getPubKey(mThis.getContext(), list2.get(i).toString()) == null) {
+                            if(ContactsManager.getPubKey(mThis.getContext(), list2.get(i).toString()) == null) {
                                 BigInteger a = new BigInteger(XORpKey, 16);
                                 String HexPubKey = Utils.xorStrings(a, body).second;
                                 Log.d("RXOR", HexPubKey);
                                 ContactsManager.updatePubKey(mThis.getContext(), list2.get(i).toString(), HexPubKey);
-//                            XORpKey = "RZ"+new String(Base64.encode(b.xor(a).toByteArray()));
-//                            BigInteger rtrvdPub =
-                            //}
+                            }
                         }
                         maplist.add(map);
                     }
@@ -393,9 +392,6 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
 
                 feedList.add(poo);
             }
-
-    //        Collections.reverse(feedList);
-
             mThis.getActivity().runOnUiThread(new Runnable() {
 
                 @Override
@@ -406,10 +402,6 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                     InboxAdapter = fillListView(feedList);
                     lv.setAdapter(InboxAdapter);
                     myLog("TEST", "Running UI thread");
-                   // myLog("feedList", feedList.toString());
-                    //        Collections.reverse(feedList);
-                   // InboxAdapter = fillListView(feedList);
-
                 }
             });
 
@@ -426,7 +418,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
     public void onResult(String pinCode, Boolean enc) throws GeneralSecurityException {
         EMDialog.dismiss();
         // todo: check here that we have the destination address' public key!
-        //byte[] ct = Utils.encryptTextWithPubKey(pinCode, deets.get("walletPubKey"));
+
 
         message = pinCode;
         encReqd = enc;
@@ -435,10 +427,6 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
 
         sendMessageThread = new sendMessage();
         sendMessageThread.start();
-
-//        myLog("Message Send:", new String(ct));
-
-        //setPIN(pinCode);
     }
 
     private boolean showEditDialog(String title, String prompt, Boolean cancelable) {
@@ -467,17 +455,12 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
         public void run() {
             myLog("TEST", "Running SendMSG thread");
             String rawString = message;
-            //byte[] bytes = rawString.getBytes(StandardCharsets.UTF_8);
-            //String walletPrvKey = deets.get("walletPrvKey");
+
             String walletPubKey = deets.get("walletPubKey");
-            //walletPrvKey = walletPrvKey.replace("0x", "");
-            //walletPubKey = walletPubKey.replace("0x", "");
-            //PublicKey x509key;
+
             String remotePubKey = null;
             myLog("walletPubKey", walletPubKey);
-            //wpk="6RLj4k7CmA7RLsphpi/LwyXNaSsc1MbYmCa3iPcIzLk8jgaPCq3EqeyhJcmpOzzeHjnXnwbK6J9yF8RozFiuvQ==";
-            //byte[] wpkBytes = toByte(walletPubKey);
-            // wpk=Base64.decode()
+
 
             String base64_encoded_ciphertext;
             byte[] ciphertext = new byte[]{0}; //ciphertext[0]=0;
@@ -487,22 +470,8 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                 if (encReqd) {
                     if ((remotePubKey = getPubKey(getContext(), destination)) != null) {
                         byte[] ct = Utils.encryptTextWithPubKey(message, remotePubKey);
-/*
-               // x509key = Utils.rawToEncodedECPublicKey("secp256k1", wpkBytes); //.decode(wpk));
-               // myLog("KeyInfo:", x509key.getFormat());
-               // Cipher iesCipher = Cipher.getInstance("ECIES");
-               // iesCipher.init(Cipher.ENCRYPT_MODE, x509key);
 
-               // ciphertext = iesCipher.doFinal(rawString.getBytes());
-
-
-
-
-
-                //b = new String(ciphertext, StandardCharsets.UTF_8);*/
                         String hexStr = Hex.toHexString(ct);
-                        //String hexStr2 = hexStr.substring(2);
-                        byte[] hexByt = toByte(hexStr);
                         base64_encoded_ciphertext = new String(Base64.toBase64String(ct).getBytes(), StandardCharsets.UTF_8);
 
                         myLog("Ciphered: ",
@@ -510,8 +479,6 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                                         "B64: " + Base64.toBase64String(ciphertext) + "\n" +
                                         "Len: " + base64_encoded_ciphertext.length());
 
-
-//                receipt = contract.sendMessage(addresses.getSelectedItem().toString(), utf8EncodedString).send();
                         receipt = contract.sendMessage(destination, base64_encoded_ciphertext).send();
                         text = "Message sent!\n\nGas used:" + receipt.getGasUsed().toString();
                     } else {
@@ -544,33 +511,6 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
 
             }
 
-    /*        try {
-                myLog("PRIVATE KEY", "Len (Hex ) "+walletPrvKey.length()+"\nLen (Byte) "+(walletPrvKey.length()/2)+"\nKey: "+walletPrvKey);
-                Cipher iesDecipher = Cipher.getInstance("ECIES");
-
-                //BigInteger s = new BigInteger(walletPrvKey, 16);
-                //PrivateKey X509_priv = Utils.getPrivateKeyFromECBigIntAndCurve(s, "secp256k1");
-
-                ECKeyPair pair = c.getEcKeyPair();
-
-                PrivateKey X509_priv = Utils.getPrivateKeyFromECBigIntAndCurve(pair.getPrivateKey(), "secp256k1");
-                //PrivateKey X509_priv = (PrivateKey) pair.getPublicKey();
-
-                //java.security.KeyFactory keyFactory = KeyFactory.getInstance("EC", secP);
-                //PrivateKey X509_priv = Utils.gPK(toByte(walletPrvKey));
-                iesDecipher.init(Cipher.DECRYPT_MODE, X509_priv);
-                myLog("DECIPHERED TEXT", "" + new String(iesDecipher.doFinal(ciphertext)));
-            } catch (Exception e){
-                myLog("DECRYPTION FAILED", e.getMessage());
-                e.printStackTrace();
-            }
-            if(receipt.isStatusOK()){
-                text = "Message sent!\n"+receipt.getGasUsed().toString();
-            } else {
-                text = "Message sending failed";
-            }
-*/
-            //String poo = Utils.deCipherText(c, ciphertext);
             String finalText = text;
             mAct.runOnUiThread(() -> {
                 dialogActivity.dismiss();
@@ -584,6 +524,31 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                 }
 
             });
+        }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.fragment_menu_messages, menu);
+        super.onCreateOptionsMenu(menu,inflater);
+    }
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle item selection
+        switch (item.getItemId()) {
+
+            case R.id.mm_cleanInbox:
+                try {
+                    contract.clearInbox().send();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                showDialog("Info:", "Inbox cleared", true);
+                getMessagesThread = new getInbox();
+                getMessagesThread.start();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 }

@@ -110,7 +110,7 @@ public class EnterMsgDialogFragment extends android.app.DialogFragment {
                     maxlen = 320;
                     error="Max Length: 320";
                 }
-
+                maxlen = 1000;
                 if(s.toString().length() > maxlen){
                     editMessage.setError(error);
                 } else if (isFieldValid(s.toString())) {

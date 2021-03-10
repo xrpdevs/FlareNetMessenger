@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/mm_cleanInbox"
+        android:title="Clear Inbox" />
+    <!--<item android:id="@+id/version"
+        android:title="@string/about_this_app" />
+    <item android:id="@+id/ma1"
+        android:title="@string/old_mainactivity" />
+    <item android:id="@+id/pks"
+        android:title="Show PubKey" />-->
+</menu>
