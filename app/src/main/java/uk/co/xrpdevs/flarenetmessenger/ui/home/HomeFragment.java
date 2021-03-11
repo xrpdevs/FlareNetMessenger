@@ -1,12 +1,11 @@
 package uk.co.xrpdevs.flarenetmessenger.ui.home;
 
 import android.app.Activity;
+import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-//import android.net.Credentials;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -15,15 +14,12 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -40,16 +36,16 @@ import org.web3j.protocol.Web3j;
 import java.util.HashMap;
 
 import uk.co.xrpdevs.flarenetmessenger.BuildConfig;
-import uk.co.xrpdevs.flarenetmessenger.ContactList;
 import uk.co.xrpdevs.flarenetmessenger.FirstRun;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
-import uk.co.xrpdevs.flarenetmessenger.ui.contacts.ContactsFragment;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
+//import android.net.Credentials;
 
 public class HomeFragment extends Fragment {
 
@@ -79,6 +75,7 @@ public class HomeFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
+        Service bob = new MyService();
         try {
             deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
         } catch (JSONException e) {

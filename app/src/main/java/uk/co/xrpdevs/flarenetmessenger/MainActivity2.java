@@ -3,12 +3,6 @@ package uk.co.xrpdevs.flarenetmessenger;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-
-import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
@@ -17,6 +11,8 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import uk.co.xrpdevs.flarenetmessenger.ui.contacts.ContactsFragment;
 
@@ -36,6 +32,15 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+
+        if(!Utils.isMyServiceRunning(MyService.class, this)) {
+            try {
+                Intent serviceIntent = new Intent(this, MyService.class);
+                startService(serviceIntent);
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
         myLog("FRAG", "onCreateCalled");
         setContentView(R.layout.activity_main2);
         BottomNavigationView navView = findViewById(R.id.nav_view);

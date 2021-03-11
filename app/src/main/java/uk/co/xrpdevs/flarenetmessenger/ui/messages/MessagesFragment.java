@@ -48,6 +48,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import uk.co.xrpdevs.flarenetmessenger.ContactsManager;
+import uk.co.xrpdevs.flarenetmessenger.Contracts.Fsms;
 import uk.co.xrpdevs.flarenetmessenger.EnterMsgDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.Inbox;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
@@ -132,6 +133,8 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
         cgp = new DefaultGasProvider();
         c = Credentials.create(deets.get("walletPrvKey"));
         contract = Smstest3.load(contractAddress, FlareConnection, c, GAS_PRICE, GAS_LIMIT );
+
+        Fsms bob = MyService.fsms;
 
         //ibSize = inboxSize();
         if(prefs.getInt("walletCount", 0) > 0 ) {
@@ -496,6 +499,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                     text = "Pubkey Sent!\nGas Used: " + receipt.getGasUsed().toString() + "\n\n";
                     receipt = contract.sendMessage(destination, message).send();
                     text = text + "Message sent!\nGas used:" + receipt.getGasUsed().toString();
+                    receipt = MyService.fsms.sendMessage(destination, message).send();
                 }
             } catch (Exception e) {
                 if (receipt != null) {

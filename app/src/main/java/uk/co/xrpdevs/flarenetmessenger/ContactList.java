@@ -2,7 +2,6 @@ package uk.co.xrpdevs.flarenetmessenger;
 
 import android.Manifest;
 import android.content.ContentUris;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -16,10 +15,8 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,8 +30,6 @@ import com.google.zxing.integration.android.IntentResult;
 import org.json.JSONException;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
-import org.web3j.protocol.core.methods.response.EthBlockNumber;
-import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.gas.ContractGasProvider;
 import org.web3j.tx.gas.DefaultGasProvider;
 
@@ -48,42 +43,27 @@ import java.util.Objects;
 
 public class ContactList extends AppCompatActivity{
     public Web3j FlareConnection;
-    private Object TextView;
-    TextView myTV;
-    EthBlockNumber bob;
-    Button refresh;
-    Button sendMsg;
-    TextView myBalance;
-    android.widget.TextView message;
-    public String walletAddress;
-    public String contractAddress;
-    public String walletPrivateKey;
+    Smstest3 contract;
     Credentials c;
     ContractGasProvider cgp;
-    TransactionReceipt receipt;
-    Spinner addresses;
-    Button inbox;
-    public SimpleAdapter InboxAdapter;
-    public SimpleAdapter simpleAdapter;
-    Smstest3 contract;
-    BigInteger GAS_LIMIT = BigInteger.valueOf(670025L);
-    BigInteger GAS_PRICE = BigInteger.valueOf(200000L);
+    BigInteger GAS_LIMIT,GAS_PRICE;
+    public String walletAddress, contractAddress;
     SharedPreferences prefs;
-    public ArrayList<HashMap<String, String>> feedList = new ArrayList<HashMap<String, String>>();
-    HashMap<String, String> deets;
-    ArrayList<HashMap<String, String>> maplist = new ArrayList<HashMap<String, String>>();
+    public SimpleAdapter InboxAdapter, simpleAdapter;
+    ArrayList<HashMap<String, String>> feedList = new ArrayList<HashMap<String, String>>();
+    ArrayList<HashMap<String, String>> maplist = new ArrayList<HashMap<String, String>>();  //todo: can one of these be omitted
+    HashMap<String, String> contactItem, deets;
+    IntentIntegrator integrator;
     ListView lv;
     public int ListType;
     int WITH_ACCOUNTS = 1000;
-    IntentIntegrator integrator;
-    Context mThis = this;
-    HashMap<String, String> contactItem;
-    @Override
 
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contacts);
-
+        GAS_LIMIT = BigInteger.valueOf(670025L);
+        GAS_PRICE = BigInteger.valueOf(200000L);
 
         Intent in = getIntent();
         ListType = in.getIntExtra("lType", 1000);
@@ -100,7 +80,7 @@ public class ContactList extends AppCompatActivity{
         contractAddress = "0x4a1400220373983f3716D4e899059Dda418Fd08A"; // v1 SMSTest2
 
         contractAddress = MyService.contractAddress;
-        addresses = findViewById(R.id.spinner);
+
         try {
             deets = Utils.getPkey(this, prefs.getInt("currentWallet", 0));
         } catch (JSONException e) {
@@ -206,12 +186,14 @@ public class ContactList extends AppCompatActivity{
         });
 
         return simpleAdapter;
-
     }
 
-
-
-
+    // TODO: Present RAWCONTACTS with "yourAccountType" as just one account
+    //       In the event that we support multiple blockchains in the future, we can use
+    //       one of the Data.DATA[n] fields to store additional information on a per rawcontact basis
+    //       about which blockchain the addresses pertain to. We can display small icons in the ListItem View
+    //       below the contact name to let the user know what network their contact has a wallet for.
+    // TODO: Get contact pictures for the list if they exist otherwise (N) Name like in android contacts.
     class Contact_thread extends Thread {
 
         @Override
@@ -227,6 +209,8 @@ public class ContactList extends AppCompatActivity{
             List<Long> ctl = new ArrayList<Long>();
 
             if(ListType == WITH_ACCOUNTS) {
+
+
                 Log.d("TEST", "ContactList WITH_ACCOUNTS");
                 yourAccountType = "uk.co.xrpdevs.flarenetmessenger";//ex: "com.whatsapp"
 
@@ -305,26 +289,20 @@ public class ContactList extends AppCompatActivity{
                 Log.d("TEST", ctl.toString());
             }
 
-                Log.d("TEST", maplist.toString());
+            Log.d("TEST", maplist.toString());
 
             runOnUiThread(new Runnable() {
-
                 @Override
                 public void run() {
-                    // TODO Auto-generated method stub
-                    // mContactList.setAdapter(cursorAdapter);
-
                     InboxAdapter = fillListView(maplist);
                     lv.setAdapter(InboxAdapter);
                     Log.d("TEST", "Running UI thread");
-
-
-
                 }
             });
         }
     }
 
+    // todo: move to utils class
     public String getDate(Long ts) {
         Log.d("mooo", "val: " + ts);
         Date df = new Date(ts * 1000);
@@ -394,21 +372,6 @@ public class ContactList extends AppCompatActivity{
                     abc.setData(myUri);
                     startActivity(abc);
 
-
-                   // abc.setData
-
-        //            pEdit.putString("wallet"+String.valueOf(wC), new JSONObject(tmp).toString());
-        //            pEdit.putInt("walletCount", wC);
-        //            pEdit.putInt("currentWallet", wC);
-
-                    //                        pEdit.putString("walletPrvKey", ""+scanContent);
-//                        pEdit.putString("walletPubKey", "0x"+publicKey);
-//                        pEdit.putString("walletAddress",""+addr);
-        //            pEdit.commit();
-         //           pEdit.apply();
-                    //       formatTxt.setText("FORMAT: " + scanFormat);
-                    //         contentTxt.setText("CONTENT: " + scanContent);
-                    //we have a result
                 } else {
                     Toast toast = Toast.makeText(getApplicationContext(),
                             "No scan data received!", Toast.LENGTH_SHORT);
@@ -423,19 +386,18 @@ public class ContactList extends AppCompatActivity{
         }
     }
 
-
-
     @Override
     public void onResume() {
         super.onResume();
     }
 
-    @Override
+    @Override //todo: prevent possible crashes related to onResume/onPause
     public void onPause() {
         super.onPause();
 
     }
 
+    // todo: is this even referenced in this context
     public void doScan(){
 
         Log.d("TEST", "Button Pressed");
