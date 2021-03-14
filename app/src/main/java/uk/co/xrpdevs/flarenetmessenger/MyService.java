@@ -9,19 +9,28 @@ package uk.co.xrpdevs.flarenetmessenger;
 
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
+import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
+
 import org.json.JSONException;
 import org.web3j.abi.EventEncoder;
+import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.http.HttpService;
@@ -39,17 +48,26 @@ public class MyService extends Service {
         super();
     }
 
-    static BigInteger GAS_LIMIT = BigInteger.valueOf(1670025L);
-    static BigInteger GAS_PRICE = BigInteger.valueOf(200000L);
+    static BigInteger GAS_LIMIT = BigInteger.valueOf(8000000L);
+    static BigInteger GAS_PRICE = BigInteger.valueOf(470000000000L);
+
+    static String rpc = "https://api.avax-test.network/ext/bc/C/rpc";
 
     public static String contractAddress= "0x7884C21E95cBBF12A15F7EaF878224633d6ADF54";
-    public static String fsmsContractAddress = "0xba448E96B4D03d4a5AF6faC9CAE12cac5004dBd2";
-    static Web3j fsmsLink = Web3j.build(new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
+//    public static String fsmsContractAddress = "0x0A51d135316cc52A0CBac6f0D92c927A69bf6E27";  //COSTON
+    public static String fsmsContractAddress = "0xdA451F4feBBbdDdAb8A80a606B45146d0ac1C4fa";    // AVAXTEST
+//    public static String fCoinAddr = "0x068412C17fc66f73CC24048c334A1DBA994e8fED"; // COSTON
+    public static String fCoinAddr = "0x94e0e1f82c99dBC11271DB7E39c1Af5E379aF8e0";              // AVAXTEST
+    //    static Web3j fsmsLink = Web3j.build(new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
+//    static Web3j fCoinLink = Web3j.build(new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
+    static Web3j fsmsLink = initConnection(rpc, 0xa869);
+    static Web3j fCoinLink = initConnection(rpc, 0xa869);
     public static Fsms fsms;
+    public static ERC20 fcoin;
     public static SharedPreferences prefs;
     public SharedPreferences.Editor pEdit;
     static HashMap<String, String> deets;
-    static org.web3j.crypto.Credentials c;
+    public static org.web3j.crypto.Credentials c;
     Context mC;
 
 
@@ -63,6 +81,23 @@ public class MyService extends Service {
     /**
      * Factory Method
      */
+
+
+    public static ERC20 getERC20link(String contractAddress, Credentials c, String RPCendPoint){
+        //Web3j RPC = Web3j.build(new HttpService(RPCendPoint));
+        ERC20 aToken = ERC20.load(contractAddress, fCoinLink, MyService.c, GAS_PRICE, GAS_LIMIT);
+        return aToken;
+    }
+
+    @Override
+    public void onCreate(){
+        super.onCreate();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            startMyOwnForeground();
+        else
+            startForeground(1, new Notification());
+    }
+
     public static void start(Context context) {
         if (!isStarted()) {
             context.startService(new Intent(context, MyService.class));
@@ -113,6 +148,10 @@ public class MyService extends Service {
         isAlarmSet = false;
     }
 
+    public static void initialiseContracts(){
+        fsms = Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+        fcoin = ERC20.load(fCoinAddr, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -130,7 +169,11 @@ public class MyService extends Service {
             e.printStackTrace();
         }
         c = create(deets.get("walletPrvKey"));
-        fsms = Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+     //   fsms = Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+    //    fcoin = ERC20.load(fCoinAddr, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+       initialiseContracts();
+
+        //fcoin.transfer("")
 
         if (!isAlarmScheduled()) {
             setAlarm();
@@ -164,38 +207,103 @@ public class MyService extends Service {
         Boolean a;
         BGThread(Boolean a){this.a = a;}
         public void run() {
+
+            try {
+                BigInteger bal = fcoin.balanceOf(c.getAddress()).send();
+                String cn = fcoin.name().send();
+                Log.d("ERC20-name", cn);
+                Log.d("BALANCE", bal.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             EthFilter eventFilter = new EthFilter(null, null, fsmsContractAddress);
-            eventFilter.addSingleTopic(EventEncoder.encode(Fsms.MESSAGENOTIFICATION_EVENT)); // filter: event type (topic[0])
-            eventFilter.addOptionalTopics(null, deets.get("walletAddress")); // filter: event parameters (gameId: no filter, player1: no filter, player2: filter)
-            //eventFilter.addOptionalTopics(null, "0x3457834985"); // filter: event parameters (gameId: no filter, player1: no filter, player2: filter)
-            myLog("fsms", "running on our owd fred");
-            fsms.messageNotificationEventFlowable(eventFilter)
+            eventFilter.addSingleTopic(EventEncoder.encode(Fsms.MESSAGENOTIFICATION_EVENT));
+            //TODO: Filter isn't working yet. Needs investigation!
+            // think it is because walletAddress for both _to and _from will match walletAddress.
+            // it doesn't check by position, only if the hash exists.
+            // think we need to alter our contract to only emit (a hash of?) _to as having both _from and _to in Events makes
+            // it easier for an outsider to collect metadata
+            //
+            // Modified smart contract with same results. Frustrating. Is this the best way of doing this?
+            // We could store a "lastReceivedMessageTimeStamp" in wallet info, then just query the contract for any new messages
+            // since that time. Since the HashMap that messages are stored in is static, we could add new messages to it from the thread
+            // in the Service if there are activities open. Is it worth user's data if we're having to listen to EVERY messageNotificationEvent
+            // and then filter in the app - presumably this is what the Flowable has to do anyway, seems like a waste of resources.                                        vcvv
+
+            eventFilter.addOptionalTopics(null, deets.get("walletAddress"));
+
+            myLog("fsms", "running on our owd fred, "+deets.get("walletAddress").substring(2));
+        /*    Disposable bob = fsms.messageNotificationEventFlowable(eventFilter)
                     .doOnError(
                             error -> System.err.println("The error message is: " + error.getMessage()))
                     .subscribe(messageNotificationEventResponse ->
                     {
                         doAlert(messageNotificationEventResponse);
-                        myLog("EVENT", "bob");
-                    }, Throwable::printStackTrace);
+                        myLog("EVENT", deets.get("walletAddress")+" "+messageNotificationEventResponse._to);
+                    }, Throwable::printStackTrace);*/
+
         }
     }
-
     public void doAlert(Fsms.MessageNotificationEventResponse mno){
-        myLog("EVENT", mno.toString());
-        try {
-            Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-            Ringtone r = RingtoneManager.getRingtone(mC, notification);
-            r.play();
-        } catch (Exception e) {
-            e.printStackTrace();
+        myLog("EVENT", "_to   = walletaddress: "+mno._to.equals(deets.get("walletAddress")));
+        if(mno._to.equals(deets.get("walletAddress"))) {
+            //    mno.
+            try {
+                Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                Ringtone r = RingtoneManager.getRingtone(mC, notification);
+                r.play();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
+    }
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void startMyOwnForeground(){
+        String NOTIFICATION_CHANNEL_ID = "uk.co.xrpdevs.flarenetmessenger";
+        String channelName = "My Background Service";
+        NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE);
+        chan.setLightColor(Color.BLUE);
+        chan.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);
+        NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        assert manager != null;
+        manager.createNotificationChannel(chan);
+
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
+        Notification notification = notificationBuilder.setOngoing(true)
+                .setSmallIcon(R.drawable.ic_wallet)
+                .setContentTitle("App is running in background")
+                .setPriority(NotificationManager.IMPORTANCE_MIN)
+                .setCategory(Notification.CATEGORY_SERVICE)
+                .build();
+        startForeground(2, notification);
+    }
+
+    @Override
+    public boolean stopService(Intent name) {
+        // TODO Auto-generated method stub
+        cancelAlarm();
+        stopSelf();
+        return super.stopService(name);
+
+    }
+
+    public static Web3j initConnection(String rpc, int chainID){
+
+        Web3j myEtherWallet = Web3j.build(
+
+                new HttpService(rpc));
+//                new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
+        myEtherWallet.ethChainId().setId(chainID);
+        return myEtherWallet;
     }
 
     public static Web3j initWeb3j(){
 
         Web3j myEtherWallet = Web3j.build(
-                new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
 
+                new HttpService("https://api.avax-test.network/ext/bc/C/rpc"));
+//                new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
+        myEtherWallet.ethChainId().setId(0xa869);
         return myEtherWallet;
     }
 

@@ -1,0 +1,38 @@
+{
+  "fCoin": {
+    "Symbol": "FCX",
+    "Address": "0x94e0e1f82c99dBC11271DB7E39c1Af5E379aF8e0",
+    "Type": "ERC20",
+    "Decimals": 18
+  },
+  "dXUSD": {
+    "Symbol": "dXUSD",
+    "Address": "0x0658FA064aca71Ec54bA884ea1B3a9538a87c010",
+    "Type": "ERC20"
+  },
+  "YFLR": {
+    "Symbol": "dYFLR",
+    "Address": "0x3018cD9E6b892308D9e3f3429C2006996c270375",
+    "Type": "ERC20"
+  },
+  "dYFIN": {
+    "Symbol": "dYFIN",
+    "Address": "0x3bC342EA8C7f48a2FFC97Bad034342E2EbC65846",
+    "Type": "ERC20"
+  },
+  "dFXRP": {
+    "Symbol": "dFXRP",
+    "Address": "0xD43b5f8871435e1d9CE3bf7CDeffd261D803C45A",
+    "Type": "ERC20"
+  },
+  "dFLTC": {
+    "Symbol": "dFLTC",
+    "Address": "0x57A252a90F58457863026eD92188739FFca9d8FB",
+    "Type": "ERC20"
+  },
+  "dFDoge": {
+    "Symbol": "dFDOGE",
+    "Address": "0x903dfC745Fb3cA50cC41393D7D822407950d0Da6",
+    "Type": "ERC20"
+  }
+}

@@ -529,7 +529,7 @@ public class MainActivity extends AppCompatActivity {
             //Pair<BigDecimal, String> gmb = Utils.getMyBalance(deets.get("walletAddress"));
 
             myTvString = "Current Coston\nBlock Number:\n" + bob.getBlockNumber().toString() + "  Wallets: " + prefs.getInt("walletCount", 0) + "  Current: " + prefs.getInt("currentWallet", 0);
-            myBalanceS = "FXRP Balance of Flare Testnet Address " + deets.get("walletAddress") + " = " + Utils.getMyBalance(deets.get("walletAddress")).first.toString();
+            myBalanceS = "FLR Balance of Flare Testnet Address " + deets.get("walletAddress") + " = " + Utils.getMyBalance(deets.get("walletAddress")).first.toString();
 
 
 

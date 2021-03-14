@@ -2,11 +2,16 @@ package uk.co.xrpdevs.flarenetmessenger.ui.home;
 
 import android.app.Activity;
 import android.app.Service;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -14,12 +19,14 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -33,6 +40,7 @@ import org.json.JSONException;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 
 import uk.co.xrpdevs.flarenetmessenger.BuildConfig;
@@ -42,7 +50,9 @@ import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
+import uk.co.xrpdevs.flarenetmessenger.ui.token.TokensFragment;
 
+import static android.content.Context.CLIPBOARD_SERVICE;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 //import android.net.Credentials;
@@ -60,6 +70,7 @@ public class HomeFragment extends Fragment {
     BottomNavigationView navView;
     TextView walletName;
     Activity mAct;
+    Button hShare, hCopy, hAssets;
 
     Credentials c;
     Web3j fc = MyService.initWeb3j();
@@ -96,6 +107,11 @@ public class HomeFragment extends Fragment {
 
                     navView.setSelectedItemId(R.id.navigation_home);
                 }
+                if (args.getString("selectFragment", "").equals("tokens")) {
+                    myLog("FRAG", "Has selectFragment = tokens");
+
+                    navView.setSelectedItemId(R.id.navigation_wallets);
+                }
             }
         }
         if(prefs.contains("currentWallet")) {
@@ -120,6 +136,7 @@ public class HomeFragment extends Fragment {
         HomeViewModel homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
         root = inflater.inflate(R.layout.fragment_home, container, false);
         final TextView textView = root.findViewById(R.id.text_home);
+        hCopy = root.findViewById(R.id.homeQR_copy); hShare = root.findViewById(R.id.homeQR_share); hAssets = root.findViewById(R.id.hAssets);
         walletName = root.findViewById(R.id.textView7);
         homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
      //   BottomNavigationView navView = root.getParent().findViewById(R.id.nav_view);
@@ -137,8 +154,52 @@ public class HomeFragment extends Fragment {
 
         //webview.loadUrl("https://xrpdevs.co.uk/");
 
+        hCopy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ClipboardManager clipboard = (ClipboardManager) mAct.getSystemService(CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("Copied", deets.get("walletAddress"));
+                clipboard.setPrimaryClip(clip);
+            }
+        });
+        hShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                // TODO: Add some information about what blockchain wallet is for to avoid confusion.
+
+                ImageView imageView = root.findViewById(R.id.imageView2);
+                Bitmap bitmap = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
+
+                String bitmapPath = MediaStore.Images.Media.insertImage(mAct.getContentResolver(), bitmap, "Wallet", deets.get("walletAddress"));
+                Uri bitmapUri = Uri.parse(bitmapPath);
+
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("image/jpg");
+                intent.putExtra(Intent.EXTRA_STREAM, bitmapUri);
+                startActivity(Intent.createChooser(intent, "Share"));
+
+            }
+        });
+        hAssets.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
+                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                //fragmentTransaction.remove(currentFragment);
+                Fragment f = new TokensFragment();
+                Bundle args = new Bundle();
+                args.putInt("ltype", 2000);
+                args.putString("selectFragment", "tokens");
+                f.setArguments(args);
+                fragmentTransaction.replace(R.id.nav_host_fragment, f);
+                fragmentTransaction.commit();
+            }
+        });
         return root;
     }
+
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
@@ -149,7 +210,14 @@ public class HomeFragment extends Fragment {
                 startActivity(intent2);
                 return true;
             case R.id.version:
-                showDialog("Version: "+ BuildConfig.VERSION_NAME+"\n\nBuild: "+BuildConfig.VERSION_CODE, true);
+                BigInteger balance = new BigInteger("0");
+                //try {
+            //        balance = fcoin.balanceOf(deets.get("walletAddress")).send();
+            //    } catch (Exception e) {
+           //         e.printStackTrace();
+           //     }
+                showDialog("Version: "+ BuildConfig.VERSION_NAME+"\n\nBuild: "+BuildConfig.VERSION_CODE+"\n\n"+
+                        "FCoin Balance: "+balance, true);
                 return true;
             case R.id.ma1:
                 Intent aa = new Intent(this.getActivity(), MainActivity.class); startActivity(aa);

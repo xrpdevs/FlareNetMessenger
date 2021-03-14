@@ -2,6 +2,8 @@ package uk.co.xrpdevs.flarenetmessenger.ui.messages;
 
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -10,6 +12,7 @@ import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.ContactsContract;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -54,19 +57,20 @@ import uk.co.xrpdevs.flarenetmessenger.Inbox;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.R;
-import uk.co.xrpdevs.flarenetmessenger.Smstest3;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.ui.contacts.ContactsFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
 
+import static android.content.Context.CLIPBOARD_SERVICE;
 import static uk.co.xrpdevs.flarenetmessenger.ContactsManager.getPubKey;
+import static uk.co.xrpdevs.flarenetmessenger.MyService.fsms;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.deCipherText;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 public class MessagesFragment extends Fragment implements EnterMsgDialogFragment.OnResultListener {
     public SimpleAdapter InboxAdapter;
     public SimpleAdapter simpleAdapter;
-    Smstest3 contract;
+    Fsms contract;
     BigInteger GAS_LIMIT = BigInteger.valueOf(1670025L);
     BigInteger GAS_PRICE = BigInteger.valueOf(200000L);
     SharedPreferences prefs;
@@ -92,6 +96,8 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
     PleaseWaitDialog dialogActivity;
     Boolean encReqd = false;
     String pubKeyTmp = null;
+    private int mParentContextMenuListIndex;
+    AdapterView.AdapterContextMenuInfo subInfo;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -121,10 +127,11 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
         root = inflater.inflate(R.layout.fragment_messages, container, false);
         lv = root.findViewById(R.id.inbox_list);
         lv.setAdapter(InboxAdapter);
+        registerForContextMenu(lv);
         prefs = mThis.getActivity().getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
         FlareConnection = MyService.initWeb3j();
-        contractAddress = MyService.contractAddress;
+        contractAddress = MyService.fsmsContractAddress;
         try {
             deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
         } catch (JSONException e) {
@@ -132,9 +139,11 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
         }
         cgp = new DefaultGasProvider();
         c = Credentials.create(deets.get("walletPrvKey"));
-        contract = Smstest3.load(contractAddress, FlareConnection, c, GAS_PRICE, GAS_LIMIT );
+        contract = fsms;
 
-        Fsms bob = MyService.fsms;
+        //MyService.initialiseContracts();
+
+        Fsms bob = fsms;
 
         //ibSize = inboxSize();
         if(prefs.getInt("walletCount", 0) > 0 ) {
@@ -187,7 +196,8 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
             }
         }
         c = Credentials.create(deets.get("walletPrvKey"));
-        contract = Smstest3.load(contractAddress, FlareConnection, c, GAS_PRICE, GAS_LIMIT );
+        MyService.initialiseContracts();
+        contract = MyService.fsms;
 
     }
     public Boolean IsBase64Encoded(String str) {
@@ -210,7 +220,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
             return false;
         }
     }
-    public SimpleAdapter fillListView(final ArrayList lines) {
+    public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) {
 
         simpleAdapter = new SimpleAdapter(mThis.getContext(), lines, R.layout.listitem_inbox, new String[]{"cnam", "body", "type", "date"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}){
             @Override
@@ -275,25 +285,34 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                         Inbox.class);
                 TextView cNam = v.findViewById(R.id.inboxAddress);     // todo: refactor to InboxAddress
                 TextView cBod = v.findViewById(R.id.inboxContent);  // todo: refactor to InboxContent
+                HashMap<String, String> theItem = lines.get(position);
 
-                String who = cNam.getText().toString();
-                String bod = cBod.getText().toString();
-                HashMap<String, String> theItem = (HashMap<String, String>) lines.get(position);
-                destination = theItem.get("cnam");
-               // String pooo = theItem.get("num");
-                myLog("smscseeker", "name:" + theItem.toString());
+                String b64 = theItem.get("body");
 
-                showEditDialog("Reply to "+who, bod, true);
+                if(cBod.getText().toString().equals("* Encrypted *")){
+                    byte[] barr = Base64.decode(b64);
+                    cBod.setText(deCipherText(c, barr));
+                } else{
 
-                //startActivity(i);
+                    String who = cNam.getText().toString();
+                    String bod = cBod.getText().toString();
+
+                    destination = theItem.get("cnam");
+
+                    showEditDialog("Reply to " + who, bod, true);
+                }
+
 
             }
         });
-        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+        /*lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             public boolean onItemLongClick(AdapterView<?> parent, View v, int position, long id) {
                 //Intent i = new Intent(mThis.getActivity(),
                //         Inbox.class);
-                HashMap<String, String> theItem = (HashMap<String, String>) lines.get(position);
+
+                // Todo: Context menuInflater.
+
+/*                HashMap<String, String> theItem = (HashMap<String, String>) lines.get(position);
 
                 TextView inboxAddress = v.findViewById(R.id.inboxContent);
                 String b64 = theItem.get("body");
@@ -311,12 +330,72 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
 
                 return true;
             }
-        });
+        });*/
 
         return simpleAdapter;
 
     }
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        if (v.getId()==R.id.inbox_list) {
+            MenuInflater inflater = mAct.getMenuInflater();
+            inflater.inflate(R.menu.message_item_longclick, menu);
+        }
+    }
 
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info, info2;
+ /*       MenuItem subItem;
+        if(item.hasSubMenu()){
+            SubMenu abc = item.getSubMenu();
+            subItem = abc.getItem();
+            info = (AdapterView.AdapterContextMenuInfo) subItem.getMenuInfo();
+        } else {*/
+            info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        //}
+        TextView textView;
+        String bod;
+        View li;
+        ClipData clip;
+        ClipboardManager cbm = (ClipboardManager) mAct.getSystemService(CLIPBOARD_SERVICE);;
+       // int idxOfList = (info!=null) ? info.position : this.mParentContextMenuListIndex;
+        switch(item.getItemId()) {
+            case R.id.mcm_sendfunds:
+
+                li = ((View) info.targetView);
+                // add stuff here
+                return true;
+            case R.id.mcm_submenu:
+                subInfo = info;
+            case R.id.mcm_copyaddr: case R.id.mcm_copytext:
+
+                Log.d("SUBMENU", "ID: "+item.getItemId());
+                switch (item.getItemId()) {
+                    case R.id.mcm_copytext:
+                        Log.d("SUBMENU", "copytext");
+                        li = ((View) subInfo.targetView);
+                        textView = li.findViewById(R.id.inboxContent);
+                        bod = textView.getText().toString();
+                        clip = ClipData.newPlainText("Copied", bod);
+                        cbm.setPrimaryClip(clip);
+                        return true;
+                    case R.id.mcm_copyaddr:
+                        Log.d("SUBMENU", "copytext");
+                        li = ((View) subInfo.targetView);
+                        textView = li.findViewById(R.id.inboxAddress);
+                        bod = textView.getText().toString();
+                        clip = ClipData.newPlainText("Copied", bod);
+                        cbm.setPrimaryClip(clip);
+                        return true;
+                    default:
+                        return true;
+                }
+            default:
+                return super.onContextItemSelected(item);
+        }
+    }
     public String decryptWithPrivateKey(String... inputs){
 
         return "";
@@ -325,7 +404,8 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
     public int inboxSize() {
         int mCount = 0;
         try {
-            Tuple2<BigInteger, BigInteger> messageCount = contract.getMyInboxSize().send();
+//            fsms = Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+            Tuple2<BigInteger, BigInteger> messageCount = fsms.getMyInboxSize().send();
 
             myLog("TEST", "Inbox count: " + messageCount);
             String msgCount = messageCount.getValue2().toString();
@@ -347,15 +427,15 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
             int pkPos = -1;
             ArrayList<HashMap<String, String>> maplist = new ArrayList<HashMap<String, String>>();
             try {
-                Tuple3<List<BigInteger>, List<String>, List<String>> inbox = contract.receiveMessages().send();
+                Tuple3<List<BigInteger>, List<String>, List<String>> inbox = fsms.receiveMessages(new BigInteger("0")).send();
                 myLog("TEST", inbox.toString());
-                List list1 = inbox.component1(); // timestamp
-                List list2 = inbox.component2(); // "ethereum" address
-                List list3 = inbox.component3(); // message text
+                List<BigInteger> list1 = inbox.component1(); // timestamp
+                List<String> list2 = inbox.component2(); // "ethereum" address
+                List<String> list3 = inbox.component3(); // message text
                 for (int i = 0; i < ibSize; i++) {
                     HashMap<String, String> map = new HashMap<String, String>();
-                    String body = (String) list3.get(i);
-                    map.put("body", (String) list3.get(i));
+                    String body = list3.get(i);
+                    map.put("body", list3.get(i));
                     map.put("ts", list1.get(i).toString());
                     map.put("cnam", list2.get(i).toString());
                     map.put("type", "RECD");
@@ -482,7 +562,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                                         "B64: " + Base64.toBase64String(ciphertext) + "\n" +
                                         "Len: " + base64_encoded_ciphertext.length());
 
-                        receipt = contract.sendMessage(destination, base64_encoded_ciphertext).send();
+                        receipt = fsms.sendMessage(destination, base64_encoded_ciphertext).send();
                         text = "Message sent!\n\nGas used:" + receipt.getGasUsed().toString();
                     } else {
                         showDialog("Error", "No public key available for address", true);
@@ -495,11 +575,14 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                     Log.d("TXOR", xorTst);
 
                     String XORpKey = "RZ" + new String(Base64.encode(xorTmp.getBytes()));
-                    receipt = contract.sendMessage(destination, XORpKey).send();
+
+                    // send pub key. Todo: check if this contact already has our pubkey and omit this step
+                    receipt = fsms.sendMessage(destination, XORpKey).send();
                     text = "Pubkey Sent!\nGas Used: " + receipt.getGasUsed().toString() + "\n\n";
-                    receipt = contract.sendMessage(destination, message).send();
+                    // send message
+                    receipt = fsms.sendMessage(destination, message).send();
                     text = text + "Message sent!\nGas used:" + receipt.getGasUsed().toString();
-                    receipt = MyService.fsms.sendMessage(destination, message).send();
+
                 }
             } catch (Exception e) {
                 if (receipt != null) {
@@ -543,7 +626,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
 
             case R.id.mm_cleanInbox:
                 try {
-                    contract.clearInbox().send();
+                    fsms.clearInbox().send();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

@@ -1,5 +1,6 @@
 package uk.co.xrpdevs.flarenetmessenger.ui.wallets;
 
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -32,6 +33,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
+import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.PKeyScanner;
 import uk.co.xrpdevs.flarenetmessenger.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.R;
@@ -39,6 +41,7 @@ import uk.co.xrpdevs.flarenetmessenger.Smstest3;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.Zipper;
 import uk.co.xrpdevs.flarenetmessenger.ui.home.HomeFragment;
+import uk.co.xrpdevs.flarenetmessenger.ui.token.TokensFragment;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
@@ -58,6 +61,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
     ListView lv;
     PinCodeDialogFragment pinDialog;
     private String pinCode;
+    Activity mAct;
 
     @Override
     public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
@@ -77,7 +81,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
         pEdit = prefs.edit();
       //  super.onCreate(savedInstanceState);
 
-
+        mAct = this.getActivity();
         if(prefs.getInt("walletCount", 0) > 0 ) {
             myLog("FRAG", "Wallet count is non zero");
 
@@ -136,6 +140,9 @@ myLog("Lines", lines.toString());
                 args.putInt("ltype", 2000);
                 args.putString("selectFragment", "home");
                 f.setArguments(args);
+                Intent myService = new Intent(mAct, MyService.class);
+                mAct.stopService(myService);
+                mAct.startService(myService);
 
                 fragmentTransaction.replace(R.id.nav_host_fragment, f);
                 fragmentTransaction.commit();
@@ -220,7 +227,22 @@ myLog("Lines", lines.toString());
             case R.id.export_wallets:
                 exportWallets();
                 return true;
+            case R.id.tokens:
+                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+//                fragmentTransaction.setCustomAnimations(R.animator.
+//                        R.anim.slide_in,  // enter
+//                        R.anim.slide_out // exi
+                //fragmentTransaction.remove(currentFragment);
+                Fragment f = new TokensFragment();
+                Bundle args = new Bundle();
+                args.putInt("ltype", 2000);
+                args.putString("selectFragment", "home");
+                f.setArguments(args);
 
+
+                fragmentTransaction.replace(R.id.nav_host_fragment, f);
+                fragmentTransaction.commit();
+                return true;
      /*       case R.id.theNav:
                 Intent intent2 = new Intent(mThis.getContext(), FirstRun.class);
                 //intent.setType("vnd.android.cursor.item/com.sample.profile");  //should filter only contacts with phone numbers

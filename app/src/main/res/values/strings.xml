@@ -515,5 +515,10 @@
     <string name="your_reply">Your reply</string>
     <string name="old_mainactivity">Old Mainactivity</string>
     <string name="enc_max_len">Encrypted Msg Max 153 Chars!</string>
+    <string name="copy_text">Copy Text</string>
+    <string name="copy">Copy...</string>
+    <string name="copy_addr">Copy Address</string>
+    <string name="tokens">tokens</string>
+    <string name="view_assets">View Assets</string>
 
 </resources>

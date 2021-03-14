@@ -43,4 +43,9 @@
             android:id="@+id/action_navigation_messages_to_navigation_home"
             app:destination="@id/navigation_home" />
     </fragment>
+    <fragment
+        android:id="@+id/navigation_tokens"
+        android:label="Tokens"
+        android:name="uk.co.xrpdevs.flarenetmessenger.ui.token.TokensFragment"
+        tools:layout="@layout/fragment_tokens" />
 </navigation>

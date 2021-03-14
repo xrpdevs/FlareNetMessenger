@@ -1,9 +1,5 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
-
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Intent;
@@ -15,13 +11,13 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
-import android.provider.SyncStateContract;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
@@ -34,8 +30,6 @@ import org.web3j.tx.Transfer;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
-
-import jnr.ffi.Struct;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
@@ -200,7 +194,7 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
         @Override
         public void run() {
             //String myWallet, String theirWallet, BigDecimal XRPAmount) {
-            showDialog("Sending "+amount+" FXRP to \n"+cNameText+"\nPlease wait for transaction completion.", false);
+            showDialog("Sending "+amount+" FLR to \n"+cNameText+"\nPlease wait for transaction completion.", false);
             try {
                 TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
                         amount, org.web3j.utils.Convert.Unit.ETHER).send();

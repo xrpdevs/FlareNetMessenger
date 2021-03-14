@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/mcm_sendfunds"
+        android:title="@string/send_funds"/>
+    <item android:title="@string/copy"
+        android:id="@+id/mcm_submenu">
+        <menu>
+        <item
+            android:id="@+id/mcm_copytext"
+            android:title="@string/copy_text" />
+        <item
+            android:id="@+id/mcm_copyaddr"
+            android:title="@string/copy_addr" />
+    </menu>
+    </item>
+</menu>

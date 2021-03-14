@@ -162,7 +162,10 @@ public class Utils {
     public static Web3j initWeb3j(){
 
         Web3j myEtherWallet = Web3j.build(
-                new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
+
+                new HttpService("https://api.avax-test.network/ext/bc/C/rpc"));
+//                new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
+        myEtherWallet.ethChainId().setId(0xa869);
 
         return myEtherWallet;
     }
@@ -172,7 +175,7 @@ public class Utils {
         Web3j FlareConnection = MyService.initWeb3j();
         BigDecimal wei;
 
-        BigDecimal FXRP = BigDecimal.valueOf(0);
+        BigDecimal FLR = BigDecimal.valueOf(0);
 
         EthGetBalance ethGetBalance = null;
         try {
@@ -181,7 +184,7 @@ public class Utils {
                     .sendAsync()
                     .get(10, TimeUnit.SECONDS);
             wei = new BigDecimal(ethGetBalance.getBalance());
-            FXRP = Convert.fromWei(wei, Convert.Unit.ETHER);
+            FLR = Convert.fromWei(wei, Convert.Unit.ETHER);
         } catch (MessageDecodingException e) {
             if(e.toString().contains("Value must be in format")){
                 ErrorMessage = "Not a valid Flare/Coston Adddress";
@@ -196,12 +199,12 @@ public class Utils {
 
         if(!ErrorMessage.equals("OK")){
             myLog("TEST", ErrorMessage);
-            FXRP=BigDecimal.valueOf(-1);
+            FLR=BigDecimal.valueOf(-1);
         } else {
 
         }
 
-        return new Pair<BigDecimal, String>(FXRP, ErrorMessage);
+        return new Pair<BigDecimal, String>(FLR, ErrorMessage);
     }
 
     public static HashMap<String, String> jsonToMap(String t) throws JSONException {

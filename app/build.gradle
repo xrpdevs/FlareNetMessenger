@@ -44,7 +44,7 @@ android {
     sourceSets {
         main {
             java {
-                srcDirs 'src/main/java', 'src/main/java/uk/co/xrpdevs/flarenetmessenger/ui/Dialogs', 'src/main/java/uk/co/xrpdevs/flarenetmessenger/Contracts'
+                srcDirs 'src/main/java', 'src/main/java/uk/co/xrpdevs/flarenetmessenger/ui/Dialogs', 'src/main/java/uk/co/xrpdevs/flarenetmessenger/Contracts', 'src/main/java/uk/co/xrpdevs/flarenetmessenger/ui/tokens'
             }
         }
     }

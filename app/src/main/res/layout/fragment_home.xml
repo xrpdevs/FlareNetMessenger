@@ -116,6 +116,16 @@
 
     </LinearLayout>
 
+    <Button
+        android:id="@+id/hAssets"
+        style="?attr/buttonBarButtonStyle"
+        android:layout_width="171dp"
+        android:layout_height="43dp"
+        android:text="@string/view_assets"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout3" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 
