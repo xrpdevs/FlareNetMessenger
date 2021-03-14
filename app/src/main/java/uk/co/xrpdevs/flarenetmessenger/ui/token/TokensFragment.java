@@ -21,7 +21,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -52,6 +51,11 @@ import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.jsonToMap;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
+/* TODO:
+    Add token dialog. Detect chain wallet is on and offer up lists from resources.
+    Tokens list saved as a SharedPreferences item.
+    When adding custom tokens, automatically detect coin name, symbol, level of precision.
+ */
 
 public class TokensFragment extends Fragment {
     public SimpleAdapter TokensAdaptor;
@@ -186,10 +190,10 @@ public class TokensFragment extends Fragment {
                 Intent i = new Intent(mThis.getActivity(),
                         MainActivity.class);
                 HashMap<String, String> theItem = (HashMap<String, String>) lines.get(position);
-                String pooo = theItem.get("num");
+                //String pooo = theItem.get("num");
                 TextView cBody = v.findViewById(R.id.inboxContent);
                 //Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
-                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                //FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
 //                fragmentTransaction.setCustomAnimations(R.animator.
 //                        R.anim.slide_in,  // enter
 //                        R.anim.slide_out // exi

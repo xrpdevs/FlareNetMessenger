@@ -26,7 +26,6 @@ import net.lingala.zip4j.exception.ZipException;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -37,7 +36,6 @@ import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.PKeyScanner;
 import uk.co.xrpdevs.flarenetmessenger.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.R;
-import uk.co.xrpdevs.flarenetmessenger.Smstest3;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.Zipper;
 import uk.co.xrpdevs.flarenetmessenger.ui.home.HomeFragment;
@@ -47,20 +45,25 @@ import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 public class WalletsFragment extends Fragment implements PinCodeDialogFragment.OnResultListener {
 
+    /* TODO:
+        - Context menu: Remove wallet, rename wallet, view tokens, transfer, export private key (QR code)
+        - Import wallet(s) from ZIP file created by app - check format of outputted JSON in export wallets, too.
+     */
+
     public SimpleAdapter WalletsAdaptor;
-    public SimpleAdapter simpleAdapter;
-    Smstest3 contract;
-    BigInteger GAS_LIMIT = BigInteger.valueOf(670025L);
-    BigInteger GAS_PRICE = BigInteger.valueOf(200000L);
+    //public SimpleAdapter simpleAdapter;
+    //Smstest3 contract;
+    //BigInteger GAS_LIMIT = BigInteger.valueOf(670025L);
+    //BigInteger GAS_PRICE = BigInteger.valueOf(200000L);
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
     public ArrayList<HashMap<String, String>> feedList = new ArrayList<>();
-    HashMap<String, String> deets;
-    private NotificationsViewModel notificationsViewModel;
+    //HashMap<String, String> deets;
+    //private NotificationsViewModel notificationsViewModel;
     WalletsFragment mThis = this;
     ListView lv;
     PinCodeDialogFragment pinDialog;
-    private String pinCode;
+    //private String pinCode;
     Activity mAct;
 
     @Override
@@ -102,7 +105,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
 
     public SimpleAdapter fillListView(final ArrayList lines) {
 myLog("Lines", lines.toString());
-        simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_wallets, new String[]{"walletName", "walletAddress", "type", "lastval"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}){
+        SimpleAdapter simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_wallets, new String[]{"walletName", "walletAddress", "type", "lastval"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}){
             @Override
             public View getView (int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
@@ -145,7 +148,7 @@ myLog("Lines", lines.toString());
                 mAct.startService(myService);
 
                 fragmentTransaction.replace(R.id.nav_host_fragment, f);
-                fragmentTransaction.commit();
+                fragmentTransaction.addToBackStack("wallets").commit();
 
                // startActivity(i);
 
@@ -241,7 +244,7 @@ myLog("Lines", lines.toString());
 
 
                 fragmentTransaction.replace(R.id.nav_host_fragment, f);
-                fragmentTransaction.commit();
+                fragmentTransaction.addToBackStack("wallets").commit();
                 return true;
      /*       case R.id.theNav:
                 Intent intent2 = new Intent(mThis.getContext(), FirstRun.class);

@@ -48,7 +48,6 @@ import uk.co.xrpdevs.flarenetmessenger.ViewContact;
 import uk.co.xrpdevs.flarenetmessenger.ui.messages.MessagesFragment;
 
 import static android.app.Activity.RESULT_OK;
-import static java.lang.Long.getLong;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 public class ContactsFragment extends Fragment {
@@ -141,7 +140,7 @@ public class ContactsFragment extends Fragment {
                 args.putInt("ltype", 2000);
                 f.setArguments(args);
                 fragmentTransaction.replace(R.id.nav_host_fragment, f);
-                fragmentTransaction.commit();
+                fragmentTransaction.addToBackStack("contacts").commit();
                 return true;
             case R.id.menu_contacts_new: // Todo: startActivityForResult add contact then call scanner.
                 ListType = 2000;
@@ -153,7 +152,7 @@ public class ContactsFragment extends Fragment {
                 args2.putInt("ltype", 1000);
                 f2.setArguments(args2);
                 fragmentTransaction2.replace(R.id.nav_host_fragment, f2);
-                fragmentTransaction2.commit();
+                fragmentTransaction2.addToBackStack("contacts").commit();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -220,7 +219,7 @@ public class ContactsFragment extends Fragment {
                     f.setArguments(args);
 
                     fragmentTransaction.replace(R.id.nav_host_fragment, f);
-                    fragmentTransaction.commit();
+                    fragmentTransaction.addToBackStack("contacts").commit();
                 } else {
                     Intent i = new Intent(this.getActivity(),
                             ViewContact.class);

@@ -168,7 +168,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                 f.setArguments(args);
 
                 fragmentTransaction.replace(R.id.nav_host_fragment, f);
-                fragmentTransaction.commit();
+                fragmentTransaction.addToBackStack("messages").commit();
             }
         });
 

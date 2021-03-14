@@ -92,6 +92,9 @@ public class HomeFragment extends Fragment {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+
+        navView = mThis.getActivity().findViewById(R.id.nav_view);
+        navView.getMenu().findItem(R.id.navigation_home).setChecked(true);
         Bundle args = getArguments();
         myLog("FRAG", "onStart");
         mAct = mThis.getActivity();
@@ -193,7 +196,7 @@ public class HomeFragment extends Fragment {
                 args.putString("selectFragment", "tokens");
                 f.setArguments(args);
                 fragmentTransaction.replace(R.id.nav_host_fragment, f);
-                fragmentTransaction.commit();
+                fragmentTransaction.addToBackStack("home").commit();
             }
         });
         return root;
