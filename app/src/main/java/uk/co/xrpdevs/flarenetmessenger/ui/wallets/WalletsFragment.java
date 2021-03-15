@@ -34,7 +34,7 @@ import java.util.HashMap;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.PKeyScanner;
-import uk.co.xrpdevs.flarenetmessenger.PinCodeDialogFragment;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.Zipper;
@@ -103,11 +103,11 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
         return root;
     }
 
-    public SimpleAdapter fillListView(final ArrayList lines) {
-myLog("Lines", lines.toString());
-        SimpleAdapter simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_wallets, new String[]{"walletName", "walletAddress", "type", "lastval"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}){
+    public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) {
+        myLog("Lines", lines.toString());
+        SimpleAdapter simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_wallets, new String[]{"walletName", "walletAddress", "type", "lastval"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}) {
             @Override
-            public View getView (int position, View convertView, ViewGroup parent) {
+            public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
                 TextView cName = view.findViewById(R.id.inboxAddress);
                 TextView cType = view.findViewById(R.id.inboxType);
@@ -126,7 +126,7 @@ myLog("Lines", lines.toString());
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
                 Intent i = new Intent(mThis.getActivity(),
                         MainActivity.class);
-                HashMap<String, String> theItem = (HashMap<String, String>) lines.get(position);
+                HashMap<String, String> theItem = lines.get(position);
                 String pooo = theItem.get("num");
                 myLog("smscseeker", "name:" + theItem.toString());
                 pEdit.putInt("currentWallet", (position +1 ));

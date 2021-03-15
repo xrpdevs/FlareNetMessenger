@@ -33,16 +33,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
-import uk.co.xrpdevs.flarenetmessenger.ERC20;
+import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
-import uk.co.xrpdevs.flarenetmessenger.MainActivity2;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
-import uk.co.xrpdevs.flarenetmessenger.PinCodeDialogFragment;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Smstest3;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
@@ -136,7 +136,7 @@ public class TokensFragment extends Fragment {
         return root;
     }
     private ActionBar getActionBar() {
-        return ((MainActivity2) getActivity()).getSupportActionBar();
+        return ((MainActivity) getActivity()).getSupportActionBar();
     }
     @Override
     public void onStart() {
@@ -150,11 +150,11 @@ public class TokensFragment extends Fragment {
 
     }
 
-    public SimpleAdapter fillListView(final ArrayList lines) {
+    public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) {
         //myLog("Lines", lines.toString());
-        simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_tokens, new String[]{"Name", "Addressoo", "Type", "lastval"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}){
+        simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_tokens, new String[]{"Name", "Addressoo", "Type", "lastval"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}) {
             @Override
-            public View getView (int position, View convertView, ViewGroup parent) {
+            public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
                 TextView cName = view.findViewById(R.id.inboxContent);
                 TextView cType = view.findViewById(R.id.inboxType);
@@ -189,7 +189,7 @@ public class TokensFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
                 Intent i = new Intent(mThis.getActivity(),
                         MainActivity.class);
-                HashMap<String, String> theItem = (HashMap<String, String>) lines.get(position);
+                HashMap<String, String> theItem = lines.get(position);
                 //String pooo = theItem.get("num");
                 TextView cBody = v.findViewById(R.id.inboxContent);
                 //Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
@@ -234,7 +234,7 @@ public class TokensFragment extends Fragment {
             byte[] buffer = new byte[size];
             is.read(buffer);
             is.close();
-            json = new String(buffer, "UTF-8");
+            json = new String(buffer, StandardCharsets.UTF_8);
             //Log.d("JSON", "== "+json);
             JSONObject jo = new JSONObject(json);
             JSONArray key = jo.names ();
@@ -423,7 +423,7 @@ public class TokensFragment extends Fragment {
         switch(item.getItemId()) {
             case R.id.mcm_sendfunds:
 
-                li = ((View) info.targetView);
+                li = info.targetView;
                 // add stuff here
                 return true;
             case R.id.mcm_submenu:

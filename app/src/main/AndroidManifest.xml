@@ -37,7 +37,7 @@
         </receiver>
         <activity android:name=".FirstRun"></activity>
         <activity
-            android:name=".MainActivity2"
+            android:name=".MainActivity"
             android:label="FlareNetMessenger" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -80,7 +80,6 @@
         </service>
 
         <activity android:name=".PKeyScanner" />
-        <activity android:name=".ContactList" />
         <activity
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings" />
@@ -90,14 +89,7 @@
             android:stateNotNeeded="true"
             android:theme="@style/zxing_CaptureTheme"
             android:windowSoftInputMode="stateAlwaysHidden" />
-        <activity
-            android:name=".Inbox"
-            android:label="@string/title_activity_inbox"
-            android:theme="@style/Theme.FlareNetMessenger.NoActionBar" />
-        <activity
-            android:name=".Wallets"
-            android:label="@string/title_activity_wallet"
-            android:theme="@style/Theme.FlareNetMessenger.NoActionBar" />
+
 
         <service android:name=".AuthenticationService">
             <intent-filter>

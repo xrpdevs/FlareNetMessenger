@@ -1,16 +1,8 @@
 <resources>
     <string name="app_name">FlareNetMessenger</string>
-    <string name="title_activity_inbox">Inbox</string>
-    <string name="title_activity_wallet">Wallets</string>
 
     <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">First Fragment</string>
-    <string name="second_fragment_label">Second Fragment</string>
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
 
-    <string name="hello_first_fragment">Hello first fragment</string>
-    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
     <string name="title_activity_settings">SettingsActivity</string>
 
     <!-- Preference Titles -->
@@ -28,421 +20,21 @@
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
     <!--> NO TRANSLATION <-->
-    <string name="fullnode_ip" translatable="false">54.236.37.243</string>
-    <string name="fullnode_port" translatable="false">50051</string>
-    <string name="soliditynode_ip" translatable="false">47.89.187.247</string>
-    <string name="soliditynode_port" translatable="false">50051</string>
 
 
-    <string name="app_version" translatable="false">v1.1.9.4</string>
-
-    <string name="preference_file_key" translatable="false">com.eletac.tronwallet.wallet_preferences</string>
-    <string name="pwd_key" translatable="false">pwd_key</string>
-    <string name="priv_key" translatable="false">priv_key</string>
-    <string name="pub_key" translatable="false">pub_key</string>
-    <string name="is_cold_wallet_key" translatable="false">is_cold_wallet_key</string>
-    <string name="preference_account_file_key" translatable="false">com.eletac.tronwallet.wallet_account_preferences</string>
-    <string name="name_key" translatable="false">name_key</string>
-    <string name="balance_key" translatable="false">balance_key</string>
-    <string name="latest_operation_time_key" translatable="false">latest_operation_time_key</string>
-    <string name="assets_key" translatable="false">assets_key</string>
-    <string name="public_address_raw" translatable="false">public_address_raw</string>
-    <string name="is_public_address_only" translatable="false">is_public_address_only</string>
-    <string name="votes_key" translatable="false">votes_key</string>
-    <string name="create_time_key" translatable="false">create_time_key</string>
-    <string name="address_key" translatable="false">address_key</string>
-    <string name="frozen_key" translatable="false">frozen_key</string>
-    <string name="bandwidth_key" translatable="false">bandwidth_key</string>
-    <string name="ip_key" translatable="false">ip</string>
-    <string name="port_key" translatable="false">port</string>
-    <string name="ip_sol_key" translatable="false">ip_sol</string>
-    <string name="port_sol_key" translatable="false">port_sol</string>
-    <string name="net_limit_key" translatable="false">net_limit_key</string>
-    <string name="net_used_key" translatable="false">net_used_key</string>
-    <string name="net_free_limit_key" translatable="false">net_free_limit_key</string>
-    <string name="net_free_used_key" translatable="false">net_free_used_key</string>
-    <string name="energy_limit_key" translatable="false">energy_limit_key</string>
-    <string name="energy_used_key" translatable="false">energy_used_key</string>
     <!--> NO TRANSLATION <-->
 
-    <string name="title_wallet">Wallet</string>
-    <string name="title_activity_import_wallet">Import Wallet</string>
-    <string name="title_block_explorer">Block Explorer</string>
-    <string name="title_settings">Settings</string>
 
-    <string name="ok">OK</string>
-    <string name="cancel">Cancel</string>
-
-    <string name="copy_success">Copied successfully</string>
-
-    <string name="create_wallet_dialog_message">You are about to create a wallet with your entered password.\n\nIn the next screen you will see your address and your private key.</string>
-    <string name="create_wallet_cold_dialog_message">You are about to create a cold wallet with your entered password.\n\nThis wallet is only used to sign transactions.\n\nIn the next screen you will see your address and your private key.</string>
-    <string name="create_wallet_dialog_title">Create Wallet</string>
-
-    <string name="import_wallet_dialog_message">You are about to import a wallet with your entered password and private key/recovery phrase.</string>
-    <string name="import_wallet_cold_dialog_message">You are about to import your private key for a cold wallet with your entered password.\n\nThis wallet is only used to sign transactions.</string>
-    <string name="import_wallet_dialog_title">Import Wallet</string>
-
-    <string name="create_wallet_inv_password_dialog_message">Please enter a password with at least 6 characters and no whitespaces.</string>
-    <string name="create_wallet_inv_password_dialog_title">Invalid Password</string>
-
-    <string name="inv_private_key_dialog_message">Enter all 64 characters of your private key.</string>
-    <string name="inv_private_key_dialog_title">Invalid Private Key</string>
-
-
-    <string name="trx_symbol">TRX</string>
-
-    <string name="title_activity_send_receive">Tron Wallet</string>
-    <string name="tab_title_send">Send</string>
-    <string name="tab_title_receive">Receive</string>
-    <string name="action_settings">Settings</string>
-
-    <string name="not_available_in_cold_wallet">Not available in cold wallet</string>
-    <string name="cold_wallet_info_dialog">A cold wallet will never connect to the Internet and is only used to sign transactions.\n\nFor even greater security, you should also never connect your device to the Internet.\n\nUse another device with the Tron Wallet App and import your public address to have an overview of your wallet and sign transactions from it.</string>
-    <string name="create_wallet">Create Wallet</string>
     <string name="import_wallet">Import Wallet</string>
-    <string name="import_text">Import</string>
-    <string name="title_activity_signed_transaction">Signed Transaction</string>
-    <string name="title_activity_sign_transaction">Sign Transaction</string>
-    <string name="tab_title_blockchain">Blockchain</string>
-    <string name="tab_title_network">Network</string>
-    <string name="tab_title_tokens">Tokens</string>
-    <string name="tab_title_accounts">Accounts</string>
-    <string name="transaction_successfully_sent">Transaction successfully sent!</string>
-    <string name="transaction_sending_failed">Transaction failed!</string>
-    <string name="tab_title_sign">Sign</string>
-    <string name="title_activity_vote">Representatives</string>
-    <string name="tab_title_candidates">Candidates</string>
-    <string name="tab_title_votes">Your Votes</string>
-    <string name="tab_title_representatives">Representatives</string>
-    <string name="tab_title_nodes">Nodes</string>
-    <string name="none">None</string>
-    <string name="never">Never</string>
-    <string name="account_item_votes_text">%s for %s candidates</string>
-    <string name="multiple_witnesses">multiple witnesses</string>
-    <string name="witness_votes">witness votes</string>
-    <string name="confirm_signing">Confirm Signing</string>
-    <string name="password">Password</string>
-    <string name="sign">Sign</string>
-    <string name="error">Error</string>
-    <string name="failed_to_generate_qr_code">Failed to generate QR code</string>
-    <string name="wrong_password">Wrong Password</string>
-    <string name="signing_canceled">The signing of your transaction was canceled.</string>
-    <string name="invalid_transaction">Invalid Transaction</string>
-    <string name="no_valid_transaction_detected">No valid transaction was detected.</string>
-    <string name="scan_transaction_qr_code">Scan the QR code of your transaction</string>
-    <string name="cold_wallet">Cold Wallet</string>
-    <string name="cold_wallet_setup">Cold Wallet Setup </string>
-    <string name="scan_your_address_qr_code">Scan your public address QR code.</string>
-    <string name="scan_your_priv_key_qr_code">Scan your private key QR code.</string>
-    <string name="import_address">Import Address</string>
-    <string name="import_address_message">You are about to import only your entered address.\n\nYou won\'t be able to make a transaction without your cold wallet.</string>
-    <string name="invalid_address">Invalid Address</string>
-    <string name="enter_valid_address">Enter a valid address</string>
-    <string name="cant_send_to_own_address">You can\'t send to your own address</string>
-    <string name="invalid_amount">Invalid Amount</string>
-    <string name="enter_amount_between">Please enter an amount between %d and %s</string>
-    <string name="send_message_text_asset">Asset:</string>
-    <string name="send_message_text_to">To:</string>
-    <string name="send_message_text_amount">Amount:</string>
-    <string name="confirm_transaction">Confirm Transaction</string>
-    <string name="send">Send</string>
-    <string name="sending">Sending</string>
-    <string name="sent_successfully">Sent successfully</string>
-    <string name="sending_failed">Sending failed</string>
-    <string name="scan_send_to_qr_code">Scan the QR code you want to send to.</string>
-    <string name="scan_signed_transaction">Scan the QR code of your signed transaction from your cold wallet</string>
-    <string name="confirm_votes">Confirm Votes</string>
-    <string name="sign_to_submit">Sign to submit</string>
-    <string name="submit">Submit</string>
-    <string name="votes_submitted_successfully">Votes submitted successfully</string>
-    <string name="submitting_failed">Submitting failed</string>
-    <string name="try_later">Try again later</string>
-    <string name="send_available">Available:</string>
-    <string name="amount">Amount</string>
-    <string name="to">To</string>
-    <string name="asset">Asset</string>
-    <string name="private_key">Private Key</string>
-    <string name="address">Address</string>
-    <string name="account">Account</string>
-    <string name="continue_">Continue</string>
-    <string name="store_the_private_key_securely">Store the private key and your 24 words recovery phrase securely!\ne.g. on a piece of paper in a safe.\n\nLosing both would end access to your account forever!</string>
-    <string name="i_am_aware_of_the_risks">I am aware of the risks</string>
-    <string name="new_password">New Password</string>
-    <string name="new_name">New Name</string>
-    <string name="password_info">Your password is important for every transaction. Without password you won\'t be able to access your assets through the wallet!</string>
-    <string name="generate_address_and_private_key">Generate Address and Private Key</string>
-    <string name="or">or</string>
-    <string name="public_address">Public Address</string>
-    <string name="private_key_info">Your private key is needed to sign transactions and access your assets</string>
-    <string name="import_public_address_only">Import public address only</string>
-    <string name="import_pub_address_only_info">Use this option when you already created a cold wallet or just want an overview of your account</string>
-    <string name="recovery_phrase_switch">Recovery phrase </string>
 
-    <string name="scan_unsigned_transaction">Scan your unsigned transaction with your cold wallet device to sign it.</string>
-    <string name="i_ve_signed_my_transaction">I\'ve signed my transaction</string>
-    <string name="scan_your_signed_transaction">Scan your signed transaction</string>
-    <string name="scan_signed_transaction_to_complete">Scan your signed transaction with your other device to complete your transaction.</string>
-    <string name="remaining_votes">Remaining Votes:</string>
-    <string name="submit_votes">Submit Votes</string>
-    <string name="search">Search</string>
-    <string name="search_space">Search</string>
-    <string name="scan_qr_code_to_get_your_address_or_click_to_copy">Scan QR code to get your address or click to copy.</string>
-    <string name="recent_blocks">Recent Blocks</string>
-    <string name="recent_transactions">Recent Transactions</string>
-    <string name="scan_a_transaction_qr_code_to_sign_it">Scan a transaction QR code to sign it.</string>
-    <string name="balance">Balance</string>
-    <string name="token">Token</string>
-    <string name="cold_wallet_caps">COLD WALLET</string>
-    <string name="receive">Receive</string>
-    <string name="balance_colon">Balance:</string>
-    <string name="assets_colon">Assets:</string>
-    <string name="votes_colon">Votes:</string>
-    <string name="last_operation_colon">Last Operation:</string>
-    <string name="produced_by">Produced by</string>
-    <string name="port_colon">Port:</string>
-    <string name="ip_colon">IP:</string>
-    <string name="vote">Vote</string>
-    <string name="total_votes_colon">Total Votes:</string>
-    <string name="produced_colon">Produced:</string>
-    <string name="missed_colon">Missed:</string>
-    <string name="last_block_colon">Last Block:</string>
-    <string name="_24_words_recovery_phrase">24 words recovery phrase</string>
-    <string name="recovery_phrase">24 words recovery phrase</string>
-    <string name="recovery_phrase_info">Your private key will be recovered using your recovery phrase.</string>
-    <string name="inv_recovery_phrase_dialog_title">Invalid Recovery Phrase</string>
-    <string name="inv_recovery_phrase_dialog_message">Please enter all 24 words of your recovery phrase.</string>
-    <string name="could_not_create_transaction">Couldn\'t create transaction.\nCheck internet connection and node settings</string>
-    <string name="tab_title_freeze">Freeze</string>
-    <string name="freeze_info_long">TRX can be frozen to gain Tron Power(TP).\nFor every TP you get a vote for super delegates and bandwidth based on the ratio to the total frozen amount on the network and yours.\nYour TRX will be frozen for 3 days, after which they can be unfrozen.\nUnfreezing removes TP\'s and your bandwidth.\nYou have 5000 free bandwidth per day.</string>
-
-    <string name="unfreeze">Unfreeze</string>
-    <string name="confirm_freezing">Confirm Freezing</string>
-    <string name="freeze">Freeze</string>
-    <string name="freezing">Freezing</string>
-    <string name="freezed_succesfully">Friezed successfully</string>
-    <string name="freezing_failed">Freezing failed</string>
-    <string name="frozen">Frozen</string>
-    <string name="confirm_unfreezing">Confirm Unfreezing</string>
-    <string name="unfreezing_failed">Unfreezing Failed</string>
-    <string name="unfreezing">Unfreezing</string>
-    <string name="unfreeze_successfully">Unfreeze successfully</string>
-    <string name="remove_wallet">Remove Wallet</string>
-    <string name="secret_account_info">Secret Account Info</string>
-    <string name="connection">Connection</string>
-    <string name="confirm_removing">Confirm Remove</string>
-    <string name="remove">Remove</string>
-    <string name="remove_info">You are about to remove this wallet.\n\nPlease make sure you have your private key or recovery phrase before removing this wallet, otherwise you will lose your access to your account.\n\nOther wallets will remain</string>
-    <string name="remove_address_only_info">You are about to remove this wallet.\n\nYou\'ll only remove your public address, so there is no risk.</string>
-    <string name="removing_failed">Removing failed</string>
-    <string name="no_access">No Access</string>
-    <string name="account_no_access_info">An address only wallet cannot access these information</string>
-    <string name="password_needed">Password</string>
-    <string name="access_denied">Access denied</string>
-    <string name="tron_wallet_description">Tron Wallet is a multifunctional wallet for the Tron network.</string>
-    <string name="copyright">© 2018 Marius Gill All Rights Reserved</string>
-    <string name="title_activity_participate_asset">Participate</string>
-    <string name="confirm_spending">Confirm Spending</string>
-    <string name="spending_failed">Spending failed</string>
-    <string name="spending">Spending</string>
-    <string name="spend">Spend</string>
-    <string name="spending_successfully">Spending successfully</string>
-    <string name="tron_power_short">TP</string>
-
-    <string name="not_enough_bandwidth">Not enough bandwidth</string>
-    <string name="transactions_failed_bandwidth">Transactions failed, not enough bandwidth!</string>
-    <string name="bandwidth">Bandwidth</string>
-    <string name="title_activity_confirm_transaction">Confirm Transaction</string>
-    <string name="failed">Failed</string>
-
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="attention">Attention</string>
-    <string name="transaction_will_cost">Transaction will cost</string>
-    <string name="loading">Loading…</string>
-    <string name="title_activity_issue_token">Create Token</string>
-    <string name="selected_wallet_key">selected_wallet_key</string>
-    <string name="wallet_name_key">wallet_name_key</string>
-    <string name="is_watch_only_setup_key">is_watch_only_setup_key</string>
-    <string name="wallets_key">wallets_key</string>
-    <string name="title_activity_select_wallet">Select Wallet</string>
-    <string name="wallet_address_key">wallet_address_key</string>
-    <string name="no_wallet_selected">No wallet selected</string>
-    <string name="could_not_copy">Couldn\'t copy, no wallet selected</string>
-    <string name="tab_title_history">History</string>
-    <string name="info_history">* History only contains transactions successfully sent through Tron Wallet</string>
-    <string name="title_activity_transaction_viewer">Transaction</string>
-    <string name="confirmed">Confirmed</string>
-    <string name="unconfirmed">Unconfirmed</string>
-    <string name="unknown">Unknown</string>
-
-    <string name="title_about">About</string>
-
-    <string name="tab_wallet">Wallet</string>
-    <string name="tab_settings">Settings</string>
-    <string name="tab_block_explorer">Block Explorer</string>
-
-    <string name="btn_about">About</string>
-    <string name="btn_select_wallet">Select Wallet</string>
-
-    <string name="full_node">Full Node</string>
-    <string name="node_ip">Node IP (e.g. 47.254.16.55)</string>
-    <string name="node_port">Node Port (e.g. 50051)</string>
-    <string name="btn_reset">RESET</string>
-    <string name="btn_save_connect">SAVE AND CONNECT</string>
-    <string name="solidity_node">Solidity Node</string>
-    <string name="invalid_name">Invalid Name</string>
-    <string name="please_enter_a_valid_name">Please enter a valid name</string>
-    <string name="you_already_have_an_wallet_with_this_name">You already have an wallet with this name</string>
-    <string name="account_name_info">Your account name is not the same as that of your wallet.\nIt is a publicly visible name and can be used, among other things, to compare transactions in order to verify an account more quickly.\n\nYour account name can only be changed once.\nMake sure you choose the right name.</string>
-    <string name="setup_account_name">Setup Account Name</string>
-    <string name="account_name_requirements">At least 8 characters and no whitespaces</string>
-    <string name="public_name">Public Name</string>
-    <string name="name_not_valid_or_forgiven">Your name is not valid or already in use</string>
-    <string name="missing_votes">Missing Votes</string>
-    <string name="to_get_votes_you_have_to_freeze_trx">To get votes you have to freeze some TRX\n\n1 TRX = 1 Vote</string>
-    <string name="saved_new_node_connection">Saved new node connection</string>
-    <string name="invalid_ip_or_port">Invalid IP or Port</string>
-    <string name="saved_new_solidity_node_connection">Saved new solidity node connection</string>
-    <string name="solidity_node_connection_reset_to_default">Solidity node connection reset to default</string>
-    <string name="account_creation">Account Creation</string>
-    <string name="transfer">Transfer</string>
-    <string name="token_transfer">Token Transfer</string>
-    <string name="token_vote">Token Vote</string>
-    <string name="multiple_candidates">Multiple Candidates</string>
-    <string name="votes_reset">votes reset</string>
-    <string name="votes">Votes</string>
-    <string name="candidate_votes">Candidate Votes</string>
-    <string name="witness_creation">Witness Creation</string>
-    <string name="token_creation">Token Creation</string>
-    <string name="deploy_contract">DeployContract</string>
-    <string name="witness_update">Witness Update</string>
-    <string name="token_participation">Token Participation</string>
-    <string name="account_update">Account Update</string>
-    <string name="freeze_balance">Freeze Balance</string>
-    <string name="unfreeze_balance">Unfreeze Balance</string>
-    <string name="withdraw_balance">Withdraw Balance</string>
-    <string name="custom_contract">CustomContract</string>
-    <string name="unrecognized">UNRECOGNIZED</string>
-    <string name="duration">duration</string>
-    <string name="could_not_parse_transaction">Couldn\'t parse transaction</string>
-    <string name="no_valid_contract_check_input">No valid contract, check your input.</string>
-    <string name="could_not_open_wallet">Couldn\'t open wallet</string>
-    <string name="view_transaction_question">View Transaction?</string>
-    <string name="no">No</string>
-    <string name="cannot_load_in_cold_wallet">cannot load in cold wallet</string>
-    <string name="missing_name">Missing name</string>
-    <string name="missing_abbreviation">Missing abbreviation</string>
-    <string name="missing_url">Missing URL</string>
-    <string name="missing_description">Missing description</string>
-    <string name="missing_supply">Missing supply</string>
-    <string name="missing_trx_exchange_amount">Missing TRX exchange amount</string>
-    <string name="missing_token_exchange_amount">Missing token exchange amount</string>
-    <string name="missing_frozen_days">Missing frozen days</string>
-    <string name="missing_frozen_amount">Missing frozen amount</string>
-    <string name="missing_total_bandwidth">Missing total bandwidth</string>
-    <string name="missing_bandwidth_per_account">Missing bandwidth per account</string>
-    <string name="supply_to_small">Supply to small</string>
-    <string name="invalid_exchange_rate">Invalid exchange rate</string>
-    <string name="bandwidth_can_not_be_greater_than_total">Bandwidth per account can\'t be greater than the total available bandwidth</string>
-    <string name="start_should_be_in_the_future">Start should be in the future</string>
-    <string name="end_should_be_after_start">End should be after start</string>
-    <string name="not_enough_trx">Not enough TRX</string>
-    <string name="need_for_issuing">Needed: 1024 TRX</string>
-    <string name="issue_token_information_message">Creating a token costs 1024 TRX and will be consumed when the transaction is sent to the network and approved.\nContinue only if you are aware of this.</string>
-    <string name="account_create_contract">Account Create Contract</string>
-    <string name="transfer_contract">Transfer Contract</string>
-    <string name="transfer_asset_contract">Transfer Asset Contract</string>
-    <string name="vote_asset_contract">Vote Asset Contract</string>
-    <string name="vote_witness_contract">Vote Witness Contract</string>
-    <string name="witness_create_contract">Witness Create Contract</string>
-    <string name="asset_issue_contract">Asset Issue Contract</string>
-    <string name="witness_update_contract">Witness Update Contract</string>
-    <string name="participate_asset_issue_contract">Participate Asset Issue Contract</string>
-    <string name="account_update_contract">Account Update Contract</string>
-    <string name="freeze_balance_contract">Freeze Balance Contract</string>
-    <string name="unfreeze_balance_contract">Unfreeze Balance Contract</string>
-    <string name="withdraw_balance_contract">Withdraw Balance Contract</string>
-    <string name="unfreeze_asset_contract">Unfreeze Asset Contract</string>
-    <string name="update_asset_contract">Update Asset Contract</string>
-    <string name="node_connection_reset_to_default">Node connection reset to default</string>
-    <string name="participate">Participate</string>
-    <string name="create">Create</string>
-    <string name="total_supply_colon">Total Supply:</string>
-    <string name="issuer_colon">Issuer:</string>
-    <string name="start_time_colon">Start Time:</string>
-    <string name="end_time_colon">End Time:</string>
-    <string name="description_colon">Description:</string>
-    <string name="price_colon">Price:</string>
-    <string name="token_amount">Token Amount</string>
-    <string name="costs_colon">Costs:</string>
-    <string name="usd">USD</string>
-    <string name="max_amount_colon">Max Amount:</string>
-    <string name="max_usd_colon">Max USD:</string>
-    <string name="tron_power">Tron Power</string>
-    <string name="for_security_reasons_you_should_setup_a_public_account_name">For security reasons you should setup a public account name</string>
-    <string name="freeze_amount">Freeze Amount</string>
-    <string name="new_frozen_trx_colon">New frozen TRX:</string>
-    <string name="new_tp_colon">New TP:</string>
-    <string name="bandwidth_colon">Bandwidth:</string>
-    <string name="current_tp_colon">Current TP:</string>
-    <string name="frozen_trx_colon">Frozen TRX:</string>
-    <string name="expires_all_colon">Expires all:</string>
-    <string name="current_bandwidth_colon">Current Bandwidth:</string>
-    <string name="bandwidth_cost_colon">Bandwidth Cost:</string>
-    <string name="new_bandwidth_colon">New Bandwidth:</string>
-    <string name="not_enough_bandwidth_caps">NOT ENOUGH BANDWIDTH</string>
-    <string name="get_bandwidth">Get Bandwidth</string>
-    <string name="the_transaction_will_cost_colon">The transaction will cost:</string>
-    <string name="address_colon">Address:</string>
-    <string name="amount_colon">Amount:</string>
-    <string name="days_colon">Days:</string>
-    <string name="from_colon">From:</string>
-    <string name="to_colon">To:</string>
-    <string name="token_colon">Token:</string>
-    <string name="cost_colon">Cost:</string>
-    <string name="details">Details</string>
-    <string name="name">Name</string>
-    <string name="abbreviation">Abbreviation</string>
-    <string name="total_supply">Total Supply</string>
-    <string name="website_url">Website URL</string>
-    <string name="description">Description</string>
-    <string name="exchange_rate">Exchange Rate</string>
-    <string name="trx_amount">TRX Amount</string>
-    <string name="_1_token_equals">1 Token =</string>
-    <string name="days">Days</string>
-    <string name="bandwidth_distribution">Bandwidth Distribution</string>
-    <string name="total_bandwidth">Total Bandwidth</string>
-    <string name="bandwidth_per_account">Bandwidth per Account</string>
-    <string name="participation">Participation</string>
-    <string name="set_start">Set Start</string>
-    <string name="set_end">Set End</string>
-    <string name="create_token_info">Creating a token will cost 1024 TRX. After issuing the token your account will receive the amount of tokens equal to the total supply. When other users exchange their TRX for tokens then the tokens will be withdrawn from your account and you will receive TRX equal to the specified exchange rate.</string>
-    <string name="create_token">Create Token</string>
-    <string name="frozen_supply">Frozen Supply</string>
-    <string name="transaction_id">Transaction ID</string>
-    <string name="timestamp">Timestamp</string>
-    <string name="open_in_tronscan">Open in Tronscan</string>
-    <string name="name_colon">Name:</string>
-    <string name="confirm_your_password">Confirm your password</string>
-    <string name="title_activity_p_i_n">PINActivity</string>
     <!--
     This string is used for square devices and overridden by hello_world in
     values-round/strings.xml for round devices.
     -->
-    <string name="hello_world">Hello Square World!</string>
     <!-- Strings related to login -->
-    <string name="prompt_email">Email</string>
-    <string name="prompt_password">Password</string>
-    <string name="action_sign_in">Sign in or register</string>
-    <string name="action_sign_in_short">Sign in</string>
     <string name="welcome">"Welcome!"</string>
-    <string name="invalid_username">Not a valid username</string>
-    <string name="invalid_password">Password must be >5 characters</string>
-    <string name="login_failed">"Login failed"</string>
-    <string name="title_activity_main2">MainActivity</string>
     <string name="title_home">Home</string>
     <string name="title_dashboard">Contacts</string>
-    <string name="title_notifications">Notifications</string>
     <string name="todo">TODO</string>
     <string name="title_messages">Messages</string>
     <string name="wallets">Wallets</string>
@@ -461,40 +53,17 @@
     <string name="import_wallets">Import Wallets</string>
     <string name="show_balances">Show Balances</string>
     <string name="pin_code">PIN code</string>
-    <string name="connect">Connect</string>
-    <string name="connect_pin">Connect with PIN code</string>
-    <string name="disconnect">Disconnect</string>
-    <string name="title_channelId">Channel ID</string>
-    <string name="title_apiKey">API Key</string>
-    <string name="hint_channelId">Enter your Channel ID</string>
-    <string name="hint_apiKey">Enter your API key</string>
-    <string name="hint_pinCode">Enter 6-digit PIN code</string>
+    <string name="connect">Connect</string><![CDATA[
+
+
+
+
+
+
+
     !--TODO review dialog title and message strings-->
-    <string name="sessionconfig_dialog_message">
-        In order to start a session to a channel, the SDK needs a channel ID and an API key.
-        You can configure channels and generate an API key in the Rescue Admin Center.\n
-        We suggest you to store the channel ID and the API key in your code statically (see Config.java) or fetch it from your servers.\n
-        For testing purposes you can enter them now, and the application will store them as a preference.</string>
-    <string name="apikey_dialog_message">
-        In order to start a session with a PIN code, the SDK needs an API key. You can generate an API key in the Rescue Admin Center.\n
-        We suggest you to store the API key in your code statically (see Config.java) or fetch it from your servers.\n
-        For testing purposes you can enter one now, and the application will store it as a preference.</string>
-    <string name="sessionconfig_dialog_title">Session configuration</string>
-    <string name="pin_code_entry_dialog_title">Connect with PIN code</string>
+    ]]>
     <string name="empty_field">Fill in this field!</string>
-    <string name="error_title">Error</string>
-    <string name="error_no_such_channel">The channel (id: %s) doesn\'t exist!</string>
-    <string name="not_set">not set</string>
-    <string name="api_key_label">API key</string>
-    <string name="pin_mode_label">Start with PIN code</string>
-    <string name="channelid_mode_label">Start with channel ID</string>
-    <string name="channelid_label">Channel ID</string>
-    <string name="channel_name_company_id_mode_label">Start with channel name and company ID</string>
-    <string name="channel_name_label">Channel Name</string>
-    <string name="company_id_label">Company ID</string>
-    <string name="settings_menu_label">Settings</string>
-    <string name="pause">Pause stream</string>
-    <string name="resume">Resume stream</string>
     <string name="firstRun_noWallet">
         It appears that you don\'t yet have a wallet set up.\n
         \n
@@ -514,7 +83,6 @@
     <string name="homeQR_copy">Copy</string>
     <string name="your_reply">Your reply</string>
     <string name="old_mainactivity">Old Mainactivity</string>
-    <string name="enc_max_len">Encrypted Msg Max 153 Chars!</string>
     <string name="copy_text">Copy Text</string>
     <string name="copy">Copy...</string>
     <string name="copy_addr">Copy Address</string>

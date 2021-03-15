@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
@@ -51,11 +50,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import uk.co.xrpdevs.flarenetmessenger.ContactsManager;
-import uk.co.xrpdevs.flarenetmessenger.Contracts.Fsms;
-import uk.co.xrpdevs.flarenetmessenger.EnterMsgDialogFragment;
-import uk.co.xrpdevs.flarenetmessenger.Inbox;
+import uk.co.xrpdevs.flarenetmessenger.contracts.Fsms;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.EnterMsgDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
-import uk.co.xrpdevs.flarenetmessenger.PleaseWaitDialog;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.ui.contacts.ContactsFragment;
@@ -281,18 +279,18 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
         lv.setAdapter(simpleAdapter);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-                Intent i = new Intent(mThis.getActivity(),
-                        Inbox.class);
+                // Intent i = new Intent(mThis.getActivity(),
+                //        Inbox.class);
                 TextView cNam = v.findViewById(R.id.inboxAddress);     // todo: refactor to InboxAddress
                 TextView cBod = v.findViewById(R.id.inboxContent);  // todo: refactor to InboxContent
                 HashMap<String, String> theItem = lines.get(position);
 
                 String b64 = theItem.get("body");
 
-                if(cBod.getText().toString().equals("* Encrypted *")){
+                if (cBod.getText().toString().equals("* Encrypted *")) {
                     byte[] barr = Base64.decode(b64);
                     cBod.setText(deCipherText(c, barr));
-                } else{
+                } else {
 
                     String who = cNam.getText().toString();
                     String bod = cBod.getText().toString();
@@ -353,29 +351,30 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
             subItem = abc.getItem();
             info = (AdapterView.AdapterContextMenuInfo) subItem.getMenuInfo();
         } else {*/
-            info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         //}
         TextView textView;
         String bod;
         View li;
         ClipData clip;
-        ClipboardManager cbm = (ClipboardManager) mAct.getSystemService(CLIPBOARD_SERVICE);;
-       // int idxOfList = (info!=null) ? info.position : this.mParentContextMenuListIndex;
-        switch(item.getItemId()) {
+        ClipboardManager cbm = (ClipboardManager) mAct.getSystemService(CLIPBOARD_SERVICE);
+        // int idxOfList = (info!=null) ? info.position : this.mParentContextMenuListIndex;
+        switch (item.getItemId()) {
             case R.id.mcm_sendfunds:
 
-                li = ((View) info.targetView);
+                li = info.targetView;
                 // add stuff here
                 return true;
             case R.id.mcm_submenu:
                 subInfo = info;
-            case R.id.mcm_copyaddr: case R.id.mcm_copytext:
+            case R.id.mcm_copyaddr:
+            case R.id.mcm_copytext:
 
                 Log.d("SUBMENU", "ID: "+item.getItemId());
                 switch (item.getItemId()) {
                     case R.id.mcm_copytext:
                         Log.d("SUBMENU", "copytext");
-                        li = ((View) subInfo.targetView);
+                        li = subInfo.targetView;
                         textView = li.findViewById(R.id.inboxContent);
                         bod = textView.getText().toString();
                         clip = ClipData.newPlainText("Copied", bod);
@@ -383,7 +382,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                         return true;
                     case R.id.mcm_copyaddr:
                         Log.d("SUBMENU", "copytext");
-                        li = ((View) subInfo.targetView);
+                        li = subInfo.targetView;
                         textView = li.findViewById(R.id.inboxAddress);
                         bod = textView.getText().toString();
                         clip = ClipData.newPlainText("Copied", bod);
@@ -404,7 +403,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
     public int inboxSize() {
         int mCount = 0;
         try {
-//            fsms = Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+//            fsms = uk.co.xrpdevs.flarenetmessenger.contracts.Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
             Tuple2<BigInteger, BigInteger> messageCount = fsms.getMyInboxSize().send();
 
             myLog("TEST", "Inbox count: " + messageCount);
@@ -437,7 +436,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                     String body = list3.get(i);
                     map.put("body", list3.get(i));
                     map.put("ts", list1.get(i).toString());
-                    map.put("cnam", list2.get(i).toString());
+                    map.put("cnam", list2.get(i));
                     map.put("type", "RECD");
                     if(body.startsWith("RZ")){
                         pkPos = i+1;
@@ -447,11 +446,11 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                             String XORpKey = new String(Base64.decode(pubKeyTmp.substring(2)));
                             Log.d("RXOR", XORpKey);
 
-                            if(ContactsManager.getPubKey(mThis.getContext(), list2.get(i).toString()) == null) {
+                            if (ContactsManager.getPubKey(mThis.getContext(), list2.get(i)) == null) {
                                 BigInteger a = new BigInteger(XORpKey, 16);
                                 String HexPubKey = Utils.xorStrings(a, body).second;
                                 Log.d("RXOR", HexPubKey);
-                                ContactsManager.updatePubKey(mThis.getContext(), list2.get(i).toString(), HexPubKey);
+                                ContactsManager.updatePubKey(mThis.getContext(), list2.get(i), HexPubKey);
                             }
                         }
                         maplist.add(map);

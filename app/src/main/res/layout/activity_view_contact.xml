@@ -80,7 +80,6 @@
             android:text="@string/delete" />
 
         <Button
-            android:id="@+id/button6"
             style="?attr/buttonBarButtonStyle"
             android:layout_width="122dp"
             android:layout_height="50dp"

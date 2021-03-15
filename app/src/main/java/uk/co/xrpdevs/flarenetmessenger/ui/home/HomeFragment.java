@@ -47,7 +47,7 @@ import uk.co.xrpdevs.flarenetmessenger.BuildConfig;
 import uk.co.xrpdevs.flarenetmessenger.FirstRun;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
-import uk.co.xrpdevs.flarenetmessenger.PleaseWaitDialog;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.ui.token.TokensFragment;

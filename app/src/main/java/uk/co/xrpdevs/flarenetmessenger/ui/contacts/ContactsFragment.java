@@ -1,6 +1,7 @@
 package uk.co.xrpdevs.flarenetmessenger.ui.contacts;
 
 import android.Manifest;
+import android.app.FragmentManager;
 import android.content.ContentUris;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -40,9 +41,10 @@ import java.util.Objects;
 
 import uk.co.xrpdevs.flarenetmessenger.CaptureActivityPortrait;
 import uk.co.xrpdevs.flarenetmessenger.ContactsManager;
-import uk.co.xrpdevs.flarenetmessenger.MainActivity2;
+import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyContact;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.ViewContact;
 import uk.co.xrpdevs.flarenetmessenger.ui.messages.MessagesFragment;
@@ -65,6 +67,8 @@ public class ContactsFragment extends Fragment {
     public View rootView;
     private DashboardViewModel dashboardViewModel;
     Boolean SendMessage = false;
+    PleaseWaitDialog dialogActivity;
+    int ctxcnt = 0;
 
     @Override
     public void onStart() {
@@ -97,7 +101,7 @@ public class ContactsFragment extends Fragment {
     }
 
     private ActionBar getActionBar() {
-        return ((MainActivity2) getActivity()).getSupportActionBar();
+        return ((MainActivity) getActivity()).getSupportActionBar();
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -282,8 +286,7 @@ public class ContactsFragment extends Fragment {
             String yourAccountType = "%";
             Cursor c; Cursor d;
 
-            int contactNameColumn ;
-            int addressColumnIndex;
+            int contactNameColumn, addressColumnIndex, count = 0;
             int addressColumnId;
             List<Long> ctl = new ArrayList<Long>();
 
@@ -325,45 +328,59 @@ public class ContactsFragment extends Fragment {
                     // Long contactID = c.getLong(c.getColumnIndex(ContactsContract.RawContacts.CONTACT_ID));
                     Uri rawContactUri = ContentUris.withAppendedId(ContactsContract.RawContacts.CONTENT_URI, addressColumnIndex);
                     Uri entityUri = Uri.withAppendedPath(rawContactUri, ContactsContract.RawContacts.Entity.CONTENT_DIRECTORY);
-                    d = mThis.getActivity().getContentResolver().query(entityUri,
-                            null, "mimetype = 'vnd.android.cursor.item/com.sample.profile'", null, null);
+                    String filter = "( mimetype =? AND " + ContactsContract.Data.DATA5 + " = ?) ";
+                    d = mThis.getActivity().getContentResolver().query(
+                            entityUri,
+                            null,
+                            filter,
+                            new String[]{"vnd.android.cursor.item/com.sample.profile", MyService.currentChain},
+                            null,
+                            null
+                    );
+
                     tmp.put("id", String.valueOf(addressColumnIndex));
-               //     tmp.put("id", String.valueOf(bumole));
+                    //     tmp.put("id", String.valueOf(bumole));
 
 
-                    int count =0;
                     try {
                         while (d.moveToNext()) {
                             count++;
                             String XRPAddress = d.getString(d.getColumnIndex(ContactsContract.RawContacts.Entity.DATA3));
-                            myLog("TEST", "XRP Address: "+XRPAddress);
-                            myLog("TEST", "XRP Tag    : "+d.getString(d.getColumnIndex(ContactsContract.RawContacts.Entity.DATA2)));
-                            myLog("TEST", "XRP Info   : "+d.getString(d.getColumnIndex(ContactsContract.RawContacts.Entity.DATA1)));
-                            myLog("TEST", "entityURI: "+ DatabaseUtils.dumpCurrentRowToString(d));
+                            myLog("TEST", "XRP Address: " + XRPAddress);
+                            myLog("TEST", "XRP Tag    : " + d.getString(d.getColumnIndex(ContactsContract.RawContacts.Entity.DATA2)));
+                            myLog("TEST", "XRP Info   : " + d.getString(d.getColumnIndex(ContactsContract.RawContacts.Entity.DATA1)));
+                            myLog("TEST", "entityURI: " + DatabaseUtils.dumpCurrentRowToString(d));
                             Long contactID = d.getLong(d.getColumnIndex(ContactsContract.RawContacts.CONTACT_ID));
                             int bumole = Integer.parseInt(d.getString(d.getColumnIndex("data_id")));
                             ctl.add(contactID);
                             tmp.put("numb", XRPAddress);
                             tmp.put("id", String.valueOf(bumole));
                             tmp.put("name", c.getString(contactNameColumn));
+                            maplist.add(tmp);
+//                            contactList.add(tmp);
                         }
                     } finally {
                         d.close();
                     }
+                    if (count == 0) {
+
+                    }
                     String getRawQuery = ContactsContract.RawContacts.CONTACT_ID + "=" + addressColumnIndex;
                 } else {
+                    count++;
                     contactNameColumn = c.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME);
                     addressColumnIndex = c.getColumnIndex(ContactsContract.Contacts._ID);
                     tmp.put("numb", c.getString(addressColumnIndex));
                     tmp.put("id", c.getString(addressColumnIndex));
                     tmp.put("name", c.getString(contactNameColumn));
+                    maplist.add(tmp);
                 }
-                maplist.add(tmp);
+                //               maplist.add(tmp);
 
               //  myLog("TEST", "ContactList existing entry: "+tmp.toString());
 
-
                 contactList.add(c.getString(contactNameColumn));
+
             }
             c.close();
             if(ctl != null) {
@@ -372,17 +389,23 @@ public class ContactsFragment extends Fragment {
 
             myLog("TEST", maplist.toString());
 
+            int finalCount = count;
             mThis.getActivity().runOnUiThread(new Runnable() {
 
                 @Override
                 public void run() {
                     // TODO Auto-generated method stub
                     // mContactList.setAdapter(cursorAdapter);
-
+                    String noContacts = "It appears that you have no accounts for " + MyService.currentChain + "! Please add a " + MyService.currentChain + " address to one of your contacts, or manually enter an address.";
+                    if (finalCount < 70000) {
+                        if (ListType != WITH_ACCOUNTS) {
+                            noContacts = "You have no contacts in your phone at all. [FNM] relies on your phone's contact database to save wallet addresses to. Please create some contacts and then (in this app) associate those contacts with the corresponding wallet addresses for " + MyService.currentChain;
+                        }
+                        showDialog("No Contacts", noContacts, true);
+                    }
                     InboxAdapter = fillListView(maplist);
                     lv.setAdapter(InboxAdapter);
                     myLog("TEST", "Running UI thread");
-
 
 
                 }
@@ -397,6 +420,16 @@ public class ContactsFragment extends Fragment {
         return (rc);
     }
 
+    private boolean showDialog(String title, String prompt, Boolean cancelable) {
+        FragmentManager manager = mThis.getActivity().getFragmentManager();
+
+        dialogActivity = new PleaseWaitDialog();
+        dialogActivity.prompt = prompt;
+        dialogActivity.titleText = title;
+        dialogActivity.cancelable = cancelable;
+        dialogActivity.show(manager, "DialogActivity");
+        return true;
+    }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
@@ -442,7 +475,7 @@ public class ContactsFragment extends Fragment {
 
                     MyContact newContact = new MyContact(contactItem.get("name"), addr, "0", Integer.parseInt(Objects.requireNonNull(contactItem.get("id"))));
 
-                    String rCID = ContactsManager.addContact(mThis.getActivity(), newContact);
+                    String rCID = ContactsManager.addContact(mThis.getActivity(), newContact, MyService.currentChain);
 
 
                     String uriString = new StringBuilder().append("content://com.android.contacts/data/").append(rCID).toString();

@@ -31,6 +31,9 @@ import org.web3j.tx.Transfer;
 import java.math.BigDecimal;
 import java.util.HashMap;
 
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
+
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 public class ViewContact extends AppCompatActivity implements PinCodeDialogFragment.OnResultListener {

@@ -1,7 +1,5 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.Manifest;
 import android.app.FragmentManager;
 import android.content.Context;
@@ -10,21 +8,25 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.Pair;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
+
 import org.json.JSONObject;
 import org.web3j.crypto.Credentials;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
+
 public class PKeyScanner extends AppCompatActivity implements View.OnClickListener {
-    SharedPreferences prefs; SharedPreferences.Editor pEdit;
+    SharedPreferences prefs;
+    SharedPreferences.Editor pEdit;
     private static final int ADDRESS_REQUEST_CODE = 7541;
     public static final int PRIV_KEY_REQUEST_CODE = 9554;
     public int SCAN_TYPE;

@@ -1,4 +1,4 @@
-package uk.co.xrpdevs.flarenetmessenger;
+package uk.co.xrpdevs.flarenetmessenger.ui.dialogs;
 import android.app.Dialog;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -8,14 +8,11 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -25,6 +22,8 @@ import androidx.appcompat.widget.SwitchCompat;
 import net.lingala.zip4j.exception.ZipException;
 
 import java.security.GeneralSecurityException;
+
+import uk.co.xrpdevs.flarenetmessenger.R;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 

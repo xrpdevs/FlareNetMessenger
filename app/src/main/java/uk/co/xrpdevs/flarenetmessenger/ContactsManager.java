@@ -1,32 +1,23 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-
-import android.content.ContentProvider;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentResolver;
-import android.content.ContentValues;
 import android.content.Context;
-import android.content.Entity;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.net.Uri;
-import android.provider.Contacts;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
-import android.provider.ContactsContract.CommonDataKinds.Im;
-import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
-import android.provider.ContactsContract.Groups;
 import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.Settings;
 import android.util.Log;
-import android.webkit.WebChromeClient.CustomViewCallback;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
@@ -91,9 +82,9 @@ public class ContactsManager {
     }
 
 
-    public static String addContact(Context context, MyContact contact) {
+    public static String addContact(Context context, MyContact contact, String blockChainID) {
         ContentResolver resolver = context.getContentResolver();
-      //  resolver.delete(RawContacts.CONTENT_URI, RawContacts.ACCOUNT_TYPE + " = ?", new String[] { AccountGeneral.ACCOUNT_TYPE });
+        //  resolver.delete(RawContacts.CONTENT_URI, RawContacts.ACCOUNT_TYPE + " = ?", new String[] { AccountGeneral.ACCOUNT_TYPE });
 
         String retval = "0";
 
@@ -101,13 +92,13 @@ public class ContactsManager {
 
         int rcID = getRawContactId(context, contact.id);
 
-        Log.d("TEST", "contact vals: "+contact.tag);
+        Log.d("TEST", "contact vals: " + contact.tag);
         Log.d("TEST", "contact vals: "+contact.id);
         Log.d("TEST", "contact vals: "+contact.XRPAddr);
         Log.d("TEST", "contact vals: "+contact.displayname);
 
         ops.add(ContentProviderOperation.newInsert(addCallerIsSyncAdapterParameter(RawContacts.CONTENT_URI, true))
-                .withValue(RawContacts.ACCOUNT_NAME, AccountGeneral.ACCOUNT_NAME)
+                .withValue(RawContacts.ACCOUNT_NAME, blockChainID)
                 .withValue(RawContacts.ACCOUNT_TYPE, AccountGeneral.ACCOUNT_TYPE)
                 //.withValue(RawContacts.SOURCE_ID, 12345)
                 //.withValue(RawContacts.AGGREGATION_MODE, RawContacts.AGGREGATION_MODE_DISABLED)
@@ -142,9 +133,10 @@ public class ContactsManager {
         ops.add(ContentProviderOperation.newInsert(addCallerIsSyncAdapterParameter(Data.CONTENT_URI, true))
                 .withValueBackReference(Data.RAW_CONTACT_ID, 0)
                 .withValue(Data.MIMETYPE, MIMETYPE)
-                .withValue(Data.DATA1, contact.displayname)
-                .withValue(Data.DATA2, contact.tag)
-                .withValue(Data.DATA3, contact.XRPAddr)
+                .withValue(Data.DATA1, contact.displayname)    // probably we dont need this..
+                .withValue(Data.DATA2, contact.tag)            // for addresses with "tags"
+                .withValue(Data.DATA3, contact.XRPAddr)        // wallet address
+                .withValue(Data.DATA5, blockChainID)           // for making sure we only display relevant contacts.
                 .build());
         try {
             ContentProviderResult[] results = resolver.applyBatch(ContactsContract.AUTHORITY, ops);

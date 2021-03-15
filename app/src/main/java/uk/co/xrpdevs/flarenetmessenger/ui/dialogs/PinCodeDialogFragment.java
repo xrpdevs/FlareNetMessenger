@@ -1,4 +1,4 @@
-package uk.co.xrpdevs.flarenetmessenger;
+package uk.co.xrpdevs.flarenetmessenger.ui.dialogs;
 import android.app.Dialog;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -16,6 +16,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
 import net.lingala.zip4j.exception.ZipException;
+
+import uk.co.xrpdevs.flarenetmessenger.R;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 

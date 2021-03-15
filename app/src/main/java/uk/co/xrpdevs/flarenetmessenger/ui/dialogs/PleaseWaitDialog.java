@@ -1,7 +1,6 @@
-package uk.co.xrpdevs.flarenetmessenger;
+package uk.co.xrpdevs.flarenetmessenger.ui.dialogs;
 
 import android.app.Dialog;
-import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -10,6 +9,8 @@ import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
+
+import uk.co.xrpdevs.flarenetmessenger.R;
 
 public class PleaseWaitDialog extends android.app.DialogFragment {
 
@@ -20,6 +21,8 @@ public class PleaseWaitDialog extends android.app.DialogFragment {
     PleaseWaitDialog mC = this;
 
     public Boolean cancelable;
+
+    public Boolean hasButtons;
 
     @Override
     public void onActivityCreated(Bundle arg0) {
@@ -50,7 +53,11 @@ public class PleaseWaitDialog extends android.app.DialogFragment {
         title.setTextSize(20);
 
         builder.setCustomTitle(title);
-      //  builder.set
+        //  builder.set
+        if (hasButtons) {
+
+        }
+
         builder.setMessage(prompt);
         setCancelable(cancelable);
         return builder.create();

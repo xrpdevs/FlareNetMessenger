@@ -38,7 +38,8 @@ import org.web3j.protocol.http.HttpService;
 import java.math.BigInteger;
 import java.util.HashMap;
 
-import uk.co.xrpdevs.flarenetmessenger.Contracts.Fsms;
+import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
+import uk.co.xrpdevs.flarenetmessenger.contracts.Fsms;
 
 import static org.web3j.crypto.Credentials.create;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
@@ -69,6 +70,8 @@ public class MyService extends Service {
     static HashMap<String, String> deets;
     public static org.web3j.crypto.Credentials c;
     Context mC;
+    public static String currentChain = "Coston";
+    String cChain = currentChain;
 
 
     public static final String TAG = MyService.class.getSimpleName();
@@ -169,9 +172,9 @@ public class MyService extends Service {
             e.printStackTrace();
         }
         c = create(deets.get("walletPrvKey"));
-     //   fsms = Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
-    //    fcoin = ERC20.load(fCoinAddr, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
-       initialiseContracts();
+        //   fsms = uk.co.xrpdevs.flarenetmessenger.contracts.Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+        //    fcoin = uk.co.xrpdevs.flarenetmessenger.contracts.ERC20.load(fCoinAddr, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+        initialiseContracts();
 
         //fcoin.transfer("")
 
@@ -211,7 +214,7 @@ public class MyService extends Service {
             try {
                 BigInteger bal = fcoin.balanceOf(c.getAddress()).send();
                 String cn = fcoin.name().send();
-                Log.d("ERC20-name", cn);
+                Log.d("uk.co.xrpdevs.flarenetmessenger.contracts.ERC20-name", cn);
                 Log.d("BALANCE", bal.toString());
             } catch (Exception e) {
                 e.printStackTrace();
