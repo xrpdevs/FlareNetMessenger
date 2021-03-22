@@ -44,7 +44,6 @@ import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.R;
-import uk.co.xrpdevs.flarenetmessenger.Smstest3;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
 
@@ -60,7 +59,6 @@ import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 public class TokensFragment extends Fragment {
     public SimpleAdapter TokensAdaptor;
     public SimpleAdapter simpleAdapter;
-    Smstest3 contract;
     BigInteger GAS_LIMIT = BigInteger.valueOf(670025L);
     BigInteger GAS_PRICE = BigInteger.valueOf(200000L);
     SharedPreferences prefs;

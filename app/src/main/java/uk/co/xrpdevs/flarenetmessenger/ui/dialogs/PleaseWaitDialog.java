@@ -54,9 +54,9 @@ public class PleaseWaitDialog extends android.app.DialogFragment {
 
         builder.setCustomTitle(title);
         //  builder.set
-        if (hasButtons) {
+        // if (hasButtons) {
 
-        }
+        //  }
 
         builder.setMessage(prompt);
         setCancelable(cancelable);

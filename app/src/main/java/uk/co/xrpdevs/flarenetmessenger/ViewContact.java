@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -36,10 +37,10 @@ import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
-public class ViewContact extends AppCompatActivity implements PinCodeDialogFragment.OnResultListener {
+public class ViewContact extends AppCompatActivity implements Button.OnClickListener, PinCodeDialogFragment.OnResultListener {
     TextView contactName;
     TextView xrpAddress;
-    Button deleteContact;
+    Button deleteContact, sendFunds;
     Long rawContactID = 0L;
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
@@ -60,17 +61,19 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
         Intent myIntent = getIntent();
         Bundle bundle = myIntent.getExtras();
         String action = myIntent.getAction();
-    //    final String myWallet, theirWallet, cNameText;
+        //    final String myWallet, theirWallet, cNameText;
         String info;
         BigDecimal myBalance, theirBalance;
 
 
         //contactName   = findViewById(R.id.viewContactName);
-        xrpAddress    = findViewById(R.id.viewContactWalletAddress);
+        xrpAddress = findViewById(R.id.viewContactWalletAddress);
         deleteContact = findViewById(R.id.button7);
+        deleteContact.setOnClickListener(this);
         balancesInfo = findViewById(R.id.balancesInfo);
         XRPAmount = findViewById(R.id.editTextNumberDecimal);
-        Button sendFunds = findViewById(R.id.viewContactSendFunds);
+        sendFunds = findViewById(R.id.viewContactSendFunds);
+        sendFunds.setOnClickListener(this);
         prefs = this.getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
         String pinCode = prefs.getString("pinCode", "abcd");
@@ -83,12 +86,15 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
 
 
 
-        deleteContact.setOnClickListener(v -> {
-            Log.d("TEST", "Deleted: "+ContactsManager.deleteRawContactID(this, rawContactID));
-        });
+        /*deleteContact.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d("TEST", "Deleted: " + ContactsManager.deleteRawContactID(ViewContact.this, rawContactID));
+            }
+        });*/
 
 
-                Uri uri = myIntent.getData();
+        Uri uri = myIntent.getData();
         if (bundle != null) {
             for (String key : bundle.keySet()) {
                 Log.e("TEST", key + " : " + (bundle.get(key) != null ? bundle.get(key) : "NULL"));
@@ -101,18 +107,18 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
         Cursor contactsCursor = getContentResolver().query(uri, null, null, null,
                 null);
 
-    //    Log.d("TEST", action);
-        Log.d("TEST", "ViewContact URI: "+uri.toString());
-        if(contactsCursor.moveToFirst()) {
-            Log.d("TEST", "UriData: "+ DatabaseUtils.dumpCurrentRowToString(contactsCursor));
+        //    Log.d("TEST", action);
+        Log.d("TEST", "ViewContact URI: " + uri.toString());
+        if (contactsCursor.moveToFirst()) {
+            Log.d("TEST", "UriData: " + DatabaseUtils.dumpCurrentRowToString(contactsCursor));
             int addressColumnIndex = contactsCursor.getColumnIndex(ContactsContract.RawContacts.Entity.DATA3);
             int cNameIndex = contactsCursor.getColumnIndex(ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY);
 
             rawContactID = contactsCursor.getLong(contactsCursor.getColumnIndex("raw_contact_id"));
 
-          //  rawContactID = Long.getLong(rcID);
+            //  rawContactID = Long.getLong(rcID);
 
-            Log.d("TEST", "RAWCONTACTID "+rawContactID);
+            Log.d("TEST", "RAWCONTACTID " + rawContactID);
 
             String XRPAddress = contactsCursor.getString(addressColumnIndex);
             cNameText = contactsCursor.getString(cNameIndex);
@@ -127,16 +133,16 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
 
             String pubkey = ContactsManager.getPubKey(mThis.getApplicationContext(), theirWallet);
 
-            info = "Your balance: "+ myBalance +"\n"+
-                    "Their balance: "+ theirBalance +"\n";
+            info = "Your balance: " + myBalance + "\n" +
+                    "Their balance: " + theirBalance + "\n";
 
-            if(pubkey != null){
-                info=info+"Pubkey Present";
+            if (pubkey != null) {
+                info = info + "Pubkey Present";
             }
 
             balancesInfo.setText(info);
 
-            sendFunds.setOnClickListener(v -> {
+            /*sendFunds.setOnClickListener((View v) -> {
 
                 FragmentManager manager = getFragmentManager();
                 pinDialog = new PinCodeDialogFragment().newInstance(this, "Enter PIN:");
@@ -144,7 +150,7 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
 
 
 
-            });
+            });*/
 
             // contactName.setText(cNameText);
             this.getSupportActionBar().setTitle(cNameText);
@@ -171,11 +177,10 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
     }
 
 
-
     @Override
     public void onResult(String pinCode) {
-        myLog("PIN", "Onresult called - PINCODE = "+pinCode);
-        if(pinCode.equals(prefs.getString("pinCode", "abcd"))) {
+        myLog("PIN", "Onresult called - PINCODE = " + pinCode);
+        if (pinCode.equals(prefs.getString("pinCode", "abcd"))) {
             pinDialog.dismiss();
 
             to = theirWallet;
@@ -189,7 +194,28 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
         }
     }
 
-    class sendFunds extends Thread  {
+    @Override
+    public void onClick(View v) {
+        Log.d("ONCLICK", "id: " + v.getId());
+        switch (v.getId()) {
+            case R.id.button7:
+                // delete contact
+                Log.d("TEST", "Deleted: " + ContactsManager.deleteRawContactID(ViewContact.this, rawContactID));
+                break;
+            case R.id.viewContactSendFunds:
+                FragmentManager manager = getFragmentManager();
+                pinDialog = new PinCodeDialogFragment().newInstance(this, "Enter PIN:");
+                pinDialog.show(manager, "1");
+                // send funds
+                break;
+            //todo: case R.id.thusFarUndefined:
+            // cheange contact
+
+        }
+
+    }
+
+    class sendFunds extends Thread {
 
         String cNameText;
         Boolean isReplaced = false;
@@ -197,7 +223,7 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
         @Override
         public void run() {
             //String myWallet, String theirWallet, BigDecimal XRPAmount) {
-            showDialog("Sending "+amount+" FLR to \n"+cNameText+"\nPlease wait for transaction completion.", false);
+            showDialog("Sending " + amount + " FLR to \n" + cNameText + "\nPlease wait for transaction completion.", false);
             try {
                 TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
                         amount, org.web3j.utils.Convert.Unit.ETHER).send();
@@ -205,16 +231,12 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
                 e.printStackTrace();
                 dialogActivity.dismiss();
                 isReplaced = true;
-                showDialog("Transaction to "+cNameText+" failed.\n"+e.getMessage(), true);
+                showDialog("Transaction to " + cNameText + " failed.\n" + e.getMessage(), true);
             }
-
 
 
             String info2 = "Your balance: " + Utils.getMyBalance(from).first + "\n" +
                     "Their balance: " + Utils.getMyBalance(to).first + "\n";
-
-
-
 
 
             runOnUiThread(new Runnable() {
@@ -223,7 +245,7 @@ public class ViewContact extends AppCompatActivity implements PinCodeDialogFragm
                 public void run() {
                     // TODO Auto-generated method stub
                     // mContactList.setAdapter(cursorAdapter);
-                    if(!isReplaced){
+                    if (!isReplaced) {
                         dialogActivity.dismiss();
 
                     }

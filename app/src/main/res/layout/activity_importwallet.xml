@@ -36,14 +36,14 @@
         android:layout_marginTop="32dp"
         android:ems="10"
         android:hint="@string/new_wallet_name"
+        android:importantForAutofill="no"
         android:inputType="textShortMessage"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView2"
-        android:importantForAutofill="no" />
+        app:layout_constraintTop_toBottomOf="@+id/textView2" />
 
     <Button
-        android:id="@+id/importPubKeyQR"
+        android:id="@+id/importPrvKeyQR"
         android:text="@string/scan_pubkey"
         android:layout_width="205dp"
         android:layout_height="49dp"
@@ -58,12 +58,24 @@
         app:layout_constraintTop_toBottomOf="@+id/publicKey" />
 
     <Button
+        android:id="@+id/savePrivKey"
         android:layout_width="205dp"
         android:layout_height="49dp"
         android:layout_marginTop="32dp"
         android:text="@string/save_wallet"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/importPubKeyQR" />
+        app:layout_constraintTop_toBottomOf="@+id/importPrvKeyQR" />
+
+    <ListView
+        android:id="@+id/import_chainsList"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintBottom_toTopOf="@+id/newWalletName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView2" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

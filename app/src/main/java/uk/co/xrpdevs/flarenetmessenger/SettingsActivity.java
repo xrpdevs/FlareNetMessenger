@@ -9,7 +9,6 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.PreferenceScreen;
 
 import org.xmlpull.v1.XmlPullParser;
 
@@ -53,7 +52,7 @@ public class SettingsActivity extends AppCompatActivity {
 
                     AttributeSet attr = Xml.asAttributeSet(parser);
                     int count = attr.getAttributeCount();
-                    PrivateKeyDialog poo = new PrivateKeyDialog(bob, attr);
+
                     return true;
                 }
             });

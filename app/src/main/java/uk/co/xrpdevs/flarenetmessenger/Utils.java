@@ -10,6 +10,7 @@ import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 import org.bouncycastle.util.encoders.Hex;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.spongycastle.jce.provider.BouncyCastleProvider;
@@ -22,8 +23,11 @@ import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.http.HttpService;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -36,6 +40,7 @@ import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECPoint;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.concurrent.TimeUnit;
@@ -273,5 +278,39 @@ public static void myLog(String tag, String logString){
         }
         return false;
     }
+
+    public static ArrayList<HashMap<String, String>> getAvailChains() {
+        ArrayList<HashMap<String, String>> availTokens = new ArrayList<>();
+
+        String json = null;
+        try {
+            InputStream is = FlareNetMessenger.getContext().getAssets().open("blockchains.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            json = new String(buffer, StandardCharsets.UTF_8);
+            //Log.d("JSON", "== "+json);
+            JSONObject jo = new JSONObject(json);
+            JSONArray key = jo.names();
+            for (int i = 0; i < key.length(); ++i) {
+                JSONObject obj = jo.getJSONObject(key.getString(i));
+                HashMap<String, String> tmp = jsonToMap(obj.toString());
+                tmp.put("Name", key.getString(i));
+                availTokens.add(tmp);
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return null;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
+        //myLog("json", availTokens.toString());
+
+        return availTokens;
+    }
+
 
 }
