@@ -52,17 +52,20 @@ public class MyService extends Service {
     static BigInteger GAS_LIMIT = BigInteger.valueOf(8000000L);
     static BigInteger GAS_PRICE = BigInteger.valueOf(470000000000L);
 
-    static String rpc = "https://api.avax-test.network/ext/bc/C/rpc";
+    static int tmpCID = 0x11;
 
-    public static String contractAddress= "0x7884C21E95cBBF12A15F7EaF878224633d6ADF54";
-//    public static String fsmsContractAddress = "0x0A51d135316cc52A0CBac6f0D92c927A69bf6E27";  //COSTON
-    public static String fsmsContractAddress = "0xdA451F4feBBbdDdAb8A80a606B45146d0ac1C4fa";    // AVAXTEST
-//    public static String fCoinAddr = "0x068412C17fc66f73CC24048c334A1DBA994e8fED"; // COSTON
-    public static String fCoinAddr = "0x94e0e1f82c99dBC11271DB7E39c1Af5E379aF8e0";              // AVAXTEST
+    static String rpc = "https://coston.flare.network/ext/bc/C/rpc";
+
+    //  public static String contractAddress= "0x7884C21E95cBBF12A15F7EaF878224633d6ADF54";
+    public static String fsmsContractAddress = "0x21dd8FAa568b05Fd260e998D2d0adc12b5f36b1E";  //COSTON
+    public static String contractAddress = fsmsContractAddress;
+    //    public static String fsmsContractAddress = "0xdA451F4feBBbdDdAb8A80a606B45146d0ac1C4fa";    // AVAXTEST
+    public static String fCoinAddr = "0xd15942e499186AA173A082ED0Bc90Aa3Ab93bd73"; // COSTON
+    //    public static String fCoinAddr = "0x94e0e1f82c99dBC11271DB7E39c1Af5E379aF8e0";              // AVAXTEST
     //    static Web3j fsmsLink = Web3j.build(new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
 //    static Web3j fCoinLink = Web3j.build(new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
-    static Web3j fsmsLink = initConnection(rpc, 0xa869);
-    static Web3j fCoinLink = initConnection(rpc, 0xa869);
+    static Web3j fsmsLink = initConnection(rpc, tmpCID);
+    static Web3j fCoinLink = initConnection(rpc, tmpCID);
     public static Fsms fsms;
     public static ERC20 fcoin;
     public static SharedPreferences prefs;
@@ -300,13 +303,13 @@ public class MyService extends Service {
         return myEtherWallet;
     }
 
-    public static Web3j initWeb3j(){
+    public static Web3j initWeb3j() {
 
         Web3j myEtherWallet = Web3j.build(
 
-                new HttpService("https://api.avax-test.network/ext/bc/C/rpc"));
-//                new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
-        myEtherWallet.ethChainId().setId(0xa869);
+                //new HttpService("https://api.avax-test.network/ext/bc/C/rpc"));
+                new HttpService("https://coston.flare.network/ext/bc/C/rpc"));
+        myEtherWallet.ethChainId().setId(0x11);
         return myEtherWallet;
     }
 

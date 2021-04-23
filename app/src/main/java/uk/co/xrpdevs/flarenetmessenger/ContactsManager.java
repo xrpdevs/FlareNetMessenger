@@ -61,10 +61,10 @@ public class ContactsManager {
     }
 
     public static String getPubKey(Context context, String walletAddress){
-        String filter = ContactsContract.Data.DATA3 + "=?";
+        String filter = " ( " + ContactsContract.Data.DATA3 + "=? AND data5 =? ) ";
         Uri uri = ContactsContract.Data.CONTENT_URI;
-        String[] projection    = new String[] {ContactsContract.Data.DATA4};
-        String[] filterParams = new String[] {walletAddress};
+        String[] projection = new String[]{ContactsContract.Data.DATA4};
+        String[] filterParams = new String[]{walletAddress, "Coston"};
         String pubkey = null;
         Cursor cursor = context.getContentResolver().query(uri, projection, filter, filterParams, null);
         if (cursor != null) {
@@ -73,7 +73,7 @@ public class ContactsManager {
                 myLog("temp", DatabaseUtils.dumpCurrentRowToString(cursor));
                 return pubKey;
             }
-            cursor.close();
+            //cursor.close();
         } else {
             myLog("temp", "Cursor = null");
             return pubkey;

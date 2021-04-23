@@ -1,10 +1,10 @@
 {
   "Coston": {
     "NativeCurrency": "Spark",
-    "Symbol" : "FLR",
-    "RPC": "https://costone.flare.network/ext/bc/C/rpc",
+    "Symbol": "CFLR",
+    "RPC": "https://coston.flare.network/ext/bc/C/rpc",
     "Type": "ETH",
-    "ChainID": "0x1"
+    "ChainID": "0x11"
   },
   "AVAXTest":{
     "NativeCurrency": "AVAX",

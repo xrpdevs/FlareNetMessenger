@@ -62,6 +62,7 @@ import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
 import static android.content.Context.CLIPBOARD_SERVICE;
 import static uk.co.xrpdevs.flarenetmessenger.ContactsManager.getPubKey;
 import static uk.co.xrpdevs.flarenetmessenger.MyService.fsms;
+import static uk.co.xrpdevs.flarenetmessenger.MyService.fsmsContractAddress;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.deCipherText;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
@@ -129,7 +130,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
         prefs = mThis.getActivity().getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
         FlareConnection = MyService.initWeb3j();
-        contractAddress = MyService.fsmsContractAddress;
+        contractAddress = fsmsContractAddress;
         try {
             deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
         } catch (JSONException e) {
@@ -137,14 +138,17 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
         }
         cgp = new DefaultGasProvider();
         c = Credentials.create(deets.get("walletPrvKey"));
+
+        fsms = uk.co.xrpdevs.flarenetmessenger.contracts.Fsms.load(fsmsContractAddress, FlareConnection, c, GAS_PRICE, GAS_LIMIT);
+
+
         contract = fsms;
 
         //MyService.initialiseContracts();
 
-        Fsms bob = fsms;
 
         //ibSize = inboxSize();
-        if(prefs.getInt("walletCount", 0) > 0 ) {
+        if (prefs.getInt("walletCount", 0) > 0) {
             myLog("FRAG", "Wallet count is non zero");
             getMessagesThread.start();
 
@@ -233,20 +237,29 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                 if(namesCache.containsKey(listName)){
                     cName.setText(namesCache.get(listName));
                 } else {
-//myLog("fuckoff", "listname: "+listName);
-                    String filter = ContactsContract.Data.DATA3 + "=?";
+                    myLog("fuckoff", "listname: " + listName);
+                    //       String filter = ContactsContract.Data.DATA3 + " LIKE ?";
+                    String filter = "( data3 =? AND data5 =? ) ";
+                    // String[] filter = new String[] {"data3 =?", "data5 =?"};
                     Uri uri = ContactsContract.Data.CONTENT_URI;
-                    String[] projection    = new String[] {ContactsContract.Contacts.DISPLAY_NAME,
+                    String[] projection = new String[]{ContactsContract.Contacts.DISPLAY_NAME,
                             ContactsContract.Data.DATA3,
-                            ContactsContract.Data.MIMETYPE};
-                    String[] filterParams = new String[]{listName};
-                    Cursor cursor = getContext().getContentResolver().query(uri, projection, filter, filterParams, null);
+                            ContactsContract.Data.MIMETYPE,
+                            ContactsContract.Data.DATA5};
+                    String[] filterParams = new String[]{
+                            listName, "Coston"};
+                    Cursor cursor = getContext().getContentResolver().query(
+                            uri, projection,
+                            filter,
+                            filterParams,
+                            null);
                     if (cursor != null) {
                         while (cursor.moveToNext()) {
                             String name = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DISPLAY_NAME));
                             String data3 = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA3));
                             String mimetype = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
-                            myLog("temp", name + " " + data3 + " " + mimetype);
+                            String bcid = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA5));
+                            myLog("tempbacons", name + " " + data3 + " " + mimetype + " " + bcid);
                             cName.setText(name);
                             namesCache.put(listName, name);
                         }
@@ -403,7 +416,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
     public int inboxSize() {
         int mCount = 0;
         try {
-//            fsms = uk.co.xrpdevs.flarenetmessenger.contracts.Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+//
             Tuple2<BigInteger, BigInteger> messageCount = fsms.getMyInboxSize().send();
 
             myLog("TEST", "Inbox count: " + messageCount);

@@ -124,6 +124,9 @@ public class Utils {
     }
 
     public static byte[] toByte(String s){
+        if (s.length() == 127) {  // make sure we add back leading zeroes. These need to be saved properly in contact details.
+            s = "0" + s;
+        }
         return Hex.decode(s);
     }
 
@@ -164,13 +167,13 @@ public class Utils {
         return Credentials.create(deets.get("walletPrvKey"));
     }
 
-    public static Web3j initWeb3j(){
+    public static Web3j initWeb3j() {
 
         Web3j myEtherWallet = Web3j.build(
 
-                new HttpService("https://api.avax-test.network/ext/bc/C/rpc"));
-//                new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
-        myEtherWallet.ethChainId().setId(0xa869);
+                //   new HttpService("https://api.avax-test.network/ext/bc/C/rpc"));
+                new HttpService("https://coston.flare.network/ext/bc/C/rpc"));
+        myEtherWallet.ethChainId().setId(0x11);
 
         return myEtherWallet;
     }
