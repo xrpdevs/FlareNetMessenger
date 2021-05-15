@@ -53,7 +53,8 @@ import static android.app.Activity.RESULT_OK;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 public class ContactsFragment extends Fragment {
-    public String contractAddress;
+    public String contractAddress, token, tAddr;
+    boolean isToken = false;
     public SimpleAdapter InboxAdapter;
     public SimpleAdapter simpleAdapter;
     SharedPreferences prefs;
@@ -85,7 +86,7 @@ public class ContactsFragment extends Fragment {
                 ListType = args.getInt("ltype");
             }
         }
-        if(ListType == 2000){
+        if (ListType == 2000) {
 
             getActionBar().setTitle("Add to Contact");
         }
@@ -93,7 +94,15 @@ public class ContactsFragment extends Fragment {
             ListType = 1000;
             SendMessage = true;
         }
-        if(ListType == 1000){
+        if (ListType == 4000) {
+            ListType = 1000;
+            if (args.containsKey("token")) {
+                isToken = true;
+                token = args.getString("token");
+                tAddr = args.getString("tAddr");
+            }
+        }
+        if (ListType == 1000) {
 
             getActionBar().setTitle("Select Contact");
         }
@@ -202,6 +211,7 @@ public class ContactsFragment extends Fragment {
         lv.setOnItemClickListener((parent, v, position, id) -> {
             HashMap<String, String> theItem = lines.get(position);
             if(ListType == 1000) {
+
                 if(SendMessage){
                     TextView cNam = v.findViewById(R.id.inboxAddress);     // todo: refactor to InboxAddress
                     TextView cAddr = v.findViewById(R.id.inboxContent);  // todo: refactor to InboxContent
@@ -225,6 +235,7 @@ public class ContactsFragment extends Fragment {
                     fragmentTransaction.replace(R.id.nav_host_fragment, f);
                     fragmentTransaction.addToBackStack("contacts").commit();
                 } else {
+
                     Intent i = new Intent(this.getActivity(),
                             ViewContact.class);
                     Bundle b = new Bundle();
@@ -232,6 +243,10 @@ public class ContactsFragment extends Fragment {
 
                     b.putString("name", theItem.get("name"));
                     b.putString("addr", theItem.get("numb"));
+                    if (isToken) {
+                        b.putString("token", token);
+                        b.putString("tAddr", tAddr);
+                    }
                     b.putString("id", theItem.get("id"));
                     i.putExtra("contactInfo", b);
                     String uriString = new StringBuilder().append("content://com.android.contacts/data/").append(theItem.get("id")).toString();
@@ -397,7 +412,7 @@ public class ContactsFragment extends Fragment {
                     // TODO Auto-generated method stub
                     // mContactList.setAdapter(cursorAdapter);
                     String noContacts = "It appears that you have no accounts for " + MyService.currentChain + "! Please add a " + MyService.currentChain + " address to one of your contacts, or manually enter an address.";
-                    if (finalCount < 70000) {
+                    if (finalCount < 1) {
                         if (ListType != WITH_ACCOUNTS) {
                             noContacts = "You have no contacts in your phone at all. [FNM] relies on your phone's contact database to save wallet addresses to. Please create some contacts and then (in this app) associate those contacts with the corresponding wallet addresses for " + MyService.currentChain;
                         }

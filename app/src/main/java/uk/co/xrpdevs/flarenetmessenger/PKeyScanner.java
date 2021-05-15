@@ -22,12 +22,13 @@ import com.google.zxing.integration.android.IntentResult;
 import org.json.JSONObject;
 import org.web3j.crypto.Credentials;
 
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
-
-import static uk.co.xrpdevs.flarenetmessenger.Utils.getAvailChains;
 
 public class PKeyScanner extends AppCompatActivity implements View.OnClickListener {
     SharedPreferences prefs;
@@ -35,10 +36,11 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
     private static final int ADDRESS_REQUEST_CODE = 7541;
     public static final int PRIV_KEY_REQUEST_CODE = 9554;
     public int SCAN_TYPE;
-    Button scan, save;
+    Button scan, cnew, save;
     Context mThis = this;
     IntentIntegrator integrator;
     EditText wName;
+    EditText wKey;
     PleaseWaitDialog dialogActivity;
     ListView lv;
 
@@ -61,10 +63,12 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         wName = findViewById(R.id.newWalletName);
         scan = findViewById(R.id.importPrvKeyQR);
         scan.setOnClickListener(this);
+        cnew = findViewById(R.id.importPrvKeyQR2);
+        cnew.setOnClickListener(this);
         save = findViewById(R.id.savePrivKey);
         save.setOnClickListener(this);
-        lv = findViewById(R.id.import_chainsList);
-        lv.setAdapter(fillListView(getAvailChains()));
+        //  lv = findViewById(R.id.import_chainsList);
+        //  lv.setAdapter(fillListView(getAvailChains()));
     }
 
 
@@ -175,6 +179,50 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
                 integrator.setCaptureActivity(CaptureActivityPortrait.class);
                 integrator.setBarcodeImageEnabled(false);
                 integrator.initiateScan();
+                break;
+            case R.id.importPrvKeyQR2:
+                String scanContent = null;
+                Log.d("MOO", "MOOOOOOOOOOOOOOOOOOOOOOOOOO");
+                try {
+                    scanContent = Utils.newKeys();
+                } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException e) {
+                    e.printStackTrace();
+                }
+                Credentials cs = Credentials.create(scanContent);
+
+                String privateKey = cs.getEcKeyPair().getPrivateKey().toString(16);
+                String publicKey = cs.getEcKeyPair().getPublicKey().toString(16);
+                String addr = cs.getAddress();
+
+                //Pair<BigDecimal, String> testAddr = Utils.getMyBalance(addr);
+
+
+                if (scanContent.startsWith("0x") && scanContent.length() == 66) {
+                    int wC = prefs.getInt("walletCount", 0);
+                    wC++;
+
+                    System.out.println("Private key: " + privateKey);
+                    System.out.println("Public key: " + publicKey);
+                    System.out.println("Address: " + addr);
+
+                    HashMap<String, String> tmp = new HashMap<String, String>();
+                    if (wName.getText().toString().equals("")) {
+                        tmp.put("walletName", "Wallet " + wC);
+                    } else {
+                        tmp.put("walletName", wName.getText().toString());
+                    }
+                    tmp.put("walletPrvKey", scanContent);
+                    tmp.put("walletPubKey", "0x" + publicKey);
+                    tmp.put("walletAddress", addr);
+
+                    pEdit.putString("wallet" + wC, new JSONObject(tmp).toString());
+                    pEdit.putInt("walletCount", wC);
+                    pEdit.putInt("currentWallet", wC);
+                    pEdit.commit();
+                    pEdit.apply();
+                    Intent i = new Intent(PKeyScanner.this, MainActivity.class);
+                    startActivity(i);
+                }
                 break;
         }
     }

@@ -46,12 +46,6 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView navView = findViewById(R.id.nav_view);
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
-        AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.navigation_home, R.id.navigation_contacts, R.id.navigation_wallets, R.id.navigation_messages, R.id.navigation_tokens)
-                .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
-        NavigationUI.setupWithNavController(navView, navController);
         prefs = this.getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
         //  EasyLock.checkPassword(this);
@@ -64,8 +58,15 @@ public class MainActivity extends AppCompatActivity {
         if (!prefs.contains("pinCode") || prefs.getInt("walletCount", 0) == 0) {
             Intent firstRun = new Intent(this, FirstRun.class);
             startActivity(firstRun);
+        } else {
+            //    setContentView(R.layout.activity_main2);
+            //    AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
+            //            R.id.navigation_home, R.id.navigation_contacts, R.id.navigation_wallets, R.id.navigation_messages, R.id.navigation_tokens)
+            //            .build();
+            //    NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+            //    NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+            //    NavigationUI.setupWithNavController(navView, navController);
         }
-
         Intent incoming = getIntent();
 
         if (incoming.hasExtra("selectFragment")) {
@@ -93,6 +94,18 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onResume() {
+
+        super.onResume();
+        BottomNavigationView navView = findViewById(R.id.nav_view);
+        AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.navigation_home, R.id.navigation_contacts, R.id.navigation_wallets, R.id.navigation_messages, R.id.navigation_tokens)
+                .build();
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+        NavigationUI.setupWithNavController(navView, navController);
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

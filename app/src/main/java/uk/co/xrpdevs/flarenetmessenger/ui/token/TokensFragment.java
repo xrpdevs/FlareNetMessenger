@@ -21,6 +21,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -39,12 +40,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
-import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
-import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
+import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
+import uk.co.xrpdevs.flarenetmessenger.ui.contacts.ContactsFragment;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.jsonToMap;
@@ -166,7 +168,7 @@ public class TokensFragment extends Fragment {
                             MyService.getERC20link(
                                     item.get("Address"),
                                     MyService.c,
-                                    "https://costone.flare.network/ext/bc/C/rpc"),
+                                    MyService.rpc),
                             deets.get("walletAddress"),
                             cName);
                 } else {
@@ -184,12 +186,39 @@ public class TokensFragment extends Fragment {
         };
 
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                HashMap<String, String> theItem = lines.get(position);
+                Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
+                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                fragmentTransaction.remove(currentFragment);
+                ContactsFragment f = new ContactsFragment();
+                Bundle args = new Bundle();
+                myLog("item", theItem.toString());
+                args.putInt("ltype", 4000);
+                if (!theItem.containsKey("primary")) {
+                    args.putString("token", theItem.get("Name"));
+                    args.putString("tAddr", theItem.get("Address"));
+                }
+                f.setArguments(args);
+                fragmentTransaction.replace(R.id.nav_host_fragment, f);
+                fragmentTransaction.addToBackStack("contacts").commit();
+
+            }
+//return false;
+
+        });
+
+        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+
                 Intent i = new Intent(mThis.getActivity(),
                         MainActivity.class);
                 HashMap<String, String> theItem = lines.get(position);
                 //String pooo = theItem.get("num");
-                TextView cBody = v.findViewById(R.id.inboxContent);
+                Log.d("AAAA", theItem.toString());
+                TextView cBody = view.findViewById(R.id.inboxContent);
                 //Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
                 //FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
 //                fragmentTransaction.setCustomAnimations(R.animator.
@@ -197,18 +226,36 @@ public class TokensFragment extends Fragment {
 //                        R.anim.slide_out // exi
                 //fragmentTransaction.remove(currentFragment);
                 String addr = theItem.get("Address");
-                ERC20 bob = MyService.getERC20link(addr, MyService.c, "https://costone.flare.network/ext/bc/C/rpc");
-                BigInteger bal = new BigInteger("0");
 
+                BigInteger bal = new BigInteger("0");
+                Thread updateBalance;
                 try {
-                    bal = bob.balanceOf(deets.get("walletAddress")).send();
+                    if (theItem.containsKey("primary")) {
+                        // bal = new BigInteger("100");
+                        updateBalance = new getERC20Balance(
+                                null,
+                                deets.get("walletAddress"),
+                                cBody);
+                    } else {
+
+                        updateBalance = new getERC20Balance(
+                                MyService.getERC20link(
+                                        theItem.get("Address"),
+                                        MyService.c,
+                                        MyService.rpc),
+                                deets.get("walletAddress"),
+                                cBody);
+
+                    }
+                    updateBalance.start();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 //String balance = bob.balanceOf(deets.get("walletAddress")
-                BigDecimal bd = new BigDecimal(bal, 18);
-                cBody.setText(bd.stripTrailingZeros().toPlainString());
+                //   BigDecimal bd = new BigDecimal(bal, 18);
+                //   cBody.setText(bd.stripTrailingZeros().toPlainString());
                 // startActivity(i);
+                return true;
 
             }
         });

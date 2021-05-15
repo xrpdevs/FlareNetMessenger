@@ -3,6 +3,7 @@ package uk.co.xrpdevs.flarenetmessenger;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.util.Log;
 import android.util.Pair;
 
@@ -13,6 +14,14 @@ import org.bouncycastle.util.encoders.Hex;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.spongycastle.asn1.sec.SECNamedCurves;
+import org.spongycastle.asn1.x9.X9ECParameters;
+import org.spongycastle.crypto.AsymmetricCipherKeyPair;
+import org.spongycastle.crypto.generators.ECKeyPairGenerator;
+import org.spongycastle.crypto.params.ECDomainParameters;
+import org.spongycastle.crypto.params.ECKeyGenerationParameters;
+import org.spongycastle.crypto.params.ECPrivateKeyParameters;
+import org.spongycastle.crypto.params.ECPublicKeyParameters;
 import org.spongycastle.jce.provider.BouncyCastleProvider;
 import org.spongycastle.util.Arrays;
 import org.web3j.crypto.Credentials;
@@ -30,11 +39,14 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.AlgorithmParameters;
 import java.security.GeneralSecurityException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.Provider;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.Security;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
@@ -43,6 +55,8 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.crypto.Cipher;
@@ -172,8 +186,8 @@ public class Utils {
         Web3j myEtherWallet = Web3j.build(
 
                 //   new HttpService("https://api.avax-test.network/ext/bc/C/rpc"));
-                new HttpService("https://coston.flare.network/ext/bc/C/rpc"));
-        myEtherWallet.ethChainId().setId(0x11);
+                new HttpService(MyService.rpc));
+        myEtherWallet.ethChainId().setId(MyService.tmpCID);
 
         return myEtherWallet;
     }
@@ -190,7 +204,7 @@ public class Utils {
             ethGetBalance = FlareConnection
                     .ethGetBalance(walletAddress, DefaultBlockParameterName.LATEST)
                     .sendAsync()
-                    .get(10, TimeUnit.SECONDS);
+                    .get(200, TimeUnit.SECONDS);
             wei = new BigDecimal(ethGetBalance.getBalance());
             FLR = Convert.fromWei(wei, Convert.Unit.ETHER);
         } catch (MessageDecodingException e) {
@@ -314,6 +328,115 @@ public static void myLog(String tag, String logString){
 
         return availTokens;
     }
+
+    public static String dump(Bundle bundle) {
+        if (bundle == null) {
+            return "null";
+        }//from  w  w w.  jav  a2s.  c  o m
+
+        final StringBuilder builder = new StringBuilder("Bundle{");
+
+        boolean isFirst = true;
+        Object val;
+
+        for (String key : bundle.keySet()) {
+            if (isFirst) {
+                isFirst = false;
+            } else {
+                builder.append(", ");
+            }
+            builder.append(key).append(": ");
+            val = bundle.get(key);
+            if (val instanceof Bundle) {
+                builder.append(dump((Bundle) val));
+            } else {
+                builder.append(val);
+            }
+        }
+        builder.append("}");
+        return builder.toString();
+    }
+
+    public static String dumpMap(Map<String, ?> prefs) {
+        String out = "";
+        for (String key : prefs.keySet()) {
+            Object pref = prefs.get(key);
+            String printVal = "";
+            if (pref instanceof Boolean) {
+                printVal = key + " : " + (Boolean) pref;
+            }
+            if (pref instanceof Float) {
+                printVal = key + " : " + (Float) pref;
+            }
+            if (pref instanceof Integer) {
+                printVal = key + " : " + (Integer) pref;
+            }
+            if (pref instanceof Long) {
+                printVal = key + " : " + (Long) pref;
+            }
+            if (pref instanceof String) {
+                printVal = key + " : " + (String) pref;
+            }
+            if (pref instanceof Set<?>) {
+                printVal = key + " : " + (Set<String>) pref;
+            }
+            // Every new preference goes to a new line
+            out = out + printVal + "\n\n";
+        }
+        return out;
+    }
+
+    public static Pair<BigInteger, BigInteger> getKeyPair() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
+        ECKeyPairGenerator keyGen = new ECKeyPairGenerator();
+        X9ECParameters params = SECNamedCurves.getByName("secp256k1");
+        ECKeyGenerationParameters keygenParams =
+                new ECKeyGenerationParameters(
+                        new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH()),
+                        new SecureRandom());
+
+        ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256k1");
+        keyGen.init(keygenParams);
+        AsymmetricCipherKeyPair keypair = keyGen.generateKeyPair();
+        ECPrivateKeyParameters privParams = (ECPrivateKeyParameters) keypair.getPrivate();
+        ECPublicKeyParameters pubParams = (ECPublicKeyParameters) keypair.getPublic();
+        BigInteger priv = privParams.getD();
+        BigInteger pub = new BigInteger(pubParams.getQ().getEncoded());
+        Pair<BigInteger, BigInteger> ret = new Pair<>(priv, pub);
+
+
+        return ret;
+    }
+
+    public static String newKeys() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
+
+        Pair<BigInteger, BigInteger> pair = getKeyPair();
+
+        HashMap<String, String> newKeys = new HashMap<>();
+
+        String sPrivatekeyInHex = pair.first.toString(16);
+        String sPublickeyInHex = pair.second.toString(16);
+
+        Credentials cs = Credentials.create("0x" + sPrivatekeyInHex);
+
+        String privateKey = cs.getEcKeyPair().getPrivateKey().toString(16);
+        String publicKey = cs.getEcKeyPair().getPublicKey().toString(16);
+        String addr = cs.getAddress();
+
+        newKeys.put("prv", sPrivatekeyInHex);
+        newKeys.put("pub", sPublickeyInHex);
+        newKeys.put("add", addr);
+        newKeys.put("d_prv", privateKey);
+        newKeys.put("d_pub", publicKey);
+
+        Log.d("KEYZ", Utils.dumpMap(newKeys));
+
+        String newPrivKey = "0x" + sPrivatekeyInHex;
+
+
+        return newPrivKey;
+    }
+
+//0xd4AF405f5ec7F75d270836702bb364081B804A67
 
 
 }

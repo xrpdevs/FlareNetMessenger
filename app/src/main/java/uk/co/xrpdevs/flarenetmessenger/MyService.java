@@ -52,15 +52,20 @@ public class MyService extends Service {
     static BigInteger GAS_LIMIT = BigInteger.valueOf(8000000L);
     static BigInteger GAS_PRICE = BigInteger.valueOf(470000000000L);
 
-    static int tmpCID = 0x11;
+    //    static int tmpCID = 0x11;
+    public static int tmpCID = 16;
 
-    static String rpc = "https://coston.flare.network/ext/bc/C/rpc";
+    public static String rpc = "https://testnet.xrpdevs.co.uk:9650/ext/bc/C/rpc";
+//    public static String rpc = "https://coston.flare.network/ext/bc/C/rpc";
 
     //  public static String contractAddress= "0x7884C21E95cBBF12A15F7EaF878224633d6ADF54";
-    public static String fsmsContractAddress = "0x21dd8FAa568b05Fd260e998D2d0adc12b5f36b1E";  //COSTON
+//    public static String fsmsContractAddress = "0x21dd8FAa568b05Fd260e998D2d0adc12b5f36b1E";  //COSTON
+    public static String fsmsContractAddress = "0xBb5E6dC37Fe620E71A9394bC1dE446D4ED11C7eb"; //local testnet
     public static String contractAddress = fsmsContractAddress;
     //    public static String fsmsContractAddress = "0xdA451F4feBBbdDdAb8A80a606B45146d0ac1C4fa";    // AVAXTEST
-    public static String fCoinAddr = "0xd15942e499186AA173A082ED0Bc90Aa3Ab93bd73"; // COSTON
+//    public static String fCoinAddr = "0xd15942e499186AA173A082ED0Bc90Aa3Ab93bd73"; // COSTON
+    public static String fCoinAddr = "0x933FDA928386bce4021FC472b4115C427df06612"; // local testnet
+
     //    public static String fCoinAddr = "0x94e0e1f82c99dBC11271DB7E39c1Af5E379aF8e0";              // AVAXTEST
     //    static Web3j fsmsLink = Web3j.build(new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
 //    static Web3j fCoinLink = Web3j.build(new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
@@ -83,6 +88,8 @@ public class MyService extends Service {
     public static boolean isStarted() {
         return started;
     }
+
+    public boolean isFirstRun = true;
 
     /**
      * Factory Method
@@ -169,24 +176,28 @@ public class MyService extends Service {
         //    stopSelf();
         //}
         prefs = getSharedPreferences("fnm", 0);
-        try {
-            deets = Utils.getPkey(this.getApplicationContext(), prefs.getInt("currentWallet", 0));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        c = create(deets.get("walletPrvKey"));
-        //   fsms = uk.co.xrpdevs.flarenetmessenger.contracts.Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
-        //    fcoin = uk.co.xrpdevs.flarenetmessenger.contracts.ERC20.load(fCoinAddr, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
-        initialiseContracts();
+        Log.d("PREFS", Utils.dumpMap(prefs.getAll()));
+        if (prefs.contains("walletCount") && prefs.getInt("walletCount", 0) > 0) {
+            try {
+                deets = Utils.getPkey(this.getApplicationContext(), prefs.getInt("currentWallet", 0));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            c = create(deets.get("walletPrvKey"));
+            //   fsms = uk.co.xrpdevs.flarenetmessenger.contracts.Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+            //    fcoin = uk.co.xrpdevs.flarenetmessenger.contracts.ERC20.load(fCoinAddr, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+            initialiseContracts();
 
-        //fcoin.transfer("")
+            //fcoin.transfer("")
 
-        if (!isAlarmScheduled()) {
-            setAlarm();
+            if (!isAlarmScheduled()) {
+                setAlarm();
+            }
+
+            mC = getApplicationContext();
+            // AsyncTask will take place here to get data from web.
+            subscribeNotifications();
         }
-        mC = getApplicationContext();
-        // AsyncTask will take place here to get data from web.
-        subscribeNotifications();
         started = false;
         return START_STICKY;
     }
@@ -213,32 +224,34 @@ public class MyService extends Service {
         Boolean a;
         BGThread(Boolean a){this.a = a;}
         public void run() {
+            if (deets.containsKey("walletPrvKey")) {
+                try {
+                    BigInteger bal = fcoin.balanceOf(c.getAddress()).send();
+                    String cn = fcoin.name().send();
+                    Log.d("uk.co.xrpdevs.flarenetmessenger.contracts.ERC20-name", cn);
+                    Log.d("BALANCE", bal.toString());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                EthFilter eventFilter = new EthFilter(null, null, fsmsContractAddress);
+                eventFilter.addSingleTopic(EventEncoder.encode(Fsms.MESSAGENOTIFICATION_EVENT));
+                //TODO: Filter isn't working yet. Needs investigation!
+                // think it is because walletAddress for both _to and _from will match walletAddress.
+                // it doesn't check by position, only if the hash exists.
+                // think we need to alter our contract to only emit (a hash of?) _to as having both _from and _to in Events makes
+                // it easier for an outsider to collect metadata
+                //
+                // Modified smart contract with same results. Frustrating. Is this the best way of doing this?
+                // We could store a "lastReceivedMessageTimeStamp" in wallet info, then just query the contract for any new messages
+                // since that time. Since the HashMap that messages are stored in is static, we could add new messages to it from the thread
+                // in the Service if there are activities open. Is it worth user's data if we're having to listen to EVERY messageNotificationEvent
+                // and then filter in the app - presumably this is what the Flowable has to do anyway, seems like a waste of resources.                                        vcvv
 
-            try {
-                BigInteger bal = fcoin.balanceOf(c.getAddress()).send();
-                String cn = fcoin.name().send();
-                Log.d("uk.co.xrpdevs.flarenetmessenger.contracts.ERC20-name", cn);
-                Log.d("BALANCE", bal.toString());
-            } catch (Exception e) {
-                e.printStackTrace();
+                eventFilter.addOptionalTopics(null, deets.get("walletAddress"));
             }
-            EthFilter eventFilter = new EthFilter(null, null, fsmsContractAddress);
-            eventFilter.addSingleTopic(EventEncoder.encode(Fsms.MESSAGENOTIFICATION_EVENT));
-            //TODO: Filter isn't working yet. Needs investigation!
-            // think it is because walletAddress for both _to and _from will match walletAddress.
-            // it doesn't check by position, only if the hash exists.
-            // think we need to alter our contract to only emit (a hash of?) _to as having both _from and _to in Events makes
-            // it easier for an outsider to collect metadata
-            //
-            // Modified smart contract with same results. Frustrating. Is this the best way of doing this?
-            // We could store a "lastReceivedMessageTimeStamp" in wallet info, then just query the contract for any new messages
-            // since that time. Since the HashMap that messages are stored in is static, we could add new messages to it from the thread
-            // in the Service if there are activities open. Is it worth user's data if we're having to listen to EVERY messageNotificationEvent
-            // and then filter in the app - presumably this is what the Flowable has to do anyway, seems like a waste of resources.                                        vcvv
+            myLog("fsms", "running on our owd fred, ");
 
-            eventFilter.addOptionalTopics(null, deets.get("walletAddress"));
-
-            myLog("fsms", "running on our owd fred, "+deets.get("walletAddress").substring(2));
+            //+deets.get("walletAddress").substring(2));
         /*    Disposable bob = fsms.messageNotificationEventFlowable(eventFilter)
                     .doOnError(
                             error -> System.err.println("The error message is: " + error.getMessage()))
@@ -308,8 +321,8 @@ public class MyService extends Service {
         Web3j myEtherWallet = Web3j.build(
 
                 //new HttpService("https://api.avax-test.network/ext/bc/C/rpc"));
-                new HttpService("https://coston.flare.network/ext/bc/C/rpc"));
-        myEtherWallet.ethChainId().setId(0x11);
+                new HttpService(rpc));
+        myEtherWallet.ethChainId().setId(tmpCID);
         return myEtherWallet;
     }
 

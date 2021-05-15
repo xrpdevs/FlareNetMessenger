@@ -1,5 +1,13 @@
 # Android-FLARE-Coston-Messenger
 
+15/05/2021
+Testnet is up and running at https://testnet.xrpdevs.co.uk. Flare Networks testnet is still only private beta.
+Have set the default RPC endpoint to point to my own testnet.
+
+Fixed bugs in "new user" flow, was crashing if no wallets / PIN defined.
+Added "create wallet" and associated code to create valid privkey, pubkey and address (verified working)
+Added ability to send ERC20 tokens to other contacts.
+
 23/04/2021
 Development has been halted for several weeks now due to Flare's Coston being down.
 I'm considering running a private testnet myself to enable myself (and possibly others) to continue working with Coston.

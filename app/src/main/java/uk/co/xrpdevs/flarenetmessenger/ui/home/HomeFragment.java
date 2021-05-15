@@ -118,6 +118,7 @@ public class HomeFragment extends Fragment {
             }
         }
         if(prefs.contains("currentWallet")) {
+            c = org.web3j.crypto.Credentials.create(deets.get("walletPrvKey"));
             try {
                 deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
             } catch (JSONException e) {
@@ -152,7 +153,6 @@ public class HomeFragment extends Fragment {
             e.printStackTrace();
         }
 
-        c = org.web3j.crypto.Credentials.create(deets.get("walletPrvKey"));
 
 
         //webview.loadUrl("https://xrpdevs.co.uk/");

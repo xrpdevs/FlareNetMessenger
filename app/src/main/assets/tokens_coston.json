@@ -1,7 +1,7 @@
 {
   "fCoin": {
     "Symbol": "FCX",
-    "Address": "0xEC8ed0a4fb4172a1483a01b015716BEEF6A85C09",
+    "Address": "0x933FDA928386bce4021FC472b4115C427df06612",
     "Type": "ERC20",
     "Decimals": 18
   },

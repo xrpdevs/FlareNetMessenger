@@ -91,5 +91,6 @@
     <string name="blockchainname">BlockChainName</string>
     <string name="tokenname">TokenName</string>
     <string name="chainicon">ChainIcon</string>
+    <string name="create_new_wallet">Create New</string>
 
 </resources>

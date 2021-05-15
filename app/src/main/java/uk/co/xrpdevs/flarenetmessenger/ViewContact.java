@@ -30,8 +30,10 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.Transfer;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashMap;
 
+import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 
@@ -48,10 +50,12 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
     PleaseWaitDialog dialogActivity;
     TextView balancesInfo;
     Activity mThis = this;
-    String to, from, theirWallet, myWallet, cNameText;
+    String to, from, theirWallet, myWallet, cNameText, tokenName, tokenAddress, tokenBalance;
     BigDecimal amount;
     EditText XRPAmount;
     PinCodeDialogFragment pinDialog;
+    boolean token = false;
+    ERC20 bob;
 
 
     @Override
@@ -60,6 +64,19 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
         setContentView(R.layout.activity_view_contact);
         Intent myIntent = getIntent();
         Bundle bundle = myIntent.getExtras();
+        myLog("bundle", Utils.dump(bundle));
+        if (bundle.containsKey("contactInfo")) {
+            Bundle ci = bundle.getBundle("contactInfo");
+            if (ci.containsKey("token")) {
+                // we're dealing with a token, rather than base asset
+
+                tokenName = ci.getString("token");
+                tokenAddress = ci.getString("tAddr");
+                token = true;
+                bob = MyService.getERC20link(tokenAddress, MyService.c, MyService.rpc);
+                myLog("bundle", ci.toString());
+            }
+        }
         String action = myIntent.getAction();
         //    final String myWallet, theirWallet, cNameText;
         String info;
@@ -127,14 +144,34 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
             xrpAddress.setText(XRPAddress);
 
             myWallet = deets.get("walletAddress");
-            myBalance = Utils.getMyBalance(myWallet).first;
-            theirWallet = XRPAddress;
-            theirBalance = Utils.getMyBalance(theirWallet).first;
+            if (token) {
+                theirWallet = XRPAddress;
 
+
+                BigInteger bal = new BigInteger("0");
+                try {
+                    bal = bob.balanceOf(myWallet).send();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                //String balance = bob.balanceOf(deets.get("walletAddress")
+                myBalance = new BigDecimal(bal, 18);
+                try {
+                    bal = bob.balanceOf(theirWallet).send();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                //String balance = bob.balanceOf(deets.get("walletAddress")
+                theirBalance = new BigDecimal(bal, 18);
+            } else {
+                myBalance = Utils.getMyBalance(myWallet).first;
+                theirWallet = XRPAddress;
+                theirBalance = Utils.getMyBalance(theirWallet).first;
+            }
             String pubkey = ContactsManager.getPubKey(mThis.getApplicationContext(), theirWallet);
 
-            info = "Your balance: " + myBalance + "\n" +
-                    "Their balance: " + theirBalance + "\n";
+            info = "Your balance: " + myBalance.stripTrailingZeros().toPlainString() + "\n" +
+                    "Their balance: " + theirBalance.stripTrailingZeros().toPlainString() + "\n";
 
             if (pubkey != null) {
                 info = info + "Pubkey Present";
@@ -153,7 +190,11 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
             });*/
 
             // contactName.setText(cNameText);
-            this.getSupportActionBar().setTitle(cNameText);
+            if (token) {
+                this.getSupportActionBar().setTitle(cNameText + " (" + tokenName + ")");
+            } else {
+                this.getSupportActionBar().setTitle(cNameText);
+            }
             QRCodeWriter writer = new QRCodeWriter();
             if (XRPAddress != null) {
                 try {
@@ -219,14 +260,29 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
         String cNameText;
         Boolean isReplaced = false;
+        BigDecimal myBalance, theirBalance;
+        String ts;
 
         @Override
         public void run() {
+            ts = "FLR";
+            if (token) ts = tokenName;
             //String myWallet, String theirWallet, BigDecimal XRPAmount) {
-            showDialog("Sending " + amount + " FLR to \n" + cNameText + "\nPlease wait for transaction completion.", false);
+            showDialog("Sending " + amount + " " + ts + " to \n" + cNameText + "\nPlease wait for transaction completion.", false);
             try {
-                TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
-                        amount, org.web3j.utils.Convert.Unit.ETHER).send();
+                if (token) {
+                    String aStr = amount.toPlainString();
+                    BigDecimal scale = new BigDecimal("1e18");
+                    BigDecimal bd = amount.multiply(scale);
+                    BigInteger value = bd.toBigIntegerExact();
+
+                    Log.d("POO", value.toString());
+
+                    TransactionReceipt receipt2 = bob.transfer(theirWallet, value).send();
+                } else {
+                    TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
+                            amount, org.web3j.utils.Convert.Unit.ETHER).send();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 dialogActivity.dismiss();
@@ -234,9 +290,28 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 showDialog("Transaction to " + cNameText + " failed.\n" + e.getMessage(), true);
             }
 
-
-            String info2 = "Your balance: " + Utils.getMyBalance(from).first + "\n" +
-                    "Their balance: " + Utils.getMyBalance(to).first + "\n";
+            if (token) {
+                BigInteger bal = new BigInteger("0");
+                try {
+                    bal = bob.balanceOf(myWallet).send();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                //String balance = bob.balanceOf(deets.get("walletAddress")
+                myBalance = new BigDecimal(bal, 18);
+                try {
+                    bal = bob.balanceOf(theirWallet).send();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                //String balance = bob.balanceOf(deets.get("walletAddress")
+                theirBalance = new BigDecimal(bal, 18);
+            } else {
+                myBalance = Utils.getMyBalance(myWallet).first;
+                theirBalance = Utils.getMyBalance(theirWallet).first;
+            }
+            String info2 = "Your balance: " + myBalance.stripTrailingZeros().toPlainString() + "\n" +
+                    "Their balance: " + theirBalance.stripTrailingZeros().toPlainString() + "\n";
 
 
             runOnUiThread(new Runnable() {

@@ -255,13 +255,17 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                             null);
                     if (cursor != null) {
                         while (cursor.moveToNext()) {
-                            String name = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DISPLAY_NAME));
-                            String data3 = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA3));
-                            String mimetype = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
-                            String bcid = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA5));
-                            myLog("tempbacons", name + " " + data3 + " " + mimetype + " " + bcid);
-                            cName.setText(name);
-                            namesCache.put(listName, name);
+                            try {
+                                String name = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DISPLAY_NAME));
+                                String data3 = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA3));
+                                String mimetype = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.MIMETYPE));
+                                String bcid = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA5));
+                                myLog("tempbacons", name + " " + data3 + " " + mimetype + " " + bcid);
+                                cName.setText(name);
+                                namesCache.put(listName, name);
+                            } catch (Exception e) {
+                                Log.d("CURSOR EXCEPTION", "" + e);
+                            }
                         }
                         cursor.close();
                     } else {
