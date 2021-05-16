@@ -360,7 +360,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                                     myLog("RECEIPT exception:", exception.toString());
                                     // handle exception
                                 }
-                            }, 2, 2);
+                            }, 200, 5);
 
 
                     RawTransactionManager transactionManager = new RawTransactionManager(
@@ -379,7 +379,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                             Convert.toWei(amount, Convert.Unit.ETHER).toBigIntegerExact());
 
 
-                    String oot = transactionManager.signAndSend(rawTransaction).getError().getMessage();
+                    String oot = transactionManager.signAndSend(rawTransaction).getTransactionHash();
                     oot = oot + " " + prefs.getString("csbc_rpc", "");
 //                    Sign.
                     //          nonce,

@@ -5,19 +5,19 @@
     android:visible="true"
     app:showAsAction="ifRoom">
     <item
-        android:id="@+id/menu_contacts_add"
+        android:id="@+id/menu_contacts_add_to_existing"
         android:title="Add Wallet to Contact"
         android:icon="@drawable/ic_qr_white"
         android:visible="true"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/menu_contacts_new"
+        android:id="@+id/menu_contacts_show_associated"
         android:title="Crypto Contacts"
         android:icon="@drawable/circle"
         android:visible="true"
         app:showAsAction="ifRoom" />
     <item
-        android:id="@+id/menu_contacts_plus"
+        android:id="@+id/menu_contacts_add_new"
         android:icon="@android:drawable/ic_menu_add"
         android:title="New Contact"
         android:visible="true"

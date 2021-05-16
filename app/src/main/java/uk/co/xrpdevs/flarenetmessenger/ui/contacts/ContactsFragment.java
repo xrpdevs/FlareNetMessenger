@@ -139,11 +139,11 @@ public class ContactsFragment extends Fragment {
         super.onCreateOptionsMenu(menu,inflater);
     }
 
-    @Override
+    @Override // Menu handling code
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.menu_contacts_add:
+            case R.id.menu_contacts_show_associated:
                 ListType = 2000;
                 Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
                 FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
@@ -155,7 +155,7 @@ public class ContactsFragment extends Fragment {
                 fragmentTransaction.replace(R.id.nav_host_fragment, f);
                 fragmentTransaction.addToBackStack("contacts").commit();
                 return true;
-            case R.id.menu_contacts_new: // Todo: startActivityForResult add contact then call scanner.
+            case R.id.menu_contacts_add_to_existing: // Todo: startActivityForResult add contact then call scanner.
                 ListType = 2000;
                 Fragment currentFragment2 = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
                 FragmentTransaction fragmentTransaction2 = getFragmentManager().beginTransaction();
@@ -167,12 +167,16 @@ public class ContactsFragment extends Fragment {
                 fragmentTransaction2.replace(R.id.nav_host_fragment, f2);
                 fragmentTransaction2.addToBackStack("contacts").commit();
                 return true;
+            case R.id.menu_contacts_add_new:
+                Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
+                startActivity(intent);
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-
+    // Populate ListView with HashMap contents and set up event listeners
     public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) {
         myLog("TEST", "FillListView");
       //  ArrayAdapter<String> adapter;
@@ -291,6 +295,7 @@ public class ContactsFragment extends Fragment {
 
     }
 
+    // Read contacts and populate the HashMap for the ListView
     class Contact_thread extends Thread {
 
         @Override
@@ -329,7 +334,6 @@ public class ContactsFragment extends Fragment {
 
             }
             ArrayList<String> contactList = new ArrayList<String>();
-
 
 
             myLog("TEST", "Number of results: "+c.getCount());
@@ -392,7 +396,7 @@ public class ContactsFragment extends Fragment {
                 }
                 //               maplist.add(tmp);
 
-              //  myLog("TEST", "ContactList existing entry: "+tmp.toString());
+                //  myLog("TEST", "ContactList existing entry: "+tmp.toString());
 
                 contactList.add(c.getString(contactNameColumn));
 
@@ -428,6 +432,7 @@ public class ContactsFragment extends Fragment {
         }
     }
 
+    // Convert UNIX epoch to JAVA epoch (*1000) and output human-readable
     public String getDate(Long ts) {
         myLog("mooo", "val: " + ts);
         Date df = new Date(ts * 1000);
@@ -435,6 +440,7 @@ public class ContactsFragment extends Fragment {
         return (rc);
     }
 
+    // Show a simple message dialog
     private boolean showDialog(String title, String prompt, Boolean cancelable) {
         FragmentManager manager = mThis.getActivity().getFragmentManager();
 
@@ -446,7 +452,7 @@ public class ContactsFragment extends Fragment {
         return true;
     }
 
-    @Override
+    @Override // Deal with output from "add wallet to contact" (QR Code Scan)
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
 
         myLog("FRAG", "FRAGMENT onActivityResult");
@@ -515,9 +521,7 @@ public class ContactsFragment extends Fragment {
         }
     }
 
-
-
-    @Override
+    @Override // perhaps update the HashMap for listview here (ie for after "add contact")
     public void onResume() {
         super.onResume();
     }
