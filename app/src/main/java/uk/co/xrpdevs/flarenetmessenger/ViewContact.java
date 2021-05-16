@@ -26,9 +26,23 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
 import org.json.JSONException;
+import org.spongycastle.util.encoders.Hex;
+import org.web3j.crypto.RawTransaction;
+import org.web3j.crypto.TransactionEncoder;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.methods.response.EthGasPrice;
+import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
-import org.web3j.tx.Transfer;
+import org.web3j.tx.RawTransactionManager;
+import org.web3j.tx.gas.DefaultGasProvider;
+import org.web3j.tx.response.Callback;
+import org.web3j.tx.response.QueuingTransactionReceiptProcessor;
+import org.web3j.tx.response.TransactionReceiptProcessor;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -68,6 +82,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
         if (bundle.containsKey("contactInfo")) {
             Bundle ci = bundle.getBundle("contactInfo");
             if (ci.containsKey("token")) {
+                myLog("TOKEN", "dealing with a token");
                 // we're dealing with a token, rather than base asset
 
                 tokenName = ci.getString("token");
@@ -80,7 +95,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
         String action = myIntent.getAction();
         //    final String myWallet, theirWallet, cNameText;
         String info;
-        BigDecimal myBalance, theirBalance;
+        BigDecimal myBalance = null, theirBalance = null;
 
 
         //contactName   = findViewById(R.id.viewContactName);
@@ -164,9 +179,17 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 //String balance = bob.balanceOf(deets.get("walletAddress")
                 theirBalance = new BigDecimal(bal, 18);
             } else {
-                myBalance = Utils.getMyBalance(myWallet).first;
+                try {
+                    myBalance = Utils.getMyBalance(myWallet).first;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 theirWallet = XRPAddress;
-                theirBalance = Utils.getMyBalance(theirWallet).first;
+                try {
+                    theirBalance = Utils.getMyBalance(theirWallet).first;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
             String pubkey = ContactsManager.getPubKey(mThis.getApplicationContext(), theirWallet);
 
@@ -256,6 +279,36 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
     }
 
+    private BigInteger getNetworkGasPrice(Web3j mWeb3j) {
+        BigInteger gasPrice = BigInteger.ONE;
+        try {
+            Request<?, EthGasPrice> rs = mWeb3j.ethGasPrice();
+            EthGasPrice eGasPrice = rs.sendAsync().get();
+            gasPrice = eGasPrice.getGasPrice();
+        } catch (Exception e) {
+            System.out.println("" + e);
+        }
+        return gasPrice;
+    }
+
+    /* public String serialize(final Transaction transaction) {
+         final byte[] bytesToSign = transaction.rlpEncode(chainId);
+
+         final Signature signature = signer.sign(bytesToSign);
+
+         final Sign.SignatureData web3jSignature =
+                 new Sign.SignatureData(
+                         signature.getV().toByteArray(),
+                         signature.getR().toByteArray(),
+                         signature.getS().toByteArray());
+
+         final Sign.SignatureData eip155Signature =
+                 TransactionEncoder.createEip155SignatureData(web3jSignature, chainId);
+
+         final byte[] serializedBytes = transaction.rlpEncode(eip155Signature);
+         return Numeric.toHexString(serializedBytes);
+     }
+ */
     class sendFunds extends Thread {
 
         String cNameText;
@@ -280,9 +333,112 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
                     TransactionReceipt receipt2 = bob.transfer(theirWallet, value).send();
                 } else {
-                    TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
-                            amount, org.web3j.utils.Convert.Unit.ETHER).send();
+
+                    //    TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
+                    //             amount, org.web3j.utils.Convert.Unit.ETHER).send();
+                    Web3j sendObj = MyService.initConnection(
+                            prefs.getString("csbc_rpc", ""),
+                            //Integer.decode(prefs.getString("csbc_cid", "0"))
+                            43113
+                    );
+
+                    //  String address;
+                    EthGetTransactionCount ethGetTransactionCount = sendObj.ethGetTransactionCount(
+                            myWallet, DefaultBlockParameterName.LATEST).sendAsync().get();
+
+                    BigInteger nonce = ethGetTransactionCount.getTransactionCount();
+
+                    TransactionReceiptProcessor transactionReceiptProcessor =
+                            new QueuingTransactionReceiptProcessor(sendObj, new Callback() {
+                                @Override
+                                public void accept(TransactionReceipt transactionReceipt) {
+                                    myLog("RECEIPT:", transactionReceipt.toString());
+                                }
+
+                                @Override
+                                public void exception(Exception exception) {
+                                    myLog("RECEIPT exception:", exception.toString());
+                                    // handle exception
+                                }
+                            }, 2, 2);
+
+
+                    RawTransactionManager transactionManager = new RawTransactionManager(
+                            sendObj,
+                            Utils.getCreds(deets),
+                            Integer.decode(prefs.getString("csbc_cid", "1")),
+                            transactionReceiptProcessor);
+
+
+                    RawTransaction rawTransaction = RawTransaction.createEtherTransaction(
+
+                            nonce,
+                            getNetworkGasPrice(sendObj),
+                            new BigInteger("100000"),
+                            to,
+                            Convert.toWei(amount, Convert.Unit.ETHER).toBigIntegerExact());
+
+
+                    String oot = transactionManager.signAndSend(rawTransaction).getError().getMessage();
+                    oot = oot + " " + prefs.getString("csbc_rpc", "");
+//                    Sign.
+                    //          nonce,
+                    //         new BigInteger("41000000000"), //DefaultGasProvider.GAS_PRICE,
+                    //         DefaultGasProvider.GAS_LIMIT,
+                    //          to,
+                    //       new BigInteger("12344"));
+//rawTransaction.getData();
+                    myLog("CONV",
+                            "\nNonce: " + nonce + "\nOOT: " + oot + " " +
+                                    " \nVal: " + Convert.toWei(amount, Convert.Unit.ETHER).toBigIntegerExact().toString() +
+                                    " \nGasP: " + DefaultGasProvider.GAS_PRICE + " GasL: " + DefaultGasProvider.GAS_LIMIT);
+
+                    byte[] signedMessage;
+
+                    signedMessage = TransactionEncoder.signMessage(rawTransaction, Utils.getCreds(deets));
+                    //  sendObj.ethSendRawTransaction()
+                    try {
+
+                        EthSendTransaction receipt2;
+                        receipt2 = sendObj.ethSendRawTransaction(String.valueOf(rawTransaction)).sendAsync().getNow(null);
+                        //     receipt2 = sendObj.ethSendRawTransaction(rawTransaction.getData()).sendAsync().get();
+                        myLog("REC", receipt2.getTransactionHash());
+                    } catch (Exception e) {
+                        myLog("REC", e.getMessage());
+
+                    }
+
+
+                          /*  DefaultGasProvider.GAS_PRICE,
+                            DefaultGasProvider.GAS_LIMIT,
+                            to,
+                            Hex.toHexString(signedMessage),
+                            Convert.toWei(amount, Convert.Unit.ETHER).toBigIntegerExact());
+*/
+
+                    String hexValue = "0x" + Hex.toHexString(signedMessage);
+                    Log.d("ETHMSG", hexValue);
+
+
+                    //   sendObj.ethChainId().send().setId(43113);
+                    myLog("CHAINID",
+                            "NetwkID: " + sendObj.netVersion().getId() + "\n" +
+                                    "ChainID: " + sendObj.ethChainId().send().getChainId());
+                    //     Transfer.
+                    //   transactionManager.sendTransaction()
+                    //   TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
+                    //           amount, org.web3j.utils.Convert.Unit.ETHER).send();
+//                    sendObj.ethChainId().setId(43113);
+
+                    //sendObj.netVersion().setId(43113);
+                    myLog("CHAINID",
+                            "ChainID: " + sendObj.netVersion().getId() + "\n" +
+                                    "NetwkID: " + sendObj.ethChainId().getId());
+
+                    //    aRawTransaction moo = new aRawTransaction(sendObj, Utils.getCreds(deets), null, null , 43113);
+                    //    moo.Send(to, amount.toPlainString());
                 }
+
             } catch (Exception e) {
                 e.printStackTrace();
                 dialogActivity.dismiss();
@@ -307,8 +463,16 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 //String balance = bob.balanceOf(deets.get("walletAddress")
                 theirBalance = new BigDecimal(bal, 18);
             } else {
-                myBalance = Utils.getMyBalance(myWallet).first;
-                theirBalance = Utils.getMyBalance(theirWallet).first;
+                try {
+                    myBalance = Utils.getMyBalance(myWallet).first;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try {
+                    theirBalance = Utils.getMyBalance(theirWallet).first;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
             String info2 = "Your balance: " + myBalance.stripTrailingZeros().toPlainString() + "\n" +
                     "Their balance: " + theirBalance.stripTrailingZeros().toPlainString() + "\n";

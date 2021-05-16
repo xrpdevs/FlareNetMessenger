@@ -40,6 +40,7 @@ import org.web3j.tuples.generated.Tuple2;
 import org.web3j.tuples.generated.Tuple3;
 import org.web3j.tx.gas.DefaultGasProvider;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -50,13 +51,13 @@ import java.util.HashMap;
 import java.util.List;
 
 import uk.co.xrpdevs.flarenetmessenger.ContactsManager;
-import uk.co.xrpdevs.flarenetmessenger.contracts.Fsms;
-import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.EnterMsgDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
-import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
+import uk.co.xrpdevs.flarenetmessenger.contracts.Fsms;
 import uk.co.xrpdevs.flarenetmessenger.ui.contacts.ContactsFragment;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.EnterMsgDialogFragment;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
@@ -564,7 +565,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
             String base64_encoded_ciphertext;
             byte[] ciphertext = new byte[]{0}; //ciphertext[0]=0;
             String text = "";
-
+            BigDecimal divby = new BigDecimal(1000000000);
             try {
                 if (encReqd) {
                     if ((remotePubKey = getPubKey(getContext(), destination)) != null) {
@@ -578,8 +579,9 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                                         "B64: " + Base64.toBase64String(ciphertext) + "\n" +
                                         "Len: " + base64_encoded_ciphertext.length());
 
+
                         receipt = fsms.sendMessage(destination, base64_encoded_ciphertext).send();
-                        text = "Message sent!\n\nGas used:" + receipt.getGasUsed().toString();
+                        text = "Message sent!\n\nGas used:" + new BigDecimal(new BigDecimal(receipt.getGasUsed()).divide(divby).toPlainString()) + " FLR";
                     } else {
                         showDialog("Error", "No public key available for address", true);
                     }
@@ -591,14 +593,18 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                     Log.d("TXOR", xorTst);
 
                     String XORpKey = "RZ" + new String(Base64.encode(xorTmp.getBytes()));
-
+                    BigDecimal gtemp;
                     // send pub key. Todo: check if this contact already has our pubkey and omit this step
                     receipt = fsms.sendMessage(destination, XORpKey).send();
-                    text = "Pubkey Sent!\nGas Used: " + receipt.getGasUsed().toString() + "\n\n";
+                    gtemp = new BigDecimal(receipt.getGasUsed());
+                    //text = "Pubkey Sent!\nGas Used: " + receipt.getGasUsed().toString() + "\n\n";
+                    text = "PubKey sent!\n\n";
                     // send message
                     receipt = fsms.sendMessage(destination, message).send();
-                    text = text + "Message sent!\nGas used:" + receipt.getGasUsed().toString();
+                    gtemp.add(new BigDecimal(receipt.getGasUsed()));
+                    gtemp.divide(divby);
 
+                    text = text + "Message sent!\nGas used:" + gtemp.toPlainString() + " FLR";
                 }
             } catch (Exception e) {
                 if (receipt != null) {

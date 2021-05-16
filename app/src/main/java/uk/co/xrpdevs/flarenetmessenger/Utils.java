@@ -187,12 +187,12 @@ public class Utils {
 
                 //   new HttpService("https://api.avax-test.network/ext/bc/C/rpc"));
                 new HttpService(MyService.rpc));
-        myEtherWallet.ethChainId().setId(MyService.tmpCID);
+        //myEtherWallet.ethChainId().setId(MyService.tmpCID);
 
         return myEtherWallet;
     }
 
-    public static Pair<BigDecimal, String> getMyBalance(String walletAddress) {
+    public static Pair<BigDecimal, String> getMyBalance(String walletAddress) throws IOException {
         String ErrorMessage = "OK";
         Web3j FlareConnection = MyService.initWeb3j();
         BigDecimal wei;
@@ -323,7 +323,7 @@ public static void myLog(String tag, String logString){
             e.printStackTrace();
         }
 
-
+        // TODO: Append custom chains to this list before returning "availTokens"
         //myLog("json", availTokens.toString());
 
         return availTokens;

@@ -4,12 +4,29 @@
     "Symbol": "CFLR",
     "RPC": "https://coston.flare.network/ext/bc/C/rpc",
     "Type": "ETH",
-    "ChainID": "0x11"
+    "ChainID": "0x11",
+    "Icon": "chain_flare"
   },
-  "AVAXTest":{
+  "Coston (LOCAL)": {
+    "NativeCurrency": "Spark",
+    "Symbol": "LCFLR",
+    "RPC": "https://testnet.xrpdevs.co.uk:9650/ext/bc/C/rpc",
+    "Type": "ETH",
+    "ChainID": "43112",
+    "Icon": "chain_flare"
+  },
+  "AVAXTest": {
     "NativeCurrency": "AVAX",
     "Symbol": "AVAX",
     "RPC": "https://api.avax-test.network/ext/bc/C/rpc",
-    "ChainID": "0xa869"
+    "ChainID": "43113",
+    "Icon": "chain_ava"
+  },
+  "Binance Testnet": {
+    "NativeCurrency": "BNBT",
+    "Symbol": "BNBT",
+    "RPC": "https://data-seed-prebsc-1-s1.binance.org:8545/",
+    "ChainID": "0x61",
+    "Icon": "chain_bsc"
   }
 }

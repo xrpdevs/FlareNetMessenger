@@ -35,21 +35,26 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
+import net.lingala.zip4j.exception.ZipException;
+
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 
+import java.io.IOException;
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
 import java.util.HashMap;
 
 import uk.co.xrpdevs.flarenetmessenger.BuildConfig;
 import uk.co.xrpdevs.flarenetmessenger.FirstRun;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
-import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.SelectBlockChainDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.token.TokensFragment;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
@@ -57,9 +62,10 @@ import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 //import android.net.Credentials;
 
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements SelectBlockChainDialogFragment.OnResultListener {
 
     PleaseWaitDialog notify;
+    SelectBlockChainDialogFragment sbcdf;
 
     HomeFragment mThis = this;
     View root;
@@ -76,10 +82,13 @@ public class HomeFragment extends Fragment {
     Web3j fc = MyService.initWeb3j();
     Thread qrThread;// = new QR_Thread();
 
+    public HomeFragment() throws IOException {
+    }
+
     @Override
     public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.fragment_menu_home, menu);
-        super.onCreateOptionsMenu(menu,inflater);
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
 
@@ -218,15 +227,19 @@ public class HomeFragment extends Fragment {
             //        balance = fcoin.balanceOf(deets.get("walletAddress")).send();
             //    } catch (Exception e) {
            //         e.printStackTrace();
-           //     }
-                showDialog("Version: "+ BuildConfig.VERSION_NAME+"\n\nBuild: "+BuildConfig.VERSION_CODE+"\n\n"+
-                        "FCoin Balance: "+balance, true);
+                //     }
+                showDialog("Version: " + BuildConfig.VERSION_NAME + "\n\nBuild: " + BuildConfig.VERSION_CODE + "\n\n" +
+                        "FCoin Balance: " + balance, true);
                 return true;
             case R.id.ma1:
-                Intent aa = new Intent(this.getActivity(), MainActivity.class); startActivity(aa);
+                Intent aa = new Intent(this.getActivity(), MainActivity.class);
+                startActivity(aa);
                 return true;
-                case R.id.pks:
-                showDialog("PubKey:\n\n"+c.getEcKeyPair().getPublicKey().toString(16), true);
+            case R.id.pks:
+                showDialog("PubKey:\n\n" + c.getEcKeyPair().getPublicKey().toString(16), true);
+                return true;
+            case R.id.select_blockchain:
+                bcDialog("Blockchains1", true);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -273,4 +286,29 @@ public class HomeFragment extends Fragment {
         notify.show(getActivity().getFragmentManager(), "aaa");
         return true;
     }
+
+    private boolean bcDialog(String title, Boolean cancelable) {
+        android.app.FragmentManager manager = mThis.getActivity().getFragmentManager();
+
+        sbcdf = new SelectBlockChainDialogFragment().newInstance(this, title, title, true);
+        //sbcdf.titleText = "About this App";
+        sbcdf.prompt = title;
+        sbcdf.cancelable = cancelable;
+
+        sbcdf.show(manager, "aaa");
+        return true;
+    }
+
+    @Override
+    public void onResult(HashMap<String, String> data) throws ZipException, GeneralSecurityException, IOException {
+        sbcdf.dismiss();
+        String RPC = data.get("RPC");
+        int CID = Integer.decode(data.get("ChainID"));
+        MyService.fCoinLink = MyService.initConnection(RPC, CID);
+        MyService.rpc = RPC;
+        MyService.tmpCID = CID;
+        // todo: check here that we have the destination address' public key!
+
+    }
+
 }

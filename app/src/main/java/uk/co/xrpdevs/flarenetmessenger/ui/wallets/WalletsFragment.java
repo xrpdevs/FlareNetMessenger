@@ -26,6 +26,7 @@ import net.lingala.zip4j.exception.ZipException;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -82,7 +83,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
 
         prefs = this.getActivity().getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
-      //  super.onCreate(savedInstanceState);
+        //  super.onCreate(savedInstanceState);
 
         mAct = this.getActivity();
         if(prefs.getInt("walletCount", 0) > 0 ) {
@@ -91,7 +92,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
             getWalletList();
         }
 
-       FloatingActionButton fab = root.findViewById(R.id.fab);
+        FloatingActionButton fab = root.findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override // TODO: change intent methods to Fragment context switches
             public void onClick(View view) {
@@ -129,7 +130,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
                 HashMap<String, String> theItem = lines.get(position);
                 String pooo = theItem.get("num");
                 myLog("smscseeker", "name:" + theItem.toString());
-                pEdit.putInt("currentWallet", (position +1 ));
+                pEdit.putInt("currentWallet", (position + 1));
                 pEdit.commit();
 
                 //Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
@@ -138,7 +139,12 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
 //                        R.anim.slide_in,  // enter
 //                        R.anim.slide_out // exi
                 //fragmentTransaction.remove(currentFragment);
-                HomeFragment f = new HomeFragment();
+                HomeFragment f = null;
+                try {
+                    f = new HomeFragment();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 Bundle args = new Bundle();
                 args.putInt("ltype", 2000);
                 args.putString("selectFragment", "home");
@@ -150,7 +156,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
                 fragmentTransaction.replace(R.id.nav_host_fragment, f);
                 fragmentTransaction.addToBackStack("wallets").commit();
 
-               // startActivity(i);
+                // startActivity(i);
 
             }
         });
@@ -168,7 +174,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
 
             myLog("TEST", "Number of wallets: "+prefs.getInt("walletCount", 0));
 
-            for(int i=0;i<prefs.getInt("walletCount", 0);i++){
+            for(int i=0; i<prefs.getInt("walletCount", 0); i++){
                 HashMap<String, String> map = Utils.getPkey(this.getContext(), (i+1));
                 if(!map.containsKey("walletName")){ map.put("walletName", "Wallet "+ (i + 1));}
 
@@ -191,7 +197,6 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
             //      poo.put("cnam", dbHelper.getContactName(this, poo.get("num")));
 
 
-
             feedList.add(poo);
 
         }
@@ -206,7 +211,6 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
                 WalletsAdaptor = fillListView(feedList);
                 lv.setAdapter(WalletsAdaptor);
                 myLog("TEST", "Running UI thread");
-
 
 
             }
@@ -270,7 +274,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
 
     @Override
     public void onResult(String pinCode) throws ZipException {
-        if(pinCode.equals(prefs.getString("pinCode", "asas"))){
+        if (pinCode.equals(prefs.getString("pinCode", "asas"))) {
             pinDialog.dismiss();
             Zipper zipArchive = new Zipper(prefs.getString("pinCode", "0000"), mThis.getContext());
             zipArchive.pack("/sdcard/Downloads/wallets.zip");
@@ -278,4 +282,6 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
             // TODO: Save as a passworded ZIP file in default location on phone.
         }
     }
+
 }
+//                     Web3j sendObj = MyService.initConnection(prefs.getString("csbc_rpc", ""), Integer.decode(prefs.getString("csbc_cid", "0")));

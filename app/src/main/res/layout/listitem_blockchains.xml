@@ -12,11 +12,11 @@
         android:contentDescription="@string/chainicon"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_qr_white" />
+        app:srcCompat="@mipmap/chain_flare_round" />
 
     <TextView
         android:id="@+id/bcListChainName"
-        android:layout_width="248dp"
+        android:layout_width="wrap_content"
         android:layout_height="0dp"
         android:layout_marginStart="8dp"
         android:gravity="center_vertical"
@@ -28,10 +28,10 @@
 
     <TextView
         android:id="@+id/bcListTokenName"
-        android:gravity="center_vertical"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="8dp"
+        android:gravity="center_vertical|end"
         android:text="@string/tokenname"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="@+id/bcListIcon"

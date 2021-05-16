@@ -53,9 +53,7 @@ public class MyService extends Service {
     static BigInteger GAS_PRICE = BigInteger.valueOf(470000000000L);
 
     //    static int tmpCID = 0x11;
-    public static int tmpCID = 16;
 
-    public static String rpc = "https://testnet.xrpdevs.co.uk:9650/ext/bc/C/rpc";
 //    public static String rpc = "https://coston.flare.network/ext/bc/C/rpc";
 
     //  public static String contractAddress= "0x7884C21E95cBBF12A15F7EaF878224633d6ADF54";
@@ -69,12 +67,17 @@ public class MyService extends Service {
     //    public static String fCoinAddr = "0x94e0e1f82c99dBC11271DB7E39c1Af5E379aF8e0";              // AVAXTEST
     //    static Web3j fsmsLink = Web3j.build(new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
 //    static Web3j fCoinLink = Web3j.build(new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
-    static Web3j fsmsLink = initConnection(rpc, tmpCID);
-    static Web3j fCoinLink = initConnection(rpc, tmpCID);
-    public static Fsms fsms;
-    public static ERC20 fcoin;
+
     public static SharedPreferences prefs;
     public SharedPreferences.Editor pEdit;
+
+    public static int tmpCID = 16;
+    public static String rpc = "https://testnet.xrpdevs.co.uk:9650/ext/bc/C/rpc";
+    public static Web3j fsmsLink = initConnection(rpc, tmpCID);
+    public static Web3j fCoinLink = initConnection(rpc, tmpCID);
+    public static Fsms fsms;
+    public static ERC20 fcoin;
+
     static HashMap<String, String> deets;
     public static org.web3j.crypto.Credentials c;
     Context mC;
@@ -103,8 +106,15 @@ public class MyService extends Service {
     }
 
     @Override
-    public void onCreate(){
+    public void onCreate() {
         super.onCreate();
+        prefs = getSharedPreferences("fnm", 0);
+        Log.d("PREFS", Utils.dumpMap(prefs.getAll()));
+        if (prefs.contains("csbc_rpc") && prefs.contains("csbc_cid")) {
+            tmpCID = Integer.decode(prefs.getString("csbc_cid", "1"));
+            rpc = prefs.getString("csbc_rpc", rpc);
+        }
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             startMyOwnForeground();
         else
@@ -306,23 +316,21 @@ public class MyService extends Service {
 
     }
 
-    public static Web3j initConnection(String rpc, int chainID){
+    public static Web3j initConnection(String rpc, long chainID) {
+
+        myLog("CHAINID_PRE: ", "" + chainID);
 
         Web3j myEtherWallet = Web3j.build(
-
                 new HttpService(rpc));
-//                new HttpService("https://costone.flare.network/ext/bc/C/rpc"));
-        myEtherWallet.ethChainId().setId(chainID);
+        // myEtherWallet.ethChainId().setId(chainID);
+        //   myEtherWallet.netVersion().setId(chainID);
         return myEtherWallet;
     }
 
     public static Web3j initWeb3j() {
 
-        Web3j myEtherWallet = Web3j.build(
-
-                //new HttpService("https://api.avax-test.network/ext/bc/C/rpc"));
-                new HttpService(rpc));
-        myEtherWallet.ethChainId().setId(tmpCID);
+        Web3j myEtherWallet = Web3j.build(new HttpService(rpc));
+        //  myEtherWallet.ethChainId().setId(tmpCID);
         return myEtherWallet;
     }
 

@@ -119,8 +119,16 @@ public class TokensFragment extends Fragment {
         if(prefs.getInt("walletCount", 0) > 0 ) {
             myLog("FRAG", "Wallet count is non zero");
 
-            ArrayList<HashMap<String, String>> b = getAvailTokens("coston");
-            getTokenList();
+            try {
+                ArrayList<HashMap<String, String>> b = getAvailTokens("coston");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+                getTokenList();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
         }
 
@@ -141,7 +149,9 @@ public class TokensFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        getActionBar().setTitle("Assets ("+deets.getOrDefault("walletName", "Wallet "+prefs.getInt("currentWallet", 0))+")");
+        getActionBar().setDisplayShowHomeEnabled(true);
+        getActionBar().setTitle("Assets (" + deets.getOrDefault("walletName", "Wallet " + prefs.getInt("currentWallet", 0)) + ")");
+        getActionBar().setIcon(R.mipmap.chain_flare);
         Bundle args = getArguments();
         myLog("FRAG", "onStart");
 
@@ -264,7 +274,7 @@ public class TokensFragment extends Fragment {
 
     }
 
-    public ArrayList<HashMap<String, String>> getAvailTokens(String blockChainName)  {
+    public ArrayList<HashMap<String, String>> getAvailTokens(String blockChainName) throws IOException {
         ArrayList<HashMap<String, String>> availTokens = new ArrayList<>();
         HashMap<String, String> primaryAsset = new HashMap<>();
         primaryAsset.put("Name", "FLR");
@@ -274,7 +284,7 @@ public class TokensFragment extends Fragment {
         availTokens.add(primaryAsset);
         String json = null;
         try {
-            InputStream is = getActivity().getAssets().open("tokens_"+blockChainName+".json");
+            InputStream is = getActivity().getAssets().open("tokens_" + blockChainName + ".json");
             int size = is.available();
             byte[] buffer = new byte[size];
             is.read(buffer);
@@ -302,7 +312,7 @@ public class TokensFragment extends Fragment {
         return availTokens;
     }
 
-    public void getTokenList() {
+    public void getTokenList() throws IOException {
         feedList.clear();
 /*
 //        ArrayList<HashMap<String, String>> maplist = new ArrayList<HashMap<String, String>>();
@@ -396,11 +406,15 @@ public class TokensFragment extends Fragment {
 
                 @Override
                 public void run() {
-                    BigDecimal bd;
+                    BigDecimal bd = null;
                     if(contract!=null) {
                         bd = new BigDecimal(balance, 18);
                     } else {
-                        bd = Utils.getMyBalance(address).first;
+                        try {
+                            bd = Utils.getMyBalance(address).first;
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     }
                     updateMe.setText(bd.stripTrailingZeros().toPlainString());
                 }
