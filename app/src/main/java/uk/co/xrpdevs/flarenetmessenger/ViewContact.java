@@ -26,14 +26,13 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
 import org.json.JSONException;
-import org.spongycastle.util.encoders.Hex;
 import org.web3j.crypto.RawTransaction;
-import org.web3j.crypto.TransactionEncoder;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.response.EthGasPrice;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
+import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 import org.web3j.tx.RawTransactionManager;
@@ -46,6 +45,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
 
 import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
@@ -322,6 +322,17 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
             if (token) ts = tokenName;
             //String myWallet, String theirWallet, BigDecimal XRPAmount) {
             showDialog("Sending " + amount + " " + ts + " to \n" + cNameText + "\nPlease wait for transaction completion.", false);
+
+            /* TODO
+                Transactions should be moved to a Service, that way, we don't need to wait within an activity etc
+                or do network IO on the UI thread. This also means that any failed transactions etc can be shown by way
+                of the app's notification bar.
+                *
+                Need to investigate why the TransactionManager callback doesn't get called. This works fine for now though.
+
+
+             */
+
             try {
                 if (token) {
                     String aStr = amount.toPlainString();
@@ -331,7 +342,30 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
                     Log.d("POO", value.toString());
 
-                    TransactionReceipt receipt2 = bob.transfer(theirWallet, value).send();
+
+                    // Todo: This blocks the UI thread, move to completableFuture as in the EIP-155 code for non-ERC20 sends.
+                    TransactionReceipt transactionReceipt = bob.transfer(theirWallet, value).send();
+                    String TAG = "RECEIPT";
+                    if (!transactionReceipt.isStatusOK()) {
+                        Log.d(TAG, "transactionReceipt: Error: " + transactionReceipt.getStatus());
+                    } else {
+                        //Log.d(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getTransactionReceipt().getBlockHash());
+                        Log.d(TAG, "transactionReceipt: Root: " + transactionReceipt.getRoot());
+                        Log.d(TAG, "transactionReceipt: Contract address: " + transactionReceipt.getContractAddress());
+                        Log.d(TAG, "transactionReceipt: From: " + transactionReceipt.getFrom());
+                        Log.d(TAG, "transactionReceipt: To: " + transactionReceipt.getTo());
+                        Log.d(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getBlockHash());
+                        Log.d(TAG, "transactionReceipt: Block number: " + transactionReceipt.getBlockNumber());
+                        Log.d(TAG, "transactionReceipt: Block number raw: " + transactionReceipt.getBlockNumberRaw());
+                        Log.d(TAG, "transactionReceipt: Gas used: " + transactionReceipt.getGasUsed());
+                        Log.d(TAG, "transactionReceipt: Gas used raw: " + transactionReceipt.getGasUsedRaw());
+                        Log.d(TAG, "transactionReceipt: Cumulative gas used: " + transactionReceipt.getCumulativeGasUsed());
+                        Log.d(TAG, "transactionReceipt: Cumulative gas used raw: " + transactionReceipt.getCumulativeGasUsedRaw());
+                        Log.d(TAG, "transactionReceipt: Transaction hash: " + transactionReceipt.getTransactionHash());
+                        Log.d(TAG, "transactionReceipt: Transaction index: " + transactionReceipt.getTransactionIndex());
+                        Log.d(TAG, "transactionReceipt: Transaction index raw: " + transactionReceipt.getTransactionIndexRaw());
+//                        Log.d(TAG, "transactionReceipt: JSON-RPC response: " + transactionReceipt.s
+                    }
                 } else {
 
                     //    TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
@@ -360,7 +394,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                                     myLog("RECEIPT exception:", exception.toString());
                                     // handle exception
                                 }
-                            }, 200, 5);
+                            }, 20000, 5000);
 
 
                     RawTransactionManager transactionManager = new RawTransactionManager(
@@ -379,7 +413,46 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                             Convert.toWei(amount, Convert.Unit.ETHER).toBigIntegerExact());
 
 
-                    String oot = transactionManager.signAndSend(rawTransaction).getTransactionHash();
+                    EthSendTransaction moo = transactionManager.signAndSend(rawTransaction);
+
+
+                    CompletableFuture<EthGetTransactionReceipt> transactionReceiptCompletableFuture = sendObj.ethGetTransactionReceipt(moo.getResult()).sendAsync();
+
+                    transactionReceiptCompletableFuture.thenAccept(transactionReceipt -> {
+                        myLog("RECEIPT", transactionReceipt.toString());
+                        String TAG = "RECEIPT";
+
+                        if (transactionReceipt.hasError()) {
+                            Log.d(TAG, "transactionReceipt: Error: " + transactionReceipt.getError().getMessage());
+                        } else if (transactionReceipt.getResult() != null || transactionReceipt.getTransactionReceipt() != null) {
+                            //Log.d(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getTransactionReceipt().getBlockHash());
+                            Log.d(TAG, "transactionReceipt: Root: " + transactionReceipt.getResult().getRoot());
+                            Log.d(TAG, "transactionReceipt: Contract address: " + transactionReceipt.getResult().getContractAddress());
+                            Log.d(TAG, "transactionReceipt: From: " + transactionReceipt.getResult().getFrom());
+                            Log.d(TAG, "transactionReceipt: To: " + transactionReceipt.getResult().getTo());
+                            Log.d(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getResult().getBlockHash());
+                            Log.d(TAG, "transactionReceipt: Block number: " + transactionReceipt.getResult().getBlockNumber());
+                            Log.d(TAG, "transactionReceipt: Block number raw: " + transactionReceipt.getResult().getBlockNumberRaw());
+                            Log.d(TAG, "transactionReceipt: Gas used: " + transactionReceipt.getResult().getGasUsed());
+                            Log.d(TAG, "transactionReceipt: Gas used raw: " + transactionReceipt.getResult().getGasUsedRaw());
+                            Log.d(TAG, "transactionReceipt: Cumulative gas used: " + transactionReceipt.getResult().getCumulativeGasUsed());
+                            Log.d(TAG, "transactionReceipt: Cumulative gas used raw: " + transactionReceipt.getResult().getCumulativeGasUsedRaw());
+                            Log.d(TAG, "transactionReceipt: Transaction hash: " + transactionReceipt.getResult().getTransactionHash());
+                            Log.d(TAG, "transactionReceipt: Transaction index: " + transactionReceipt.getResult().getTransactionIndex());
+                            Log.d(TAG, "transactionReceipt: Transaction index raw: " + transactionReceipt.getResult().getTransactionIndexRaw());
+                            Log.d(TAG, "transactionReceipt: JSON-RPC response: " + transactionReceipt.getJsonrpc());
+                        }
+
+                        // then accept gets transaction receipt only if the transaction is successful
+
+                    }).exceptionally(transactionReceipt -> {
+                        return null;
+                    });
+
+
+                    EthGetTransactionReceipt receipt = sendObj.ethGetTransactionReceipt(moo.getResult()).sendAsync().get();
+
+                    String oot = "";
                     oot = oot + " " + prefs.getString("csbc_rpc", "");
 //                    Sign.
                     //          nonce,
@@ -393,7 +466,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                                     " \nVal: " + Convert.toWei(amount, Convert.Unit.ETHER).toBigIntegerExact().toString() +
                                     " \nGasP: " + DefaultGasProvider.GAS_PRICE + " GasL: " + DefaultGasProvider.GAS_LIMIT);
 
-                    byte[] signedMessage;
+/*                    byte[] signedMessage;
 
                     signedMessage = TransactionEncoder.signMessage(rawTransaction, Utils.getCreds(deets));
                     //  sendObj.ethSendRawTransaction()
@@ -407,7 +480,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                         myLog("REC", e.getMessage());
 
                     }
-
+*/
 
                           /*  DefaultGasProvider.GAS_PRICE,
                             DefaultGasProvider.GAS_LIMIT,
@@ -416,8 +489,8 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                             Convert.toWei(amount, Convert.Unit.ETHER).toBigIntegerExact());
 */
 
-                    String hexValue = "0x" + Hex.toHexString(signedMessage);
-                    Log.d("ETHMSG", hexValue);
+                    //              String hexValue = "0x" + Hex.toHexString(signedMessage);
+                    //           Log.d("ETHMSG", hexValue);
 
 
                     //   sendObj.ethChainId().send().setId(43113);

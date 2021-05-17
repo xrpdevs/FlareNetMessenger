@@ -44,15 +44,16 @@ import uk.co.xrpdevs.flarenetmessenger.ContactsManager;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyContact;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
-import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.ViewContact;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.AddWalletDialogFragment;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.ui.messages.MessagesFragment;
 
 import static android.app.Activity.RESULT_OK;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
-public class ContactsFragment extends Fragment {
+public class ContactsFragment extends Fragment implements AddWalletDialogFragment.OnResultListener {
     public String contractAddress, token, tAddr;
     boolean isToken = false;
     public SimpleAdapter InboxAdapter;
@@ -69,9 +70,11 @@ public class ContactsFragment extends Fragment {
     private DashboardViewModel dashboardViewModel;
     Boolean SendMessage = false;
     PleaseWaitDialog dialogActivity;
+    AddWalletDialogFragment addWalletDialog;
     int ctxcnt = 0;
+    Bundle tempContactInfo;
 
-    @Override
+    @Override //Handle arguments and setup
     public void onStart() {
         super.onStart();
         myLog("FRAG", "onStart");
@@ -113,6 +116,7 @@ public class ContactsFragment extends Fragment {
         return ((MainActivity) getActivity()).getSupportActionBar();
     }
 
+    // Runs when the view is popped to front of the stack
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_contacts, container, false);
@@ -133,7 +137,7 @@ public class ContactsFragment extends Fragment {
         return root;
     }
 
-    @Override
+    @Override // We have an options menu to inflate
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.contacts_menu, menu);
         super.onCreateOptionsMenu(menu,inflater);
@@ -143,7 +147,7 @@ public class ContactsFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
-            case R.id.menu_contacts_show_associated:
+            case R.id.menu_contacts_add_to_existing:
                 ListType = 2000;
                 Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
                 FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
@@ -155,7 +159,7 @@ public class ContactsFragment extends Fragment {
                 fragmentTransaction.replace(R.id.nav_host_fragment, f);
                 fragmentTransaction.addToBackStack("contacts").commit();
                 return true;
-            case R.id.menu_contacts_add_to_existing: // Todo: startActivityForResult add contact then call scanner.
+            case R.id.menu_contacts_show_associated: // Todo: startActivityForResult add contact then call scanner.
                 ListType = 2000;
                 Fragment currentFragment2 = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
                 FragmentTransaction fragmentTransaction2 = getFragmentManager().beginTransaction();
@@ -168,7 +172,9 @@ public class ContactsFragment extends Fragment {
                 fragmentTransaction2.addToBackStack("contacts").commit();
                 return true;
             case R.id.menu_contacts_add_new:
-                Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
+
+                Intent intent = new Intent(Intent.ACTION_INSERT);
+                intent.setType(ContactsContract.Contacts.CONTENT_TYPE);
                 startActivity(intent);
                 return true;
             default:
@@ -204,8 +210,8 @@ public class ContactsFragment extends Fragment {
         lv.setAdapter(InboxAdapter);
         lv.setOnItemLongClickListener((parent, v, position, id) -> {
             HashMap<String, String> theItem = lines.get(position);
-            ContactsManager.deleteRawContactID(this.getActivity(), Long.parseLong(theItem.getOrDefault("id", "0")));
-            myLog("TEST", "Long Press");
+            ContactsManager.deleteRawContactID(this.getActivity(), Long.parseLong(theItem.getOrDefault("data_id", "0")));
+            myLog("TEST", "Long Press -> " + Long.parseLong(theItem.getOrDefault("data_id", "0")));
             maplist = new ArrayList<HashMap<String, String>>();
             new Contact_thread().start();
             return true;
@@ -214,17 +220,11 @@ public class ContactsFragment extends Fragment {
 
         lv.setOnItemClickListener((parent, v, position, id) -> {
             HashMap<String, String> theItem = lines.get(position);
-            if(ListType == 1000) {
+            if (ListType == 1000) { // use contact
 
-                if(SendMessage){
-                    TextView cNam = v.findViewById(R.id.inboxAddress);     // todo: refactor to InboxAddress
-                    TextView cAddr = v.findViewById(R.id.inboxContent);  // todo: refactor to InboxContent
-
-
-//                fragmentTransaction.setCustomAnimations(R.animator.
-//                        R.anim.slide_in,  // enter
-//                        R.anim.slide_out // exi
-                    //fragmentTransaction.remove(currentFragment);
+                if (SendMessage) {  // handle click-through from Messages Fragment
+                    TextView cNam = v.findViewById(R.id.inboxAddress);
+                    TextView cAddr = v.findViewById(R.id.inboxContent);
                     Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
                     FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
                     fragmentTransaction.remove(currentFragment);
@@ -238,7 +238,7 @@ public class ContactsFragment extends Fragment {
 
                     fragmentTransaction.replace(R.id.nav_host_fragment, f);
                     fragmentTransaction.addToBackStack("contacts").commit();
-                } else {
+                } else { // open contact in view contact / send funds activity
 
                     Intent i = new Intent(this.getActivity(),
                             ViewContact.class);
@@ -262,37 +262,47 @@ public class ContactsFragment extends Fragment {
 
                     startActivity(i);
                 }
-            }
+            } // add address to contact
             if(ListType == 2000) {
                 myLog("TEST", "Button Pressed");
                 Bundle b = new Bundle();
-                  b.putString("name", theItem.get("name"));
+                b.putString("name", theItem.get("name"));
                 b.putString("addr", theItem.get("numb"));
                 b.putString("id", theItem.get("id"));
 
                 contactItem = lines.get(position);
                 // mThis.getApplicationContext().getCurrent
                 //integrator = new IntentIntegrator(this.getActivity());
-                integrator = new IntentIntegrator(getActivity()) {
-                    @Override
-                    protected void startActivityForResult(Intent intent, int code) {
-                        mThis.startActivityForResult(intent, 3000); // REQUEST_CODE override
-                    }
-                };
-                //integrator.forSupportFragment(mThis);
-                integrator.setPrompt("Scanning WALLET ADDRESS\nQR code will be scanned automatically on focus");
-                integrator.addExtra("contactInfo", b);
-                integrator.setCameraId(0);
-                integrator.setOrientationLocked(true);
-                integrator.setBeepEnabled(true);
-                integrator.setCaptureActivity(CaptureActivityPortrait.class);
-                integrator.setBarcodeImageEnabled(false);
-                integrator.initiateScan();
+                tempContactInfo = b;
+                // doScanner(b);
+
+                addWalletDialog("Scan or Paste", "Please choose", true);
+
+
             }
         });
 
         return simpleAdapter;
 
+    }
+
+    // open the scanner activity to add a public key to a contact
+    public void doScanner(Bundle contactinfo) {
+        integrator = new IntentIntegrator(getActivity()) {
+            @Override
+            protected void startActivityForResult(Intent intent, int code) {
+                mThis.startActivityForResult(intent, 3000); // REQUEST_CODE override
+            }
+        };
+        //integrator.forSupportFragment(mThis);
+        integrator.setPrompt("Scanning WALLET ADDRESS\nQR code will be scanned automatically on focus");
+        integrator.addExtra("contactInfo", contactinfo);
+        integrator.setCameraId(0);
+        integrator.setOrientationLocked(true);
+        integrator.setBeepEnabled(true);
+        integrator.setCaptureActivity(CaptureActivityPortrait.class);
+        integrator.setBarcodeImageEnabled(false);
+        integrator.initiateScan();
     }
 
     // Read contacts and populate the HashMap for the ListView
@@ -301,16 +311,21 @@ public class ContactsFragment extends Fragment {
         @Override
         public void run() {
             maplist.clear();
-            // TODO Auto-generated method stub
+            // TODO: This could do with being cleaned up a fair bit
+            //           - Need to check which blockchain is currently in use in order to populate the
+            //              account type field in the custom contact items.
+            //           - Each blockchain in 'blockchains.json' needs a unique ID, this is what will be
+            //              used to determine the value that is inserted above.
 
             String yourAccountType = "%";
-            Cursor c; Cursor d;
+            Cursor c;
+            Cursor d;
 
             int contactNameColumn, addressColumnIndex, count = 0;
             int addressColumnId;
             List<Long> ctl = new ArrayList<Long>();
 
-            if(ListType == WITH_ACCOUNTS) {
+            if (ListType == WITH_ACCOUNTS) {
                 myLog("TEST", "ContactList WITH_ACCOUNTS");
                 yourAccountType = "uk.co.xrpdevs.flarenetmessenger";//ex: "com.whatsapp"
 
@@ -352,6 +367,7 @@ public class ContactsFragment extends Fragment {
                             entityUri,
                             null,
                             filter,
+                            // TODO: See above
                             new String[]{"vnd.android.cursor.item/com.sample.profile", MyService.currentChain},
                             null,
                             null
@@ -370,10 +386,12 @@ public class ContactsFragment extends Fragment {
                             myLog("TEST", "XRP Info   : " + d.getString(d.getColumnIndex(ContactsContract.RawContacts.Entity.DATA1)));
                             myLog("TEST", "entityURI: " + DatabaseUtils.dumpCurrentRowToString(d));
                             Long contactID = d.getLong(d.getColumnIndex(ContactsContract.RawContacts.CONTACT_ID));
+                            Long dataID = d.getLong(d.getColumnIndex(ContactsContract.RawContacts._ID));
                             int bumole = Integer.parseInt(d.getString(d.getColumnIndex("data_id")));
                             ctl.add(contactID);
                             tmp.put("numb", XRPAddress);
                             tmp.put("id", String.valueOf(bumole));
+                            tmp.put("data_id", String.valueOf(dataID));
                             tmp.put("name", c.getString(contactNameColumn));
                             maplist.add(tmp);
 //                            contactList.add(tmp);
@@ -432,6 +450,17 @@ public class ContactsFragment extends Fragment {
         }
     }
 
+    @Override // handle result from AddWalletDialogFragment
+    public void onResult(String pinCode) {
+        addWalletDialog.dismiss();
+        if (pinCode.equals("_SCAN_QR")) {
+            doScanner(tempContactInfo);
+        } else {
+            doAddContact(tempContactInfo, pinCode);
+            //todo: handle checking and adding from pasted address
+        }
+    }
+
     // Convert UNIX epoch to JAVA epoch (*1000) and output human-readable
     public String getDate(Long ts) {
         myLog("mooo", "val: " + ts);
@@ -452,60 +481,45 @@ public class ContactsFragment extends Fragment {
         return true;
     }
 
+    // Ask if user wants to scan a QR code or paste wallet address. TODO: Implement other options like crypto domains, etc.
+    private boolean addWalletDialog(String title, String prompt, Boolean cancelable) {
+        //FragmentManager manager = mThis.getActivity().getFragmentManager();
+        android.app.FragmentManager manager = mThis.getActivity().getFragmentManager();
+
+        // NOTE: When using DialogFragment with an OnResultListener
+        //          use newInstance as opposed to dialog = new Dialog form...
+
+        addWalletDialog = new AddWalletDialogFragment().newInstance(this, "meh");
+        addWalletDialog.prompt = prompt;
+        addWalletDialog.titleText = title;
+        addWalletDialog.cancelable = cancelable;
+        addWalletDialog.show(manager, "DialogActivity");
+        return true;
+    }
+
     @Override // Deal with output from "add wallet to contact" (QR Code Scan)
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
 
         myLog("FRAG", "FRAGMENT onActivityResult");
 
-        Toast toasty = Toast.makeText(mThis.getActivity(), "Content:" +requestCode, Toast.LENGTH_LONG);
-        toasty.show();
+
         if (requestCode == 3000) {
             IntentResult scanningResult = IntentIntegrator.parseActivityResult(resultCode, intent);
 
             if (resultCode == RESULT_OK) {
-                Toast toasty2 = Toast.makeText(mThis.getActivity(), "Content:" + scanningResult.toString(), Toast.LENGTH_LONG);
-                toasty2.show();
+
                 if (scanningResult != null) {
-                    //                        final TextView formatTxt = (TextView)findViewById(R.id.scan_format);
-                    //                      final TextView contentTxt = (TextView)findViewById(R.id.scan_content);
-                    String scanContent = scanningResult.getContents();
-                    String scanFormat = scanningResult.getFormatName();
-                    Toast toast = Toast.makeText(mThis.getActivity(), "Content:" + scanContent + " Format:" + scanFormat, Toast.LENGTH_LONG);
-                    myLog("TEST", "OnActivityResult " + scanContent);
 
-                    String addr = scanContent;
-
-                    int wC = prefs.getInt("walletCount", 0); wC++;
+                    String addr = scanningResult.getContents(); // contents of the QR code
 
                     System.out.println("Address: " + addr);
 
-                    HashMap<String, String> tmp = new HashMap<String, String>();
-
-                    tmp.put("walletAddress", addr);
                     myLog("TEST", "OnactivityResult Contact Item: "+contactItem.toString());
 
                     Intent myIntent = mThis.getActivity().getIntent();
                     Bundle bundle = myIntent.getExtras();
 
-
-                    if (bundle != null) {
-                        for (String key : bundle.keySet()) {
-                            Log.e("TEST", "onActivityResult bundleDump "+key + " : " + (bundle.get(key) != null ? bundle.get(key) : "NULL"));
-                        }
-                    }
-
-                    MyContact newContact = new MyContact(contactItem.get("name"), addr, "0", Integer.parseInt(Objects.requireNonNull(contactItem.get("id"))));
-
-                    String rCID = ContactsManager.addContact(mThis.getActivity(), newContact, MyService.currentChain);
-
-
-                    String uriString = new StringBuilder().append("content://com.android.contacts/data/").append(rCID).toString();
-
-                    Intent abc = new Intent(mThis.getContext(), ViewContact.class);
-                    Uri myUri = Uri.parse(uriString);
-                    abc.setData(myUri);
-                    startActivity(abc);
-
+                    doAddContact(bundle, addr);
 
                 } else {
                     Toast toast = Toast.makeText(mThis.getActivity().getApplicationContext(),
@@ -519,6 +533,32 @@ public class ContactsFragment extends Fragment {
                 Log.i("App", "Scan unsuccessful");
             }
         }
+    }
+
+    void doAddContact(Bundle bundle, String addr) {
+        // todo - check for invalid data (wrong length)
+        //      - if pubkey is scanned or pasted, convert to wallet address
+        //      - implement non-hex formats
+        if (bundle != null) {
+            for (String key : bundle.keySet()) {
+                Log.e("TEST", "onActivityResult bundleDump " + key + " : " + (bundle.get(key) != null ? bundle.get(key) : "NULL"));
+            }
+            MyContact newContact = new MyContact(contactItem.get("name"), addr, "0", Integer.parseInt(Objects.requireNonNull(contactItem.get("id"))));
+
+            String rCID = ContactsManager.addContact(mThis.getActivity(), newContact, MyService.currentChain);
+
+            String uriString = new StringBuilder().append("content://com.android.contacts/data/").append(rCID).toString();
+
+            Intent abc = new Intent(mThis.getContext(), ViewContact.class);
+            Uri myUri = Uri.parse(uriString);
+            bundle.putString("addr", addr);
+            abc.putExtra("contactInfo", bundle);
+            abc.setData(myUri);
+            startActivity(abc);
+        } else {
+            // TODO: handle null bundle and warn user
+        }
+
     }
 
     @Override // perhaps update the HashMap for listview here (ie for after "add contact")

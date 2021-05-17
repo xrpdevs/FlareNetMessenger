@@ -4,9 +4,11 @@ import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.OperationApplicationException;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.net.Uri;
+import android.os.RemoteException;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
@@ -186,14 +188,43 @@ public class ContactsManager {
         return null;
     }
 
-    public static String deleteRawContactID(Context context, long rcID){
+    public static void deleteContact(long rawid, ContentResolver contentResolver) {
+        ArrayList<ContentProviderOperation> ops = new ArrayList<>();
+        Uri uri = ContactsContract.RawContacts.CONTENT_URI
+                .buildUpon()
+                .appendQueryParameter(
+                        ContactsContract.CALLER_IS_SYNCADAPTER,
+                        "true")
+                .build();
+        ops.add(ContentProviderOperation
+                .newDelete(uri)
+                .withSelection(
+                        ContactsContract.RawContacts._ID + " = ?",
+                        new String[]{Long.toString(rawid)})
+                .build());
+
+        try {
+            ContentProviderResult[] contentProviderResults = contentResolver.applyBatch(
+                    ContactsContract.AUTHORITY,
+                    ops);
+            myLog("CPR", contentProviderResults.toString());
+        } catch (RemoteException | OperationApplicationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String deleteRawContactID(Context context, long rcID) {
+
         ContentResolver resolver = context.getContentResolver();
-        int deleted = resolver.delete(
-                RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(
-                        ContactsContract.CALLER_IS_SYNCADAPTER, "true").build(),
-                RawContacts._ID + " = ?",
-                new String[] {String.valueOf(rcID)});
-        return String.valueOf(deleted);
+        deleteContact(rcID, resolver);
+//        int deleted = resolver.delete(
+        //              RawContacts.CONTENT_URI.buildUpon().appendQueryParameter(
+        //                     ContactsContract.CALLER_IS_SYNCADAPTER, "true"
+        //                     ).build(),
+        //             RawContacts._ID + " = ?",
+        //             new String[] {String.valueOf(rcID)});
+        //     myLog("Delete Contact where "+RawContacts._ID+"="+rcID+": ", String.valueOf(deleted));
+        return String.valueOf(rcID);
     }
 
     public static String deleteAllAppContacts(Context context){

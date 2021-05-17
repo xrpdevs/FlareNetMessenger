@@ -15,17 +15,13 @@ import net.lingala.zip4j.io.ZipOutputStream;
 import net.lingala.zip4j.model.ZipModel;
 import net.lingala.zip4j.model.ZipParameters;
 import net.lingala.zip4j.util.Zip4jConstants;
-import net.lingala.zip4j.util.Zip4jUtil;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
@@ -86,6 +82,7 @@ public class Zipper
 
             ZipOutputStream zout = new ZipOutputStream(fos, new ZipModel() );
             String[] filenames = new String[]{"wallets.json"};
+            // todo: create QR of each key as PNG and add to zip
             for (int i = 0; i < filenames.length; i++) {
                 zipParameters.setFileNameInZip(filenames[0]);
                 zout.putNextEntry(null, zipParameters);
