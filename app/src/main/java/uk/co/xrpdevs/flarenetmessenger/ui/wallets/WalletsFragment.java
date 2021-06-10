@@ -80,7 +80,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
         View root = inflater.inflate(R.layout.fragment_wallets, container, false);
         lv = root.findViewById(R.id.wallets_list);
         lv.setAdapter(WalletsAdaptor);
-
+        registerForContextMenu(lv);
         prefs = this.getActivity().getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
         //  super.onCreate(savedInstanceState);
@@ -122,6 +122,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
                 return view;
             }
         };
+
 
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position, long id) {

@@ -2,7 +2,9 @@ package uk.co.xrpdevs.flarenetmessenger;
 
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
@@ -10,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.View;
@@ -309,6 +312,18 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
          return Numeric.toHexString(serializedBytes);
      }
  */
+    protected ServiceConnection mServerConn = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder binder) {
+            Log.d("BUMOLE", "onServiceConnected");
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.d("BUMOLE", "onServiceDisconnected");
+        }
+    };
+
     class sendFunds extends Thread {
 
         String cNameText;
@@ -346,6 +361,10 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                     // Todo: This blocks the UI thread, move to completableFuture as in the EIP-155 code for non-ERC20 sends.
                     TransactionReceipt transactionReceipt = bob.transfer(theirWallet, value).send();
                     String TAG = "RECEIPT";
+                    Intent snotifi = new Intent(ViewContact.this, MyService.class);
+                    snotifi.putExtra("message", "hello");
+                    bindService(snotifi, mServerConn, BIND_AUTO_CREATE);
+
                     if (!transactionReceipt.isStatusOK()) {
                         Log.d(TAG, "transactionReceipt: Error: " + transactionReceipt.getStatus());
                     } else {

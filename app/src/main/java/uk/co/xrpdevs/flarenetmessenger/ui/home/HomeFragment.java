@@ -126,7 +126,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                 }
             }
         }
-        if(prefs.contains("currentWallet")) {
+        if (prefs.contains("currentWallet") && deets != null) {
             c = org.web3j.crypto.Credentials.create(deets.get("walletPrvKey"));
             try {
                 deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
@@ -135,7 +135,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
             }
             XRPAddress = deets.get("walletAddress");
             c = Credentials.create(deets.get("walletPrvKey"));
-            walletName.setText(deets.getOrDefault("walletName", "Wallet "+prefs.getInt("currentWallet", 0)));
+            walletName.setText(deets.getOrDefault("walletName", "Wallet " + prefs.getInt("currentWallet", 0)));
             qrThread = new QR_Thread();
             qrThread.start();
         }

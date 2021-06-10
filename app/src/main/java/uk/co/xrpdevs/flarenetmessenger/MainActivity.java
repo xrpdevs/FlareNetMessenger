@@ -98,6 +98,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
 
         super.onResume();
+        if (!prefs.contains("pinCode") || prefs.getInt("walletCount", 0) == 0) {
+            Intent firstRun = new Intent(this, FirstRun.class);
+            startActivity(firstRun);
+        } else {
+            //    setContentView(R.layout.activity_main2);
+            //    AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
+            //            R.id.navigation_home, R.id.navigation_contacts, R.id.navigation_wallets, R.id.navigation_messages, R.id.navigation_tokens)
+            //            .build();
+            //    NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+            //    NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+            //    NavigationUI.setupWithNavController(navView, navController);
+        }
         BottomNavigationView navView = findViewById(R.id.nav_view);
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.navigation_home, R.id.navigation_contacts, R.id.navigation_wallets, R.id.navigation_messages, R.id.navigation_tokens)

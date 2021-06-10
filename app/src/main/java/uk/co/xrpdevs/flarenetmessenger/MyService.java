@@ -21,8 +21,10 @@ import android.graphics.Color;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.Messenger;
 import android.util.Log;
 
 import androidx.annotation.RequiresApi;
@@ -34,6 +36,7 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.http.HttpService;
+import org.xrpl.xrpl4j.client.XrplClient;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -44,13 +47,18 @@ import uk.co.xrpdevs.flarenetmessenger.contracts.Fsms;
 import static org.web3j.crypto.Credentials.create;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
+
 public class MyService extends Service {
     public MyService() {
         super();
     }
 
+    private final IBinder mBinder = new MyBinder();
+    private Messenger outMessenger;
     static BigInteger GAS_LIMIT = BigInteger.valueOf(8000000L);
     static BigInteger GAS_PRICE = BigInteger.valueOf(470000000000L);
+
+    XrplClient bob = null;
 
     //    static int tmpCID = 0x11;
 
@@ -218,10 +226,25 @@ public class MyService extends Service {
         Log.e(TAG, "onDestroy");
         started = false;
     }
+
+    public class MyBinder extends Binder {
+        MyService getService() {
+            return MyService.this;
+        }
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
         // TODO: Return the communication channel to the service.
-        throw new UnsupportedOperationException("Not yet implemented");
+        Log.d("SERVICE", "Message recieved: " + intent.getStringExtra("message"));
+        //   Bundle extras = arg0.getExtras();
+        Log.d("service", "onBind");
+        // Get messager from the Activity
+        // if (extras != null) {
+        //     Log.d("service","onBind with extra");
+        //     outMessenger = (Messenger) extras.get("MESSENGER");
+        //  }
+        return mBinder;
     }
 
     @SuppressLint("CheckResult")
