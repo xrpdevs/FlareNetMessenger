@@ -37,7 +37,6 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.http.HttpService;
 import org.xrpl.xrpl4j.client.XrplClient;
-import org.xrpl.xrpl4j.model.client.XrplMethods;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -61,7 +60,6 @@ public class MyService extends Service {
 
     XrplClient ob = null;
 
-    XrplMethods methods = null;
 
     //    static int tmpCID = 0x11;
 
