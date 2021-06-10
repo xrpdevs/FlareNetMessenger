@@ -37,6 +37,7 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.http.HttpService;
 import org.xrpl.xrpl4j.client.XrplClient;
+import org.xrpl.xrpl4j.model.client.XrplMethods;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -58,7 +59,9 @@ public class MyService extends Service {
     static BigInteger GAS_LIMIT = BigInteger.valueOf(8000000L);
     static BigInteger GAS_PRICE = BigInteger.valueOf(470000000000L);
 
-    XrplClient bob = null;
+    XrplClient ob = null;
+
+    XrplMethods methods = null;
 
     //    static int tmpCID = 0x11;
 
