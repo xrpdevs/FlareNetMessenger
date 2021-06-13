@@ -20,13 +20,23 @@
     "Symbol": "AVAX",
     "RPC": "https://api.avax-test.network/ext/bc/C/rpc",
     "ChainID": "43113",
-    "Icon": "chain_ava"
+    "Icon": "chain_ava",
+    "Type": "ETH"
   },
   "Binance Testnet": {
     "NativeCurrency": "BNBT",
     "Symbol": "BNBT",
     "RPC": "https://data-seed-prebsc-1-s1.binance.org:8545/",
     "ChainID": "0x61",
-    "Icon": "chain_bsc"
+    "Icon": "chain_bsc",
+    "Type": "ETH"
+  },
+  "XRP Testnet": {
+    "NativeCurrency": "XRP",
+    "Symbol": "XRP",
+    "RPC": "https://s.altnet.rippletest.net:51235/",
+    "ChainID": 0,
+    "Icon": "chain_xrp",
+    "Type": "XRPL"
   }
 }

@@ -24,14 +24,13 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SwitchCompat;
 
-import net.lingala.zip4j.exception.ZipException;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
+import uk.co.xrpdevs.flarenetmessenger.PKeyScanner;
 import uk.co.xrpdevs.flarenetmessenger.R;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.getAvailChains;
@@ -153,7 +152,11 @@ public class SelectBlockChainDialogFragment extends android.app.DialogFragment {
     }
 
     private ActionBar getActionBar() {
-        return ((MainActivity) getActivity()).getSupportActionBar();
+        if (this.getActivity().getLocalClassName().equals("PKeyScanner")) {
+            return ((PKeyScanner) getActivity()).getSupportActionBar();
+        } else {
+            return ((MainActivity) getActivity()).getSupportActionBar();
+        }
     }
 
     @Override
@@ -213,6 +216,7 @@ public class SelectBlockChainDialogFragment extends android.app.DialogFragment {
                 se.putString("csbc_name", data.get("Name"));
                 se.putString("csbc_rpc", data.get("RPC"));
                 se.putString("csbc_cid", data.get("ChainID"));
+                se.putString("csbc_type", data.get("Type"));
                 se.apply();
                 getActionBar().setDisplayUseLogoEnabled(true);
                 getActionBar().setLogo(getDrawableId(data.get("Icon")));

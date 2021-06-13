@@ -69,6 +69,7 @@ public class MyService extends Service {
     private Messenger outMessenger;
     static BigInteger GAS_LIMIT = BigInteger.valueOf(8000000L);
     static BigInteger GAS_PRICE = BigInteger.valueOf(470000000000L);
+    public static boolean isXRPL = false;
 
     HttpUrl rippledUrl;
     //    static int tmpCID = 0x11;

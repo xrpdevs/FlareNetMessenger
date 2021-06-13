@@ -126,9 +126,18 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
         ListType = in.getIntExtra("lType", 1000);
         prefs = this.getActivity().getSharedPreferences("fnm", 0);
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.LAX);
-        if ((this.getActivity().checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) || (this.getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED))  {
+        if ((this.getActivity().checkSelfPermission(Manifest.permission.CAMERA) !=
+                PackageManager.PERMISSION_GRANTED) ||
+                (this.getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+                        PackageManager.PERMISSION_GRANTED) ||
+                (this.getActivity().checkSelfPermission(Manifest.permission.WRITE_CONTACTS) !=
+                        PackageManager.PERMISSION_GRANTED) ||
+                (this.getActivity().checkSelfPermission(Manifest.permission.READ_CONTACTS) !=
+                        PackageManager.PERMISSION_GRANTED)
+            //requires android.permission.READ_CONTACTS or android.permission.WRITE_CONTACTS
+        ) {
             myLog("TEST", "No camera and storage permission");
-            requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE}, 50);
+            requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS}, 50);
         }
         contractAddress = "0x4a1400220373983f3716D4e899059Dda418Fd08A"; // v1 SMSTest2
         contractAddress = MyService.contractAddress;

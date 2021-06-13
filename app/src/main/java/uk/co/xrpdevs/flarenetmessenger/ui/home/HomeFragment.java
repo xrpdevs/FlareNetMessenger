@@ -35,8 +35,6 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
-import net.lingala.zip4j.exception.ZipException;
-
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.web3j.crypto.Credentials;
@@ -240,7 +238,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                 showDialog("PubKey:\n\n" + c.getEcKeyPair().getPublicKey().toString(16), true);
                 return true;
             case R.id.select_blockchain:
-                bcDialog("Blockchains1", true);
+                bcDialog("Select Blockchain", true);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -305,9 +303,10 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
         sbcdf.dismiss();
         String RPC = data.get("RPC");
         int CID = Integer.decode(data.get("ChainID"));
-        MyService.fCoinLink = MyService.initConnection(RPC, CID);
+        MyService.fCoinLink = MyService.initConnection(RPC, CID); // maybe just keep this to FLR
         MyService.rpc = RPC;
         MyService.tmpCID = CID;
+        MyService.isXRPL = true;
         // todo: check here that we have the destination address' public key!
 
     }

@@ -11,7 +11,6 @@ import android.provider.MediaStore;
 
 import com.google.common.io.ByteStreams;
 
-import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.io.inputstream.ZipInputStream;
 import net.lingala.zip4j.io.outputstream.ZipOutputStream;
 import net.lingala.zip4j.model.LocalFileHeader;
@@ -46,16 +45,11 @@ public class Zipper {
         this.prefs = context.getSharedPreferences("fnm", 0);
     }
 
-    public void pack(String filePath) throws ZipException {
+    public void pack(String filePath) {
         ZipParameters zipParameters = new ZipParameters();
-        //zipParameters.setCompressionMethod(Zip4jConstants.COMP_DEFLATE);
-        //zipParameters.setCompressionLevel(Zip4jConstants.DEFLATE_LEVEL_ULTRA);
         zipParameters.setEncryptFiles(true);
-        // zipParameters.set
-        //  zipParameters.setSourceExternalStream(true);
         zipParameters.setEncryptionMethod(EncryptionMethod.AES);
         zipParameters.setAesKeyStrength(AesKeyStrength.KEY_STRENGTH_256);
-        // zipParameters.;
 
         String fileName = "wallets.zip";
 
@@ -82,7 +76,7 @@ public class Zipper {
 
             int wC = prefs.getInt("walletCount", 0);
 
-            for (int i = 0; i < wC; i++) {
+            for (int i = 1; i < (wC + 1); i++) {
                 wallets.put(prefs.getString("wallet" + i, ""));
             }
 
@@ -98,7 +92,6 @@ public class Zipper {
 
             zout.close();
 
-
             Objects.requireNonNull(fos).close();
         } catch (IOException e) {
             // Log Message
@@ -108,25 +101,8 @@ public class Zipper {
     public JSONArray extractWithZipInputStream(Uri fileName, String password) throws IOException, JSONException {
 
         InputStream fis;
-
-    /*    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ContentResolver resolver = context.getContentResolver();
-            ContentValues contentValues = new ContentValues();
-            //contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-            //contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "application/zip");
-            //contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
-            Uri zipUri = resolver.insert(MediaStore.Downloads.getContentUri("external"), contentValues);
-            fos = resolver.openOutputStream(Objects.requireNonNull(zipUri));
-        } else {
-            String imagesDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString();
-            File zipfile = new File(imagesDir, fileName);
-            fos = new FileOutputStream(zipfile);
-        }*/
-
         fis = context.getContentResolver().openInputStream(fileName);
 
-        // fis = new FileInputStream(fileName.getPath());
-        String zipPassword = "abcabc";
         byte[] bytes = ByteStreams.toByteArray(fis);
         ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
         ZipInputStream innerZip = new ZipInputStream(bis, password.toCharArray());
@@ -140,19 +116,20 @@ public class Zipper {
             String entryName = zipEntry.getFileName();
             System.out.println(entryName);
             if (!zipEntry.isDirectory()) {
-                char[] charArray = new char[8 * 1024];
-                StringBuilder builder = new StringBuilder();
+
+                /**
+                 *  todo: only use wallets.json from the archive.
+                 *      future version will also export private keys
+                 *      as images of QR codes with wallet name.
+                 */
+
                 String line;
-                int numCharsRead;
+
                 String walletData = "";
-                //while (reader.read(charArray, 0, charArray.length)) != -1) {
-                //    builder.append(charArray, 0, numCharsRead);
-                //}
+
                 while ((line = reader.readLine()) != null) {
                     walletData = walletData + line;
                 }
-                //  byte[] targetArray = builder.toString().getBytes();
-
 
                 myLog("ZIPFile", walletData);
 
@@ -166,5 +143,4 @@ public class Zipper {
         return feck;
 
     }
-
 }

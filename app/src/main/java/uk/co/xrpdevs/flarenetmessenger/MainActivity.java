@@ -1,7 +1,9 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -120,6 +122,19 @@ public class MainActivity extends AppCompatActivity {
             NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
             NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
             NavigationUI.setupWithNavController(navView, navController);
+            if ((this.checkSelfPermission(Manifest.permission.CAMERA) !=
+                    PackageManager.PERMISSION_GRANTED) ||
+                    (this.checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) !=
+                            PackageManager.PERMISSION_GRANTED) ||
+                    (this.checkSelfPermission(Manifest.permission.WRITE_CONTACTS) !=
+                            PackageManager.PERMISSION_GRANTED) ||
+                    (this.checkSelfPermission(Manifest.permission.READ_CONTACTS) !=
+                            PackageManager.PERMISSION_GRANTED)
+                //requires android.permission.READ_CONTACTS or android.permission.WRITE_CONTACTS
+            ) {
+                myLog("TEST", "No camera and storage permission");
+                requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_CONTACTS, Manifest.permission.WRITE_CONTACTS}, 50);
+            }
         }
     }
 

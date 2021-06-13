@@ -56,23 +56,31 @@ import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
+/**
+ * Todo: Need an abstraction layer to handle generic functions for different types of blockchains.
+ * currently, we support ETH compatiable blockchains, but are adding support for XRPL.
+ * In the future we may add further types of blockchains, so this will make things less complicated
+ * moving forwards.
+ */
+
 public class ViewContact extends AppCompatActivity implements Button.OnClickListener, PinCodeDialogFragment.OnResultListener {
     TextView contactName;
-    TextView xrpAddress;
-    Button deleteContact, sendFunds;
+    TextView view_Address;
+    Button view_DelContact, view_SendFunds;
     Long rawContactID = 0L;
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
     HashMap<String, String> deets;
     PleaseWaitDialog dialogActivity;
-    TextView balancesInfo;
+    TextView view_BalInfo;
     Activity mThis = this;
     String to, from, theirWallet, myWallet, cNameText, tokenName, tokenAddress, tokenBalance;
     BigDecimal amount;
-    EditText XRPAmount;
+    EditText view_Amount;
     PinCodeDialogFragment pinDialog;
     boolean token = false;
-    ERC20 bob;
+    ERC20 bob;  // this is where we need our adapter for different bc's/tokens
+    String bcType;
 
 
     @Override
@@ -91,24 +99,26 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 tokenName = ci.getString("token");
                 tokenAddress = ci.getString("tAddr");
                 token = true;
+                bcType = "ETH_TOKEN";
                 bob = MyService.getERC20link(tokenAddress, MyService.c, MyService.rpc);
                 myLog("bundle", ci.toString());
             }
+        } else {
+
         }
         String action = myIntent.getAction();
         //    final String myWallet, theirWallet, cNameText;
         String info;
         BigDecimal myBalance = null, theirBalance = null;
 
-
         //contactName   = findViewById(R.id.viewContactName);
-        xrpAddress = findViewById(R.id.viewContactWalletAddress);
-        deleteContact = findViewById(R.id.button7);
-        deleteContact.setOnClickListener(this);
-        balancesInfo = findViewById(R.id.balancesInfo);
-        XRPAmount = findViewById(R.id.editTextNumberDecimal);
-        sendFunds = findViewById(R.id.viewContactSendFunds);
-        sendFunds.setOnClickListener(this);
+        view_Address = findViewById(R.id.viewContactWalletAddress);
+        view_DelContact = findViewById(R.id.button7);
+        view_DelContact.setOnClickListener(this);
+        view_BalInfo = findViewById(R.id.balancesInfo);
+        view_Amount = findViewById(R.id.editTextNumberDecimal);
+        view_SendFunds = findViewById(R.id.viewContactSendFunds);
+        view_SendFunds.setOnClickListener(this);
         prefs = this.getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
         String pinCode = prefs.getString("pinCode", "abcd");
@@ -118,16 +128,6 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
-
-
-        /*deleteContact.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Log.d("TEST", "Deleted: " + ContactsManager.deleteRawContactID(ViewContact.this, rawContactID));
-            }
-        });*/
-
 
         Uri uri = myIntent.getData();
         if (bundle != null) {
@@ -155,45 +155,49 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
             Log.d("TEST", "RAWCONTACTID " + rawContactID);
 
-            String XRPAddress = contactsCursor.getString(addressColumnIndex);
+            String Wallet_Address = contactsCursor.getString(addressColumnIndex);
             cNameText = contactsCursor.getString(cNameIndex);
 
-            Log.d("TEST", "XRP Address: " + XRPAddress + " Cname: " + cNameText);
-            xrpAddress.setText(XRPAddress);
+            Log.d("TEST", "Wallet Address: " + Wallet_Address + " Cname: " + cNameText);
+            view_Address.setText(Wallet_Address);
 
             myWallet = deets.get("walletAddress");
-            if (token) {
-                theirWallet = XRPAddress;
+            switch (bcType) {
+                case "ETH":
+                    theirWallet = Wallet_Address;
 
+                    BigInteger bal = new BigInteger("0");
+                    try {
+                        bal = bob.balanceOf(myWallet).send();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    //String balance = bob.balanceOf(deets.get("walletAddress")
+                    myBalance = new BigDecimal(bal, 18);
+                    try {
+                        bal = bob.balanceOf(theirWallet).send();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    //String balance = bob.balanceOf(deets.get("walletAddress")
+                    theirBalance = new BigDecimal(bal, 18);
+                case "ETH_TOKEN":
+                    // check BC type here
 
-                BigInteger bal = new BigInteger("0");
-                try {
-                    bal = bob.balanceOf(myWallet).send();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                //String balance = bob.balanceOf(deets.get("walletAddress")
-                myBalance = new BigDecimal(bal, 18);
-                try {
-                    bal = bob.balanceOf(theirWallet).send();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                //String balance = bob.balanceOf(deets.get("walletAddress")
-                theirBalance = new BigDecimal(bal, 18);
-            } else {
-                try {
-                    myBalance = Utils.getMyBalance(myWallet).first;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                theirWallet = XRPAddress;
-                try {
-                    theirBalance = Utils.getMyBalance(theirWallet).first;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                    try {
+                        myBalance = Utils.getMyBalance(myWallet).first;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    theirWallet = Wallet_Address;
+                    try {
+                        theirBalance = Utils.getMyBalance(theirWallet).first;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                case "XRPL":
             }
+
             String pubkey = ContactsManager.getPubKey(mThis.getApplicationContext(), theirWallet);
 
             info = "Your balance: " + myBalance.stripTrailingZeros().toPlainString() + "\n" +
@@ -203,7 +207,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 info = info + "Pubkey Present";
             }
 
-            balancesInfo.setText(info);
+            view_BalInfo.setText(info);
 
             /*sendFunds.setOnClickListener((View v) -> {
 
@@ -222,9 +226,9 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 this.getSupportActionBar().setTitle(cNameText);
             }
             QRCodeWriter writer = new QRCodeWriter();
-            if (XRPAddress != null) {
+            if (Wallet_Address != null) {
                 try {
-                    BitMatrix bitMatrix = writer.encode(XRPAddress, BarcodeFormat.QR_CODE, 512, 512);
+                    BitMatrix bitMatrix = writer.encode(Wallet_Address, BarcodeFormat.QR_CODE, 512, 512);
                     int width = bitMatrix.getWidth();
                     int height = bitMatrix.getHeight();
                     Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
@@ -252,7 +256,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
             to = theirWallet;
             from = myWallet;
-            amount = BigDecimal.valueOf(Double.parseDouble(XRPAmount.getText().toString()));
+            amount = BigDecimal.valueOf(Double.parseDouble(view_Amount.getText().toString()));
             ViewContact.sendFunds bob = new sendFunds();
             bob.cNameText = cNameText;
             bob.start();
@@ -335,7 +339,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
         public void run() {
             ts = "FLR";
             if (token) ts = tokenName;
-            //String myWallet, String theirWallet, BigDecimal XRPAmount) {
+
             showDialog("Sending " + amount + " " + ts + " to \n" + cNameText + "\nPlease wait for transaction completion.", false);
 
             /* TODO
@@ -580,7 +584,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                         dialogActivity.dismiss();
 
                     }
-                    balancesInfo.setText(info2);
+                    view_BalInfo.setText(info2);
 
                     Log.d("TEST", "Running UI thread");
 

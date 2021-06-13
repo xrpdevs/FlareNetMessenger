@@ -21,16 +21,26 @@ import com.google.zxing.integration.android.IntentResult;
 
 import org.json.JSONObject;
 import org.web3j.crypto.Credentials;
+import org.xrpl.xrpl4j.client.XrplClient;
+import org.xrpl.xrpl4j.model.transactions.Address;
+import org.xrpl.xrpl4j.model.transactions.XAddress;
+import org.xrpl.xrpl4j.wallet.DefaultWalletFactory;
+import org.xrpl.xrpl4j.wallet.Wallet;
+import org.xrpl.xrpl4j.wallet.WalletFactory;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import okhttp3.HttpUrl;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.SelectBlockChainDialogFragment;
 
-public class PKeyScanner extends AppCompatActivity implements View.OnClickListener {
+public class PKeyScanner extends AppCompatActivity implements View.OnClickListener, SelectBlockChainDialogFragment.OnResultListener {
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
     private static final int ADDRESS_REQUEST_CODE = 7541;
@@ -43,6 +53,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
     EditText wKey;
     PleaseWaitDialog dialogActivity;
     ListView lv;
+    SelectBlockChainDialogFragment sbcdf;
 
     @Override
     public void onCreate(Bundle state) {
@@ -69,6 +80,24 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         save.setOnClickListener(this);
         //  lv = findViewById(R.id.import_chainsList);
         //  lv.setAdapter(fillListView(getAvailChains()));
+
+        // call SelectBlockChainDialogFragment
+
+        bcDialog("New Wallet Type", true);
+
+
+    }
+
+    private boolean bcDialog(String title, Boolean cancelable) {
+        android.app.FragmentManager manager = this.getFragmentManager();
+
+        sbcdf = new SelectBlockChainDialogFragment().newInstance(this, title, title, true);
+        //sbcdf.titleText = "About this App";
+        sbcdf.prompt = title;
+        sbcdf.cancelable = cancelable;
+
+        sbcdf.show(manager, "aaa");
+        return true;
     }
 
 
@@ -181,49 +210,76 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
                 integrator.initiateScan();
                 break;
             case R.id.importPrvKeyQR2:
-                String scanContent = null;
-                Log.d("MOO", "MOOOOOOOOOOOOOOOOOOOOOOOOOO");
-                try {
-                    scanContent = Utils.newKeys();
-                } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException e) {
-                    e.printStackTrace();
-                }
-                Credentials cs = Credentials.create(scanContent);
 
-                String privateKey = cs.getEcKeyPair().getPrivateKey().toString(16);
-                String publicKey = cs.getEcKeyPair().getPublicKey().toString(16);
-                String addr = cs.getAddress();
-
-                //Pair<BigDecimal, String> testAddr = Utils.getMyBalance(addr);
-
-
-                if (scanContent.startsWith("0x") && scanContent.length() == 66) {
-                    int wC = prefs.getInt("walletCount", 0);
-                    wC++;
-
-                    System.out.println("Private key: " + privateKey);
-                    System.out.println("Public key: " + publicKey);
-                    System.out.println("Address: " + addr);
-
-                    HashMap<String, String> tmp = new HashMap<String, String>();
-                    if (wName.getText().toString().equals("")) {
-                        tmp.put("walletName", "Wallet " + wC);
-                    } else {
-                        tmp.put("walletName", wName.getText().toString());
-                    }
-                    tmp.put("walletPrvKey", scanContent);
-                    tmp.put("walletPubKey", "0x" + publicKey);
-                    tmp.put("walletAddress", addr);
-
-                    pEdit.putString("wallet" + wC, new JSONObject(tmp).toString());
-                    pEdit.putInt("walletCount", wC);
-                    pEdit.putInt("currentWallet", wC);
-                    pEdit.commit();
-                    pEdit.apply();
-                    Intent i = new Intent(PKeyScanner.this, MainActivity.class);
-                    startActivity(i);
+                String bcType = prefs.getString("csbc_type", "ETH");
+                if (bcType.equals("XRPL")) {
+                    newXrplWallet();
+                } else {
+                    newEthWallet();
                 }
                 break;
+        }
+    }
+
+    private void newXrplWallet() {
+        HttpUrl rippledUrl = HttpUrl
+                .get("https://s.altnet.rippletest.net:51234/");
+        XrplClient xrplClient = new XrplClient(rippledUrl);
+
+        // Create a Wallet using a WalletFactory
+        WalletFactory walletFactory = DefaultWalletFactory.getInstance();
+        Wallet testWallet = walletFactory.randomWallet(true).wallet();
+
+        // Get the Classic and X-Addresses from testWallet
+        Address classicAddress = testWallet.classicAddress();
+        XAddress xAddress = testWallet.xAddress();
+        System.out.println("Classic Address: " + classicAddress);
+        System.out.println("X-Address: " + xAddress);
+    }
+
+    private void newEthWallet() {
+        String scanContent = null;
+
+        Log.d("MOO", "MOOOOOOOOOOOOOOOOOOOOOOOOOO");
+        try {
+            scanContent = Utils.newKeys();
+        } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+        }
+        Credentials cs = Credentials.create(scanContent);
+
+        String privateKey = cs.getEcKeyPair().getPrivateKey().toString(16);
+        String publicKey = cs.getEcKeyPair().getPublicKey().toString(16);
+        String addr = cs.getAddress();
+
+        //Pair<BigDecimal, String> testAddr = Utils.getMyBalance(addr);
+
+
+        if (scanContent.startsWith("0x") && scanContent.length() == 66) {
+            int wC = prefs.getInt("walletCount", 0);
+            wC++;
+
+            System.out.println("Private key: " + privateKey);
+            System.out.println("Public key: " + publicKey);
+            System.out.println("Address: " + addr);
+
+            HashMap<String, String> tmp = new HashMap<String, String>();
+            if (wName.getText().toString().equals("")) {
+                tmp.put("walletName", "Wallet " + wC);
+            } else {
+                tmp.put("walletName", wName.getText().toString());
+            }
+            tmp.put("walletPrvKey", scanContent);
+            tmp.put("walletPubKey", "0x" + publicKey);
+            tmp.put("walletAddress", addr);
+
+            pEdit.putString("wallet" + wC, new JSONObject(tmp).toString());
+            pEdit.putInt("walletCount", wC);
+            pEdit.putInt("currentWallet", wC);
+            pEdit.commit();
+            pEdit.apply();
+            Intent i = new Intent(PKeyScanner.this, MainActivity.class);
+            startActivity(i);
         }
     }
 
@@ -237,5 +293,19 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         return true;
     }
 
+
+    @Override
+    public void onResult(HashMap<String, String> data) throws
+            GeneralSecurityException, IOException {
+        sbcdf.dismiss();
+        String RPC = data.get("RPC");
+        int CID = Integer.decode(data.get("ChainID"));
+        MyService.fCoinLink = MyService.initConnection(RPC, CID); // maybe just keep this to FLR
+        MyService.rpc = RPC;
+        MyService.tmpCID = CID;
+        MyService.isXRPL = true;
+        // todo: check here that we have the destination address' public key!
+
+    }
 
 }
