@@ -25,6 +25,7 @@ import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Messenger;
+import android.os.StrictMode;
 import android.util.Log;
 
 import androidx.annotation.RequiresApi;
@@ -36,11 +37,22 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.http.HttpService;
+import org.xrpl.xrpl4j.client.JsonRpcClientErrorException;
 import org.xrpl.xrpl4j.client.XrplClient;
+import org.xrpl.xrpl4j.client.faucet.FaucetClient;
+import org.xrpl.xrpl4j.client.faucet.FundAccountRequest;
+import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
+import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;
+import org.xrpl.xrpl4j.model.transactions.Address;
+import org.xrpl.xrpl4j.model.transactions.XAddress;
+import org.xrpl.xrpl4j.wallet.DefaultWalletFactory;
+import org.xrpl.xrpl4j.wallet.Wallet;
+import org.xrpl.xrpl4j.wallet.WalletFactory;
 
 import java.math.BigInteger;
 import java.util.HashMap;
 
+import okhttp3.HttpUrl;
 import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.contracts.Fsms;
 
@@ -58,9 +70,7 @@ public class MyService extends Service {
     static BigInteger GAS_LIMIT = BigInteger.valueOf(8000000L);
     static BigInteger GAS_PRICE = BigInteger.valueOf(470000000000L);
 
-    XrplClient ob = null;
-
-
+    HttpUrl rippledUrl;
     //    static int tmpCID = 0x11;
 
 //    public static String rpc = "https://coston.flare.network/ext/bc/C/rpc";
@@ -114,11 +124,58 @@ public class MyService extends Service {
         return aToken;
     }
 
+
     @Override
     public void onCreate() {
         super.onCreate();
+
+
+        StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.LAX);
+        if (Build.VERSION.SDK_INT >= 28) {
+
+            StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+
+            StrictMode.setVmPolicy(builder.build());
+
+        }
+        HttpUrl rippledUrl = HttpUrl
+                .get("https://s.altnet.rippletest.net:51234/");
+        XrplClient xrplClient = new XrplClient(rippledUrl);
+
+// Create a Wallet using a WalletFactory
+        WalletFactory walletFactory = DefaultWalletFactory.getInstance();
+        Wallet testWallet = walletFactory.randomWallet(true).wallet();
+
+// Get the Classic and X-Addresses from testWallet
+        Address classicAddress = testWallet.classicAddress();
+        XAddress xAddress = testWallet.xAddress();
+        System.out.println("Classic Address: " + classicAddress);
+        System.out.println("X-Address: " + xAddress);
+
+// Fund the account using the testnet Faucet
+        FaucetClient faucetClient = FaucetClient
+                .construct(HttpUrl.get("https://faucet.altnet.rippletest.net"));
+        faucetClient.fundAccount(FundAccountRequest.of(classicAddress));
+
+// Look up your Account Info
+        AccountInfoRequestParams requestParams =
+                AccountInfoRequestParams.of(classicAddress);
+        AccountInfoResult accountInfoResult =
+                null;
+        try {
+            accountInfoResult = xrplClient.accountInfo(requestParams);
+        } catch (JsonRpcClientErrorException e) {
+            e.printStackTrace();
+        }
+
+// Print the result
+        myLog("XRPAccountInfo", accountInfoResult.toString());
+
+
         prefs = getSharedPreferences("fnm", 0);
         Log.d("PREFS", Utils.dumpMap(prefs.getAll()));
+
+
         if (prefs.contains("csbc_rpc") && prefs.contains("csbc_cid")) {
             tmpCID = Integer.decode(prefs.getString("csbc_cid", "1"));
             rpc = prefs.getString("csbc_rpc", rpc);
@@ -258,6 +315,9 @@ public class MyService extends Service {
         Boolean a;
         BGThread(Boolean a){this.a = a;}
         public void run() {
+            //      @ReflectionSupport(ReflectionSupport.Level.FULL);
+            //     XrplClient fucker = new XrplClient(rippledUrl);
+
             if (deets.containsKey("walletPrvKey")) {
                 try {
                     BigInteger bal = fcoin.balanceOf(c.getAddress()).send();

@@ -165,15 +165,19 @@ public class Utils {
         String pKey;
 
         int wC = prefs.getInt("walletCount", 0);
-        String wD = prefs.getString("wallet"+ wN, "");
+        String wD = prefs.getString("wallet" + wN, "");
+        HashMap<String, String> bob;
+//        myLog("WD-", wD);
+        if (wD.contains("wallet")) {
+            bob = jsonToMap(wD);
+        } else {
+            return null;
+        }
+        //  HashMap<String, String> bob = new HashMap<String, String>();
 
-        HashMap<String, String> bob = jsonToMap(wD);
-
-      //  HashMap<String, String> bob = new HashMap<String, String>();
-
-     //   bob.put("walletPrvKey", prefs.getString("walletPrvKey", null));
-     //   bob.put("walletPubKey", prefs.getString("walletPubKey", null));
-     //   bob.put("walletAddress", prefs.getString("walletAddress", null));
+        //   bob.put("walletPrvKey", prefs.getString("walletPrvKey", null));
+        //   bob.put("walletPubKey", prefs.getString("walletPubKey", null));
+        //   bob.put("walletAddress", prefs.getString("walletAddress", null));
         return bob;
     }
 
@@ -363,22 +367,22 @@ public static void myLog(String tag, String logString){
             Object pref = prefs.get(key);
             String printVal = "";
             if (pref instanceof Boolean) {
-                printVal = key + " : " + (Boolean) pref;
+                printVal = key + " : " + pref;
             }
             if (pref instanceof Float) {
-                printVal = key + " : " + (Float) pref;
+                printVal = key + " : " + pref;
             }
             if (pref instanceof Integer) {
-                printVal = key + " : " + (Integer) pref;
+                printVal = key + " : " + pref;
             }
             if (pref instanceof Long) {
-                printVal = key + " : " + (Long) pref;
+                printVal = key + " : " + pref;
             }
             if (pref instanceof String) {
-                printVal = key + " : " + (String) pref;
+                printVal = key + " : " + pref;
             }
             if (pref instanceof Set<?>) {
-                printVal = key + " : " + (Set<String>) pref;
+                printVal = key + " : " + pref;
             }
             // Every new preference goes to a new line
             out = out + printVal + "\n\n";

@@ -57,7 +57,7 @@ public class SelectBlockChainDialogFragment extends android.app.DialogFragment {
 
 
     public interface OnResultListener {
-        void onResult(HashMap<String, String> data) throws ZipException, GeneralSecurityException, IOException;
+        void onResult(HashMap<String, String> data) throws GeneralSecurityException, IOException;
 
     }
 
@@ -208,25 +208,21 @@ public class SelectBlockChainDialogFragment extends android.app.DialogFragment {
                 SharedPreferences sp = getActivity().getSharedPreferences("fnm", 0);
                 SharedPreferences.Editor se = sp.edit();
                 HashMap<String, String> data = lines.get(position);
-                data.put((String) "id", String.valueOf(position));
+                data.put("id", String.valueOf(position));
                 se.putInt("csbc_id", position);
-                se.putString("csbc_name", (String) data.get("Name"));
-                se.putString("csbc_rpc", (String) data.get("RPC"));
-                se.putString("csbc_cid", (String) data.get("ChainID"));
+                se.putString("csbc_name", data.get("Name"));
+                se.putString("csbc_rpc", data.get("RPC"));
+                se.putString("csbc_cid", data.get("ChainID"));
                 se.apply();
                 getActionBar().setDisplayUseLogoEnabled(true);
-                getActionBar().setLogo(getDrawableId((String) data.get("Icon")));
+                getActionBar().setLogo(getDrawableId(data.get("Icon")));
                 if (onResultListener != null) {
                     myLog("PIN", "oRL: " + (onResultListener != null));
                     try {
-                        try {
-                            onResultListener.onResult(data);
-                        } catch (GeneralSecurityException e) {
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    } catch (ZipException e) {
+                        onResultListener.onResult(data);
+                    } catch (GeneralSecurityException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
                     //dialog.dismiss();

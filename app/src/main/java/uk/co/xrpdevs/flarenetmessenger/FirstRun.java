@@ -1,7 +1,5 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Intent;
@@ -9,6 +7,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
@@ -75,15 +75,15 @@ setPIN("0");
         myLog("PINS", "Pin1: " + pin1 + ", Pin2: " + pin2);
         switch (pin_progress) {
             case 0:
-                pinDialog = new PinCodeDialogFragment().newInstance(this, "Set New PIN Code");
-                pinDialog.show(manager, "1");
+                pinDialog = new PinCodeDialogFragment().newInstance(this, "Set New PIN Code", null);
+                pinDialog.show(manager, "1"); // we can probably use tag: to indicate progress...
 
                 pin_progress++;
                 return pin;
 
             case 1:
                 pin1 = pin;
-                pinDialog = new PinCodeDialogFragment().newInstance(this, "Verify PIN Code");
+                pinDialog = new PinCodeDialogFragment().newInstance(this, "Verify PIN Code", null);
                 pinDialog.show(manager, "1");
 
                 pin_progress++;
@@ -112,7 +112,7 @@ setPIN("0");
 
 
     @Override
-    public void onResult(String pinCode) {
+    public void onResult(String pinCode, String tag) {
         pinDialog.dismiss();
         setPIN(pinCode);
     }

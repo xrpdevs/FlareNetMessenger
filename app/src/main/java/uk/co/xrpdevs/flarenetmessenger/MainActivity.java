@@ -42,17 +42,20 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         myLog("FRAG", "onCreateCalled");
-        setContentView(R.layout.activity_main2);
-        BottomNavigationView navView = findViewById(R.id.nav_view);
+
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         prefs = this.getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
+        BottomNavigationView navView = findViewById(R.id.nav_view);
         //  EasyLock.checkPassword(this);
         if (!prefs.contains("walletCount")) {
             pEdit.putInt("walletCount", 0);
             pEdit.putInt("currentWallet", 0);
             pEdit.commit();
+        } else {
+            setContentView(R.layout.activity_main2);
+
         }
 
         if (!prefs.contains("pinCode") || prefs.getInt("walletCount", 0) == 0) {
@@ -109,14 +112,15 @@ public class MainActivity extends AppCompatActivity {
             //    NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
             //    NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
             //    NavigationUI.setupWithNavController(navView, navController);
+
+            BottomNavigationView navView = findViewById(R.id.nav_view);
+            AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
+                    R.id.navigation_home, R.id.navigation_contacts, R.id.navigation_wallets, R.id.navigation_messages, R.id.navigation_tokens)
+                    .build();
+            NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
+            NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+            NavigationUI.setupWithNavController(navView, navController);
         }
-        BottomNavigationView navView = findViewById(R.id.nav_view);
-        AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.navigation_home, R.id.navigation_contacts, R.id.navigation_wallets, R.id.navigation_messages, R.id.navigation_tokens)
-                .build();
-        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
-        NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
-        NavigationUI.setupWithNavController(navView, navController);
     }
 
     @Override

@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -22,9 +23,9 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import net.lingala.zip4j.exception.ZipException;
-
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -35,10 +36,10 @@ import java.util.HashMap;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.PKeyScanner;
-import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.Zipper;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.home.HomeFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.token.TokensFragment;
 
@@ -66,6 +67,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
     PinCodeDialogFragment pinDialog;
     //private String pinCode;
     Activity mAct;
+    Uri walletsImportURI;
 
     @Override
     public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
@@ -235,6 +237,9 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
             case R.id.export_wallets:
                 exportWallets();
                 return true;
+            case R.id.import_wallets:
+                importWallets();
+                return true;
             case R.id.tokens:
                 FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
 //                fragmentTransaction.setCustomAnimations(R.animator.
@@ -267,20 +272,52 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
         }
     }
 
-    public void exportWallets(){
+    public void importWallets() {
+        //File downloadedfile = new File(Environment.getExternalStoragePublicDirectory(Environment.getExternalStorageDirectory() + "/myapp") + "/" + "downloadedfile.zip");
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setDataAndType(null, "*/*");
+        startActivityForResult(intent, 7959);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 7959) {
+            walletsImportURI = data.getData(); //The uri with the location of the file
+            //  Toast.makeText(mThis.getActivity(), selectedfile.toString(), Toast.LENGTH_LONG ).show();
+            // todo: ask for PIN code (for the archive)
+            FragmentManager manager = mThis.getActivity().getFragmentManager();
+            pinDialog = new PinCodeDialogFragment().newInstance(this, "Enter Archive PIN:", "import");
+            pinDialog.show(manager, "1");
+        }
+    }
+
+    public void exportWallets() {
         FragmentManager manager = mThis.getActivity().getFragmentManager();
-        pinDialog = new PinCodeDialogFragment().newInstance(this, "Enter PIN:");
+        pinDialog = new PinCodeDialogFragment().newInstance(this, "Enter PIN:", "export");
         pinDialog.show(manager, "1");
     }
 
     @Override
-    public void onResult(String pinCode) throws ZipException {
-        if (pinCode.equals(prefs.getString("pinCode", "asas"))) {
-            pinDialog.dismiss();
-            Zipper zipArchive = new Zipper(prefs.getString("pinCode", "0000"), mThis.getContext());
-            zipArchive.pack("/sdcard/Downloads/wallets.zip");
+    public void onResult(String pinCode, String tag) throws IOException, JSONException {
 
-            // TODO: Save as a passworded ZIP file in default location on phone.
+        if (tag.equals("import")) {
+            Zipper zipDecode = new Zipper(pinCode, mThis.getContext());
+            JSONArray wallets;
+            if ((wallets = zipDecode.extractWithZipInputStream(walletsImportURI, pinCode)) != null) {
+                // todo: do something with our JSONobject
+            } else {
+                // todo: tell user they entered an incorrect PIN.
+            }
+        }
+        if (tag.equals("export")) {
+            if (pinCode.equals(prefs.getString("pinCode", "asas"))) {
+                pinDialog.dismiss();
+                Zipper zipArchive = new Zipper(prefs.getString("pinCode", "0000"), mThis.getContext());
+                zipArchive.pack("/sdcard/Downloads/wallets.zip");
+
+                // TODO: Save as a passworded ZIP file in default location on phone.
+            }
         }
     }
 

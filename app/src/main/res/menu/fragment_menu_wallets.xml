@@ -3,7 +3,9 @@
     <item
         android:id="@+id/export_wallets"
         android:title="@string/export_wallets" />
-    <item android:title="@string/import_wallets" />
+    <item
+        android:title="@string/import_wallets"
+        android:id="@+id/import_wallets" />
     <item android:title="@string/show_balances" />
     <item
         android:id="@+id/tokens"

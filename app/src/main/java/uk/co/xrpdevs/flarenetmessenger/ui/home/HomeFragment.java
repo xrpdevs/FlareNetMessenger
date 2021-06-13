@@ -156,6 +156,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
         navView = mThis.getActivity().findViewById(R.id.nav_view);
 
         prefs = mThis.getActivity().getSharedPreferences("fnm", 0);
+
         try {
             deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
         } catch (JSONException e) {
@@ -300,7 +301,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
     }
 
     @Override
-    public void onResult(HashMap<String, String> data) throws ZipException, GeneralSecurityException, IOException {
+    public void onResult(HashMap<String, String> data) throws GeneralSecurityException, IOException {
         sbcdf.dismiss();
         String RPC = data.get("RPC");
         int CID = Integer.decode(data.get("ChainID"));

@@ -17,6 +17,10 @@ import androidx.appcompat.app.AlertDialog;
 
 import net.lingala.zip4j.exception.ZipException;
 
+import org.json.JSONException;
+
+import java.io.IOException;
+
 import uk.co.xrpdevs.flarenetmessenger.R;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
@@ -29,19 +33,22 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
     public static final String TAG = "PinCodeEntryDialog";
     PinCodeDialogFragment mThis = this;
     String prompt = "Enter Pin Code";
+    String tag;
 
     public interface OnResultListener {
-        void onResult(String pinCode) throws ZipException;
+        void onResult(String pinCode, String tag) throws IOException, JSONException;
     }
 
     /**
      * Factory method to produce PinCodeEntryDialogFragment instance. Use this method for instantiation.
      */
-    public PinCodeDialogFragment newInstance(final OnResultListener listener, String prompt) {
+    public PinCodeDialogFragment newInstance(final OnResultListener listener, String prompt, String tag) {
         mThis.prompt = prompt;
         this.prompt = prompt;
+        mThis.tag = tag;
         PinCodeDialogFragment fragment = new PinCodeDialogFragment();
         fragment.prompt = prompt;
+        fragment.tag = tag;
         fragment.setOnResultListener(listener);
         return fragment;
     }
@@ -124,8 +131,10 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
                     if (onResultListener != null) {
                         myLog("PIN", "oRL: "+(onResultListener != null));
                         try {
-                            onResultListener.onResult(pinCode);
-                        } catch (ZipException e) {
+                            onResultListener.onResult(pinCode, tag);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } catch (JSONException e) {
                             e.printStackTrace();
                         }
                         //dialog.dismiss();

@@ -245,7 +245,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
 
     @Override
-    public void onResult(String pinCode) {
+    public void onResult(String pinCode, String tag) {
         myLog("PIN", "Onresult called - PINCODE = " + pinCode);
         if (pinCode.equals(prefs.getString("pinCode", "abcd"))) {
             pinDialog.dismiss();
@@ -271,7 +271,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 break;
             case R.id.viewContactSendFunds:
                 FragmentManager manager = getFragmentManager();
-                pinDialog = new PinCodeDialogFragment().newInstance(this, "Enter PIN:");
+                pinDialog = new PinCodeDialogFragment().newInstance(this, "Enter PIN:", null);
                 pinDialog.show(manager, "1");
                 // send funds
                 break;
