@@ -37,17 +37,7 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.http.HttpService;
-import org.xrpl.xrpl4j.client.JsonRpcClientErrorException;
 import org.xrpl.xrpl4j.client.XrplClient;
-import org.xrpl.xrpl4j.client.faucet.FaucetClient;
-import org.xrpl.xrpl4j.client.faucet.FundAccountRequest;
-import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
-import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;
-import org.xrpl.xrpl4j.model.transactions.Address;
-import org.xrpl.xrpl4j.model.transactions.XAddress;
-import org.xrpl.xrpl4j.wallet.DefaultWalletFactory;
-import org.xrpl.xrpl4j.wallet.Wallet;
-import org.xrpl.xrpl4j.wallet.WalletFactory;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -132,16 +122,18 @@ public class MyService extends Service {
 
 
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.LAX);
-        if (Build.VERSION.SDK_INT >= 28) {
 
-            StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
-
-            StrictMode.setVmPolicy(builder.build());
-
-        }
         HttpUrl rippledUrl = HttpUrl
                 .get("https://s.altnet.rippletest.net:51234/");
         xrplClient = new XrplClient(rippledUrl);
+  /*    //  if (Build.VERSION.SDK_INT >= 28) {
+
+          //  StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+
+         //   StrictMode.setVmPolicy(builder.build());
+//
+    //    }
+/*
 
 // Create a Wallet using a WalletFactory
         WalletFactory walletFactory = DefaultWalletFactory.getInstance();
@@ -173,7 +165,7 @@ public class MyService extends Service {
 
 // Print the result
         myLog("XRPAccountInfo", accountInfoResult.toString());
-
+*/
 
         prefs = getSharedPreferences("fnm", 0);
         Log.d("PREFS", Utils.dumpMap(prefs.getAll()));
