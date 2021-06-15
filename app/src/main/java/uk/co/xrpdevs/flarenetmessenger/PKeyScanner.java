@@ -21,15 +21,14 @@ import com.google.zxing.integration.android.IntentResult;
 
 import org.json.JSONObject;
 import org.web3j.crypto.Credentials;
-import org.xrpl.xrpl4j.client.XrplClient;
+import org.xrpl.xrpl4j.client.faucet.FaucetClient;
+import org.xrpl.xrpl4j.client.faucet.FundAccountRequest;
 import org.xrpl.xrpl4j.model.transactions.Address;
 import org.xrpl.xrpl4j.model.transactions.XAddress;
 import org.xrpl.xrpl4j.wallet.DefaultWalletFactory;
 import org.xrpl.xrpl4j.wallet.Wallet;
 import org.xrpl.xrpl4j.wallet.WalletFactory;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -54,6 +53,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
     PleaseWaitDialog dialogActivity;
     ListView lv;
     SelectBlockChainDialogFragment sbcdf;
+    HashMap<String, ?> bcData;
 
     @Override
     public void onCreate(Bundle state) {
@@ -212,6 +212,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
             case R.id.importPrvKeyQR2:
 
                 String bcType = prefs.getString("csbc_type", "ETH");
+                Utils.myLog("bcData", bcData.toString());
                 if (bcType.equals("XRPL")) {
                     newXrplWallet();
                 } else {
@@ -222,13 +223,54 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
     }
 
     private void newXrplWallet() {
-        HttpUrl rippledUrl = HttpUrl
-                .get("https://s.altnet.rippletest.net:51234/");
-        XrplClient xrplClient = new XrplClient(rippledUrl);
+        String scanContent = null;
+        //     HttpUrl rippledUrl = HttpUrl
+        //              .get("https://s.altnet.rippletest.net:51234/");
+//        XrplClient xrplClient = new XrplClient(rippledUrl);
+
 
         // Create a Wallet using a WalletFactory
         WalletFactory walletFactory = DefaultWalletFactory.getInstance();
         Wallet testWallet = walletFactory.randomWallet(true).wallet();
+
+        String privateKey = testWallet.privateKey().get();
+        String publicKey = testWallet.publicKey();
+        String addr = testWallet.classicAddress().value();
+        String xaddr = testWallet.xAddress().value();
+
+        if (bcData.containsKey("Testnet")) {
+            if ((boolean) bcData.get("Testnet")) {
+                FaucetClient faucetClient = FaucetClient
+                        .construct(HttpUrl.get("https://faucet.altnet.rippletest.net"));
+                faucetClient.fundAccount(FundAccountRequest.of(testWallet.classicAddress()));
+            }
+        }
+
+        System.out.println("Private key: " + privateKey);
+        System.out.println("Public key: " + publicKey);
+        System.out.println("Address: " + addr);
+        System.out.println("X-Address: " + addr);
+        int wC = prefs.getInt("walletCount", 0);
+        wC++;
+        HashMap<String, String> tmp = new HashMap<String, String>();
+        if (wName.getText().toString().equals("")) {
+            tmp.put("walletName", "Wallet " + wC);
+        } else {
+            tmp.put("walletName", wName.getText().toString());
+        }
+        tmp.put("walletPrvKey", scanContent);
+        tmp.put("walletPubKey", publicKey);
+        tmp.put("walletAddress", addr);
+        tmp.put("walletXaddr", xaddr);
+        tmp.put("walletType", "XRPL");
+
+        pEdit.putString("wallet" + wC, new JSONObject(tmp).toString());
+        pEdit.putInt("walletCount", wC);
+        pEdit.putInt("currentWallet", wC);
+        pEdit.commit();
+        pEdit.apply();
+        Intent i = new Intent(PKeyScanner.this, MainActivity.class);
+        startActivity(i);
 
         // Get the Classic and X-Addresses from testWallet
         Address classicAddress = testWallet.classicAddress();
@@ -295,16 +337,16 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
 
 
     @Override
-    public void onResult(HashMap<String, String> data) throws
-            GeneralSecurityException, IOException {
+    public void onResult(HashMap<String, ?> data) {
         sbcdf.dismiss();
-        String RPC = data.get("RPC");
-        int CID = Integer.decode(data.get("ChainID"));
+        bcData = data;
+        String RPC = (String) data.get("RPC");
+        int CID = Integer.decode((String) data.get("ChainID"));
         MyService.fCoinLink = MyService.initConnection(RPC, CID); // maybe just keep this to FLR
         MyService.rpc = RPC;
         MyService.tmpCID = CID;
         MyService.isXRPL = true;
-        // todo: check here that we have the destination address' public key!
+
 
     }
 

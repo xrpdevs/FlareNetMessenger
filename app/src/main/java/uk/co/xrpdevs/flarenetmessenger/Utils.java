@@ -282,13 +282,13 @@ public class Utils {
         return(rv);
     }
 
-public static void myLog(String tag, String logString){
+    public static void myLog(String tag, String logString) {
         boolean loggingOn = true;
-        if(loggingOn) {
+        if (loggingOn) {
             String callerClassName = new Exception().getStackTrace()[1].getClassName();
             Log.d(tag, ">\n" + callerClassName + "\n" + logString);
         }
-}
+    }
 
     public static boolean isMyServiceRunning(Class<?> serviceClass, Context context) {
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);

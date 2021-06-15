@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="uk.co.xrpdevs.flarenetmessenger">
-
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -16,9 +15,7 @@
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-
     <uses-feature android:name="android.hardware.camera" />
-
     <application
         android:name="uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger"
         android:allowBackup="true"
@@ -29,11 +26,9 @@
         android:theme="@style/Theme.FlareNetMessenger">
         <receiver
             android:name=".BCReceiver"
-
             android:enabled="true"
             android:exported="true">
             <!--<intent-filter>
-
             </intent-filter>-->
         </receiver>
         <activity android:name=".FirstRun"></activity>
@@ -42,25 +37,20 @@
             android:label="FlareNetMessenger" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <uses-library
             android:name="org.apache.http.legacy"
             android:required="false" />
-
         <service
             android:name=".ContactUpdateService"
             android:enabled="true"
             android:exported="true" />
-
         <service android:name=".AuthenticationService">
             <intent-filter>
                 <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
-
             <meta-data
                 android:name="android.accounts.AccountAuthenticator"
                 android:resource="@xml/authenticator" />
@@ -79,7 +69,6 @@
                 android:name="android.provider.CONTACTS_STRUCTURE"
                 android:resource="@xml/contacts" />
         </service>
-
         <activity android:name=".PKeyScanner" />
         <activity
             android:name=".SettingsActivity"
@@ -90,26 +79,13 @@
             android:stateNotNeeded="true"
             android:theme="@style/zxing_CaptureTheme"
             android:windowSoftInputMode="stateAlwaysHidden" />
-
-
-        <service android:name=".AuthenticationService">
-            <intent-filter>
-                <action android:name="android.accounts.AccountAuthenticator" />
-            </intent-filter>
-
-            <meta-data
-                android:name="android.accounts.AccountAuthenticator"
-                android:resource="@xml/authenticator" />
-        </service>
         <activity
             android:name=".ViewContact"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
-
                 <category android:name="android.intent.category.DEFAULT" />
-
                 <data android:mimeType="vnd.android.cursor.item/com.sample.profile" />
                 <!-- <data android:mimeType="vnd.android.cursor.item/com.sample.profile" /> -->
             </intent-filter>
@@ -121,7 +97,5 @@
             android:name=".MyService"
             android:enabled="true"
             android:exported="true" />
-
     </application>
-
 </manifest>

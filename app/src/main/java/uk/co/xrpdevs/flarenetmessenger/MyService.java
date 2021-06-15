@@ -150,6 +150,7 @@ public class MyService extends Service {
 // Get the Classic and X-Addresses from testWallet
         Address classicAddress = testWallet.classicAddress();
         XAddress xAddress = testWallet.xAddress();
+
         System.out.println("Classic Address: " + classicAddress);
         System.out.println("X-Address: " + xAddress);
 
@@ -260,13 +261,14 @@ public class MyService extends Service {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            c = create(deets.get("walletPrvKey"));
-            //   fsms = uk.co.xrpdevs.flarenetmessenger.contracts.Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
-            //    fcoin = uk.co.xrpdevs.flarenetmessenger.contracts.ERC20.load(fCoinAddr, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
-            initialiseContracts();
+            if (!deets.containsKey("walletXaddr")) {
+                c = create(deets.get("walletPrvKey"));
+                //   fsms = uk.co.xrpdevs.flarenetmessenger.contracts.Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+                //    fcoin = uk.co.xrpdevs.flarenetmessenger.contracts.ERC20.load(fCoinAddr, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
+                initialiseContracts();
 
-            //fcoin.transfer("")
-
+                //fcoin.transfer("")
+            }
             if (!isAlarmScheduled()) {
                 setAlarm();
             }

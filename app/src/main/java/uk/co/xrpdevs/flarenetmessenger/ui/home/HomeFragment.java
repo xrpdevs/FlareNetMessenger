@@ -110,7 +110,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
 
             myLog("FRAG", args.toString());
         }
-        if(args != null) {
+        if (args != null) {
             if (args.containsKey("selectFragment")) {
                 if (args.getString("selectFragment", "").equals("home")) {
                     myLog("FRAG", "Has selectFragment = home");
@@ -125,14 +125,19 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
             }
         }
         if (prefs.contains("currentWallet") && deets != null) {
-            c = org.web3j.crypto.Credentials.create(deets.get("walletPrvKey"));
             try {
                 deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+            if (deets.containsKey("walletXaddr")) {
+
+            } else {
+                //c = org.web3j.crypto.Credentials.create(deets.get("walletPrvKey"));
+
+            }
             XRPAddress = deets.get("walletAddress");
-            c = Credentials.create(deets.get("walletPrvKey"));
+            // c = Credentials.create(deets.get("walletPrvKey"));
             walletName.setText(deets.getOrDefault("walletName", "Wallet " + prefs.getInt("currentWallet", 0)));
             qrThread = new QR_Thread();
             qrThread.start();
@@ -147,10 +152,12 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
         HomeViewModel homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
         root = inflater.inflate(R.layout.fragment_home, container, false);
         final TextView textView = root.findViewById(R.id.text_home);
-        hCopy = root.findViewById(R.id.homeQR_copy); hShare = root.findViewById(R.id.homeQR_share); hAssets = root.findViewById(R.id.hAssets);
+        hCopy = root.findViewById(R.id.homeQR_copy);
+        hShare = root.findViewById(R.id.homeQR_share);
+        hAssets = root.findViewById(R.id.hAssets);
         walletName = root.findViewById(R.id.textView7);
         homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
-     //   BottomNavigationView navView = root.getParent().findViewById(R.id.nav_view);
+        //   BottomNavigationView navView = root.getParent().findViewById(R.id.nav_view);
         navView = mThis.getActivity().findViewById(R.id.nav_view);
 
         prefs = mThis.getActivity().getSharedPreferences("fnm", 0);
@@ -160,7 +167,6 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
         } catch (JSONException e) {
             e.printStackTrace();
         }
-
 
 
         //webview.loadUrl("https://xrpdevs.co.uk/");
@@ -223,9 +229,9 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
             case R.id.version:
                 BigInteger balance = new BigInteger("0");
                 //try {
-            //        balance = fcoin.balanceOf(deets.get("walletAddress")).send();
-            //    } catch (Exception e) {
-           //         e.printStackTrace();
+                //        balance = fcoin.balanceOf(deets.get("walletAddress")).send();
+                //    } catch (Exception e) {
+                //         e.printStackTrace();
                 //     }
                 showDialog("Version: " + BuildConfig.VERSION_NAME + "\n\nBuild: " + BuildConfig.VERSION_CODE + "\n\n" +
                         "FCoin Balance: " + balance, true);
@@ -247,6 +253,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
 
     class QR_Thread extends Thread {
         Bitmap bmp;
+
         @Override
         public void run() {
             QRCodeWriter writer = new QRCodeWriter();
@@ -299,10 +306,10 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
     }
 
     @Override
-    public void onResult(HashMap<String, String> data) throws GeneralSecurityException, IOException {
+    public void onResult(HashMap<String, ?> data) throws GeneralSecurityException, IOException {
         sbcdf.dismiss();
-        String RPC = data.get("RPC");
-        int CID = Integer.decode(data.get("ChainID"));
+        String RPC = (String) data.get("RPC");
+        int CID = Integer.decode((String) data.get("ChainID"));
         MyService.fCoinLink = MyService.initConnection(RPC, CID); // maybe just keep this to FLR
         MyService.rpc = RPC;
         MyService.tmpCID = CID;
