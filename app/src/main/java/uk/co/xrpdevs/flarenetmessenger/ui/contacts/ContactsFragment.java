@@ -508,26 +508,24 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
 
     @Override // Deal with output from "add wallet to contact" (QR Code Scan)
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-
-        myLog("FRAG", "FRAGMENT onActivityResult");
-
-
         if (requestCode == 3000) {
             IntentResult scanningResult = IntentIntegrator.parseActivityResult(resultCode, intent);
 
             if (resultCode == RESULT_OK) {
 
                 if (scanningResult != null) {
-
+                    myLog("FRAG", "FRAGMENT onActivityResult");
                     String addr = scanningResult.getContents(); // contents of the QR code
 
                     System.out.println("Address: " + addr);
 
-                    myLog("TEST", "OnactivityResult Contact Item: "+contactItem.toString());
+                    myLog("TEST", "OnactivityResult Contact Item: " + contactItem.toString());
 
                     Intent myIntent = mThis.getActivity().getIntent();
                     Bundle bundle = myIntent.getExtras();
-
+//                           for (String key : bundle.keySet()) {
+//                                Log.e("TEST", "onActivityResult bundleDump " + key + " : " + (bundle.get(key) != null ? bundle.get(key) : "NULL"));
+//                         }
                     doAddContact(bundle, addr);
 
                 } else {
@@ -548,25 +546,30 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
         // todo - check for invalid data (wrong length)
         //      - if pubkey is scanned or pasted, convert to wallet address
         //      - implement non-hex formats
-        if (bundle != null) {
-            for (String key : bundle.keySet()) {
-                Log.e("TEST", "onActivityResult bundleDump " + key + " : " + (bundle.get(key) != null ? bundle.get(key) : "NULL"));
-            }
-            MyContact newContact = new MyContact(contactItem.get("name"), addr, "0", Integer.parseInt(Objects.requireNonNull(contactItem.get("id"))));
 
-            String rCID = ContactsManager.addContact(mThis.getActivity(), newContact, MyService.currentChain);
+        //    if (bundle != null) {
+        //       for (String key : bundle.keySet()) {
+        //            Log.e("TEST", "onActivityResult bundleDump " + key + " : " + (bundle.get(key) != null ? bundle.get(key) : "NULL"));
+        //     }
+        MyContact newContact = new MyContact(contactItem.get("name"), addr, "0", Integer.parseInt(Objects.requireNonNull(contactItem.get("id"))));
 
-            String uriString = new StringBuilder().append("content://com.android.contacts/data/").append(rCID).toString();
+        String rCID = ContactsManager.addContact(mThis.getActivity(), newContact, MyService.currentChain);
+        Log.d("CurrentChain: ", MyService.currentChain);
 
-            Intent abc = new Intent(mThis.getContext(), ViewContact.class);
-            Uri myUri = Uri.parse(uriString);
-            bundle.putString("addr", addr);
-            abc.putExtra("contactInfo", bundle);
-            abc.setData(myUri);
-            startActivity(abc);
-        } else {
-            // TODO: handle null bundle and warn user
+        String uriString = new StringBuilder().append("content://com.android.contacts/data/").append(rCID).toString();
+
+        Intent abc = new Intent(mThis.getContext(), ViewContact.class);
+        Uri myUri = Uri.parse(uriString);
+        if (bundle == null) {
+            bundle = new Bundle();
         }
+        bundle.putString("addr", addr);
+        abc.putExtra("contactInfo", bundle);
+        abc.setData(myUri);
+        startActivity(abc);
+        //    } else {
+        //        Log.d("doAddContact", "Empty bundle :(");
+        //    }
 
     }
 
