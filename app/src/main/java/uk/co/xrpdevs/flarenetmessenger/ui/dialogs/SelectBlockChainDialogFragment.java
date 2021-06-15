@@ -56,7 +56,7 @@ public class SelectBlockChainDialogFragment extends android.app.DialogFragment {
 
 
     public interface OnResultListener {
-        void onResult(HashMap<String, String> data) throws GeneralSecurityException, IOException;
+        void onResult(HashMap<String, ?> data) throws GeneralSecurityException, IOException;
 
     }
 
