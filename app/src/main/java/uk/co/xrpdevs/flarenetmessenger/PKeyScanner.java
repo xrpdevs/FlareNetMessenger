@@ -233,18 +233,18 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         WalletFactory walletFactory = DefaultWalletFactory.getInstance();
         Wallet testWallet = walletFactory.randomWallet(true).wallet();
 
-        String privateKey = testWallet.privateKey().get();
+        String privateKey = String.valueOf(testWallet.privateKey());
         String publicKey = testWallet.publicKey();
         String addr = testWallet.classicAddress().value();
         String xaddr = testWallet.xAddress().value();
 
         if (bcData.containsKey("Testnet")) {
             Utils.myLog("BCDATA", bcData.toString());
-            if (bcData.get("Testnet").toString().equals("true")) {
+            //if (bcData.get("Testnet").toString().equals("true")) {
                 FaucetClient faucetClient = FaucetClient
                         .construct(HttpUrl.get("https://faucet.altnet.rippletest.net"));
                 faucetClient.fundAccount(FundAccountRequest.of(testWallet.classicAddress()));
-            }
+            // }
         }
 
         System.out.println("Private key: " + privateKey);
@@ -259,7 +259,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         } else {
             tmp.put("walletName", wName.getText().toString());
         }
-        tmp.put("walletPrvKey", scanContent);
+        tmp.put("walletPrvKey", privateKey);
         tmp.put("walletPubKey", publicKey);
         tmp.put("walletAddress", addr);
         tmp.put("walletXaddr", xaddr);
