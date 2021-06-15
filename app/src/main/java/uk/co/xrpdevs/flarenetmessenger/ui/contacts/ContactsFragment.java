@@ -442,7 +442,7 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
                 public void run() {
                     // TODO Auto-generated method stub
                     // mContactList.setAdapter(cursorAdapter);
-                    String noContacts = "It appears that you have no accounts for " + MyService.currentChain + "! Please add a " + MyService.currentChain + " address to one of your contacts, or manually enter an address.";
+                    String noContacts = "It appears that you have no accounts for " + prefs.getString("csbc_name", "") + "! Please add " + prefs.getString("csbc_name", "") + " address to one of your contacts, or manually enter an address.";
                     if (finalCount < 1) {
                         if (ListType != WITH_ACCOUNTS) {
                             noContacts = "You have no contacts in your phone at all. [FNM] relies on your phone's contact database to save wallet addresses to. Please create some contacts and then (in this app) associate those contacts with the corresponding wallet addresses for " + MyService.currentChain;
