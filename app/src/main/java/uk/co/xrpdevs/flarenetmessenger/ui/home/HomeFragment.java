@@ -31,9 +31,11 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
@@ -43,7 +45,9 @@ import org.web3j.protocol.Web3j;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
+import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.Map;
 
 import uk.co.xrpdevs.flarenetmessenger.BuildConfig;
 import uk.co.xrpdevs.flarenetmessenger.FirstRun;
@@ -257,9 +261,12 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
         @Override
         public void run() {
             QRCodeWriter writer = new QRCodeWriter();
+            // Map<EncodeHintType, ?> hints = new
+            Map<EncodeHintType, Object> hints = new EnumMap<EncodeHintType, Object>(EncodeHintType.class);
+            hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
             if (XRPAddress != null) {
                 try {
-                    BitMatrix bitMatrix = writer.encode(XRPAddress, BarcodeFormat.QR_CODE, 512, 512);
+                    BitMatrix bitMatrix = writer.encode(XRPAddress, BarcodeFormat.QR_CODE, 512, 512, hints);
                     int width = bitMatrix.getWidth();
                     int height = bitMatrix.getHeight();
                     bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
