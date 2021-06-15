@@ -239,7 +239,8 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         String xaddr = testWallet.xAddress().value();
 
         if (bcData.containsKey("Testnet")) {
-            if ((boolean) bcData.get("Testnet")) {
+            Utils.myLog("BCDATA", bcData.toString());
+            if (bcData.get("Testnet").toString().equals("true")) {
                 FaucetClient faucetClient = FaucetClient
                         .construct(HttpUrl.get("https://faucet.altnet.rippletest.net"));
                 faucetClient.fundAccount(FundAccountRequest.of(testWallet.classicAddress()));
