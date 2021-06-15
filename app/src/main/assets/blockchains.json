@@ -5,7 +5,8 @@
     "RPC": "https://coston.flare.network/ext/bc/C/rpc",
     "Type": "ETH",
     "ChainID": "0x11",
-    "Icon": "chain_flare"
+    "Icon": "chain_flare",
+    "Testnet": true
   },
   "Coston (LOCAL)": {
     "NativeCurrency": "Spark",
@@ -13,7 +14,8 @@
     "RPC": "https://testnet.xrpdevs.co.uk:9650/ext/bc/C/rpc",
     "Type": "ETH",
     "ChainID": "43112",
-    "Icon": "chain_flare"
+    "Icon": "chain_flare",
+    "Testnet": true
   },
   "AVAXTest": {
     "NativeCurrency": "AVAX",
@@ -21,7 +23,8 @@
     "RPC": "https://api.avax-test.network/ext/bc/C/rpc",
     "ChainID": "43113",
     "Icon": "chain_ava",
-    "Type": "ETH"
+    "Type": "ETH",
+    "Testnet": true
   },
   "Binance Testnet": {
     "NativeCurrency": "BNBT",
@@ -29,7 +32,8 @@
     "RPC": "https://data-seed-prebsc-1-s1.binance.org:8545/",
     "ChainID": "0x61",
     "Icon": "chain_bsc",
-    "Type": "ETH"
+    "Type": "ETH",
+    "Testnet": true
   },
   "XRP Testnet": {
     "NativeCurrency": "XRP",
@@ -37,6 +41,7 @@
     "RPC": "https://s.altnet.rippletest.net:51235/",
     "ChainID": 0,
     "Icon": "chain_xrp",
-    "Type": "XRPL"
+    "Type": "XRPL",
+    "Testnet": true
   }
 }
