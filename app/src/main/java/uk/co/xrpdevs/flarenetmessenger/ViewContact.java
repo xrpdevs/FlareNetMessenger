@@ -23,12 +23,17 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.common.primitives.UnsignedInteger;
+import com.google.common.primitives.UnsignedLong;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
+import org.bouncycastle.util.encoders.Hex;
 import org.json.JSONException;
+import org.web3j.crypto.Credentials;
+import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
@@ -43,10 +48,31 @@ import org.web3j.tx.gas.DefaultGasProvider;
 import org.web3j.tx.response.Callback;
 import org.web3j.tx.response.QueuingTransactionReceiptProcessor;
 import org.web3j.tx.response.TransactionReceiptProcessor;
+import org.xrpl.xrpl4j.crypto.KeyMetadata;
+import org.xrpl.xrpl4j.crypto.signing.SignatureService;
+import org.xrpl.xrpl4j.crypto.signing.SignedTransaction;
+import org.xrpl.xrpl4j.crypto.signing.SingleKeySignatureService;
+import org.xrpl.xrpl4j.keypairs.KeyPair;
+import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
+import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;
+import org.xrpl.xrpl4j.model.client.common.LedgerIndex;
+import org.xrpl.xrpl4j.model.client.fees.FeeResult;
+import org.xrpl.xrpl4j.model.client.ledger.LedgerRequestParams;
+import org.xrpl.xrpl4j.model.client.transactions.SubmitResult;
+import org.xrpl.xrpl4j.model.transactions.Address;
+import org.xrpl.xrpl4j.model.transactions.Payment;
+import org.xrpl.xrpl4j.model.transactions.Transaction;
+import org.xrpl.xrpl4j.model.transactions.XrpCurrencyAmount;
+import org.xrpl.xrpl4j.wallet.DefaultWalletFactory;
+import org.xrpl.xrpl4j.wallet.Wallet;
+import org.xrpl.xrpl4j.wallet.WalletFactory;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
@@ -54,6 +80,8 @@ import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 
+import static org.web3j.crypto.Credentials.create;
+import static uk.co.xrpdevs.flarenetmessenger.MyService.xrplClient;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 /**
@@ -81,6 +109,8 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
     boolean token = false;
     ERC20 bob;  // this is where we need our adapter for different bc's/tokens
     String bcType;
+    public boolean isXRP = false;
+    Wallet xrpwallet;
 
 
     @Override
@@ -90,22 +120,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
         Intent myIntent = getIntent();
         Bundle bundle = myIntent.getExtras();
         myLog("bundle", Utils.dump(bundle));
-        if (bundle.containsKey("contactInfo")) {
-            Bundle ci = bundle.getBundle("contactInfo");
-            if (ci.containsKey("token")) {
-                myLog("TOKEN", "dealing with a token");
-                // we're dealing with a token, rather than base asset
 
-                tokenName = ci.getString("token");
-                tokenAddress = ci.getString("tAddr");
-                token = true;
-                bcType = "ETH_TOKEN";
-                bob = MyService.getERC20link(tokenAddress, MyService.c, MyService.rpc);
-                myLog("bundle", ci.toString());
-            }
-        } else {
-
-        }
         String action = myIntent.getAction();
         //    final String myWallet, theirWallet, cNameText;
         String info;
@@ -128,6 +143,27 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        if (bundle.containsKey("contactInfo")) {
+            Bundle ci = bundle.getBundle("contactInfo");
+            if (ci.containsKey("token")) {
+                myLog("TOKEN", "dealing with a token");
+                // we're dealing with a token, rather than base asset
+
+                tokenName = ci.getString("token");
+                tokenAddress = ci.getString("tAddr");
+                token = true;
+                bcType = "ETH_TOKEN";
+                bob = MyService.getERC20link(tokenAddress, MyService.c, MyService.rpc);
+                myLog("bundle", ci.toString());
+            }
+        }
+
+        if ((bcType == null) && deets.containsKey("walletXaddr")) {
+            bcType = "XRPL";
+        } else {
+            bcType = "ETH";
+        }
+        Log.d("bcType", "BcType = " + bcType);
 
         Uri uri = myIntent.getData();
         if (bundle != null) {
@@ -153,7 +189,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
             //  rawContactID = Long.getLong(rcID);
 
-            Log.d("TEST", "RAWCONTACTID " + rawContactID);
+            Log.d("TEST", "RAWCONTACTID " + rawContactID + "\nADDRESSCOLINDEX " + addressColumnIndex);
 
             String Wallet_Address = contactsCursor.getString(addressColumnIndex);
             cNameText = contactsCursor.getString(cNameIndex);
@@ -196,6 +232,54 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                         e.printStackTrace();
                     }
                 case "XRPL":
+                    try {
+                        myBalance = Utils.getMyXRPBalance(myWallet).first;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    theirWallet = Wallet_Address;
+                    try {
+                        theirBalance = Utils.getMyXRPBalance(theirWallet).first;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    WalletFactory walletFactory = DefaultWalletFactory.getInstance();
+
+                    Log.d("Credentials", deets.toString());
+
+                    String pkeyHex = deets.get("walletPrvKey");
+                    String pubHex = deets.get("walletPubKey");
+                    pkeyHex = pkeyHex.replace("Optional[", "");
+                    pkeyHex = pkeyHex.replace("]", "");
+                    Credentials c = create(pkeyHex);
+
+                    try {
+                        ECKeyPair pair = c.getEcKeyPair();
+                        String pubKeyHex = pair.getPublicKey().toString(16);
+
+                        PrivateKey XRP_PrivateKey = Utils.getPrivateKeyFromECBigIntAndCurve(pair.getPrivateKey(), "secp256k1");
+                        Log.d("Credentials:: ", pubKeyHex);
+
+                        byte[] wpkBytes = Hex.decode(pubKeyHex);
+
+                        PublicKey XRP_PublicKey = Utils.rawToEncodedECPublicKey("secp256k1", wpkBytes);
+
+
+                        org.xrpl.xrpl4j.keypairs.KeyPair xrpKeys = KeyPair.builder().privateKey(pkeyHex).publicKey(pubHex).build();
+                        xrpwallet = walletFactory.fromKeyPair(xrpKeys, true);
+
+                        System.out.println(xrpwallet);
+
+                    } catch (GeneralSecurityException e) {
+                        e.printStackTrace();
+
+
+                        //   Log.d("KEEZ:", "= "+xrpKeys.toString());
+
+                    }
+
+
+                    isXRP = true;
             }
 
             String pubkey = ContactsManager.getPubKey(mThis.getApplicationContext(), theirWallet);
@@ -390,104 +474,180 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 //                        Log.d(TAG, "transactionReceipt: JSON-RPC response: " + transactionReceipt.s
                     }
                 } else {
+                    if (isXRP) {
+                        // sending XRP
 
-                    //    TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
-                    //             amount, org.web3j.utils.Convert.Unit.ETHER).send();
-                    Web3j sendObj = MyService.initConnection(
-                            prefs.getString("csbc_rpc", ""),
-                            //Integer.decode(prefs.getString("csbc_cid", "0"))
-                            43113
-                    );
+                        // 1. create a wallet object from stored keypair
 
-                    //  String address;
-                    EthGetTransactionCount ethGetTransactionCount = sendObj.ethGetTransactionCount(
-                            myWallet, DefaultBlockParameterName.LATEST).sendAsync().get();
+                        WalletFactory walletFactory = DefaultWalletFactory.getInstance();
 
-                    BigInteger nonce = ethGetTransactionCount.getTransactionCount();
+                        Log.d("Credentials", deets.get("walletPrvKey"));
 
-                    TransactionReceiptProcessor transactionReceiptProcessor =
-                            new QueuingTransactionReceiptProcessor(sendObj, new Callback() {
-                                @Override
-                                public void accept(TransactionReceipt transactionReceipt) {
-                                    myLog("RECEIPT:", transactionReceipt.toString());
-                                }
+                        // Prepare transaction --------------------------------------------------------
+// Look up your Account Info
+                        AccountInfoRequestParams requestParams = AccountInfoRequestParams.builder()
+                                .ledgerIndex(LedgerIndex.VALIDATED)
+                                .account(xrpwallet.classicAddress())
+                                .build();
+                        AccountInfoResult accountInfoResult = xrplClient.accountInfo(requestParams);
+                        UnsignedInteger sequence = accountInfoResult.accountData().sequence();
 
-                                @Override
-                                public void exception(Exception exception) {
-                                    myLog("RECEIPT exception:", exception.toString());
-                                    // handle exception
-                                }
-                            }, 20000, 5000);
+// Request current fee information from rippled
+                        FeeResult feeResult = xrplClient.fee();
+                        XrpCurrencyAmount openLedgerFee = feeResult.drops().openLedgerFee();
 
+// Get the latest validated ledger index
+                        LedgerIndex validatedLedger = xrplClient.ledger(
+                                LedgerRequestParams.builder()
+                                        .ledgerIndex(LedgerIndex.VALIDATED)
+                                        .build()
+                        )
+                                .ledgerIndex()
+                                .orElseThrow(() -> new RuntimeException("LedgerIndex not available."));
 
-                    RawTransactionManager transactionManager = new RawTransactionManager(
-                            sendObj,
-                            Utils.getCreds(deets),
-                            Integer.decode(prefs.getString("csbc_cid", "1")),
-                            transactionReceiptProcessor);
+// Workaround for https://github.com/XRPLF/xrpl4j/issues/84
+                        UnsignedInteger lastLedgerSequence = UnsignedInteger.valueOf(
+                                validatedLedger.plus(UnsignedLong.valueOf(4)).unsignedLongValue().intValue()
+                        );
 
-
-                    RawTransaction rawTransaction = RawTransaction.createEtherTransaction(
-
-                            nonce,
-                            getNetworkGasPrice(sendObj),
-                            new BigInteger("100000"),
-                            to,
-                            Convert.toWei(amount, Convert.Unit.ETHER).toBigIntegerExact());
-
-
-                    EthSendTransaction moo = transactionManager.signAndSend(rawTransaction);
-
-
-                    CompletableFuture<EthGetTransactionReceipt> transactionReceiptCompletableFuture = sendObj.ethGetTransactionReceipt(moo.getResult()).sendAsync();
-
-                    transactionReceiptCompletableFuture.thenAccept(transactionReceipt -> {
-                        myLog("RECEIPT", transactionReceipt.toString());
-                        String TAG = "RECEIPT";
-
-                        if (transactionReceipt.hasError()) {
-                            Log.d(TAG, "transactionReceipt: Error: " + transactionReceipt.getError().getMessage());
-                        } else if (transactionReceipt.getResult() != null || transactionReceipt.getTransactionReceipt() != null) {
-                            //Log.d(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getTransactionReceipt().getBlockHash());
-                            Log.d(TAG, "transactionReceipt: Root: " + transactionReceipt.getResult().getRoot());
-                            Log.d(TAG, "transactionReceipt: Contract address: " + transactionReceipt.getResult().getContractAddress());
-                            Log.d(TAG, "transactionReceipt: From: " + transactionReceipt.getResult().getFrom());
-                            Log.d(TAG, "transactionReceipt: To: " + transactionReceipt.getResult().getTo());
-                            Log.d(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getResult().getBlockHash());
-                            Log.d(TAG, "transactionReceipt: Block number: " + transactionReceipt.getResult().getBlockNumber());
-                            Log.d(TAG, "transactionReceipt: Block number raw: " + transactionReceipt.getResult().getBlockNumberRaw());
-                            Log.d(TAG, "transactionReceipt: Gas used: " + transactionReceipt.getResult().getGasUsed());
-                            Log.d(TAG, "transactionReceipt: Gas used raw: " + transactionReceipt.getResult().getGasUsedRaw());
-                            Log.d(TAG, "transactionReceipt: Cumulative gas used: " + transactionReceipt.getResult().getCumulativeGasUsed());
-                            Log.d(TAG, "transactionReceipt: Cumulative gas used raw: " + transactionReceipt.getResult().getCumulativeGasUsedRaw());
-                            Log.d(TAG, "transactionReceipt: Transaction hash: " + transactionReceipt.getResult().getTransactionHash());
-                            Log.d(TAG, "transactionReceipt: Transaction index: " + transactionReceipt.getResult().getTransactionIndex());
-                            Log.d(TAG, "transactionReceipt: Transaction index raw: " + transactionReceipt.getResult().getTransactionIndexRaw());
-                            Log.d(TAG, "transactionReceipt: JSON-RPC response: " + transactionReceipt.getJsonrpc());
-                        }
-
-                        // then accept gets transaction receipt only if the transaction is successful
-
-                    }).exceptionally(transactionReceipt -> {
-                        return null;
-                    });
+// Construct a Payment
+                        Payment payment = Payment.builder()
+                                .account(xrpwallet.classicAddress())
+                                .amount(XrpCurrencyAmount.ofXrp(amount))
+                                .destination(Address.of(theirWallet))
+                                .sequence(sequence)
+                                .fee(openLedgerFee)
+                                .signingPublicKey(xrpwallet.publicKey())
+                                .lastLedgerSequence(lastLedgerSequence)
+                                .build();
+                        System.out.println("Constructed Payment: " + payment);
 
 
-                    EthGetTransactionReceipt receipt = sendObj.ethGetTransactionReceipt(moo.getResult()).sendAsync().get();
+                        org.xrpl.xrpl4j.crypto.PrivateKey privateKey =
+                                org.xrpl.xrpl4j.crypto.PrivateKey.fromBase16EncodedPrivateKey(
+                                        xrpwallet.privateKey().get()
+                                );
+                        SignatureService signatureService = new SingleKeySignatureService(privateKey);
 
-                    String oot = "";
-                    oot = oot + " " + prefs.getString("csbc_rpc", "");
+// Sign the Payment
+                        SignedTransaction<Payment> signedPayment = signatureService.sign(
+                                KeyMetadata.EMPTY,
+                                payment
+                        );
+                        System.out.println("Signed Payment: " + signedPayment.signedTransaction());
+
+                        // Submit transaction ---------------------------------------------------------
+                        SubmitResult<Transaction> prelimResult = xrplClient.submit(signedPayment);
+                        System.out.println(prelimResult);
+
+//                        KeyPair kp = new KeyPair()
+
+//                        Wallet wal = walletFactory.fromKeyPair()
+
+                        // 2. send our transaction
+
+                        // 3. log the results..
+
+                        // 4. .... show results on screen
+
+                    } else {
+                        //    TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
+                        //             amount, org.web3j.utils.Convert.Unit.ETHER).send();
+                        Web3j sendObj = MyService.initConnection(
+                                prefs.getString("csbc_rpc", ""),
+                                //Integer.decode(prefs.getString("csbc_cid", "0"))
+                                43113
+                        );
+
+                        //  String address;
+                        EthGetTransactionCount ethGetTransactionCount = sendObj.ethGetTransactionCount(
+                                myWallet, DefaultBlockParameterName.LATEST).sendAsync().get();
+
+                        BigInteger nonce = ethGetTransactionCount.getTransactionCount();
+
+                        TransactionReceiptProcessor transactionReceiptProcessor =
+                                new QueuingTransactionReceiptProcessor(sendObj, new Callback() {
+                                    @Override
+                                    public void accept(TransactionReceipt transactionReceipt) {
+                                        myLog("RECEIPT:", transactionReceipt.toString());
+                                    }
+
+                                    @Override
+                                    public void exception(Exception exception) {
+                                        myLog("RECEIPT exception:", exception.toString());
+                                        // handle exception
+                                    }
+                                }, 20000, 5000);
+
+
+                        RawTransactionManager transactionManager = new RawTransactionManager(
+                                sendObj,
+                                Utils.getCreds(deets),
+                                Integer.decode(prefs.getString("csbc_cid", "1")),
+                                transactionReceiptProcessor);
+
+
+                        RawTransaction rawTransaction = RawTransaction.createEtherTransaction(
+
+                                nonce,
+                                getNetworkGasPrice(sendObj),
+                                new BigInteger("100000"),
+                                to,
+                                Convert.toWei(amount, Convert.Unit.ETHER).toBigIntegerExact());
+
+
+                        EthSendTransaction moo = transactionManager.signAndSend(rawTransaction);
+
+
+                        CompletableFuture<EthGetTransactionReceipt> transactionReceiptCompletableFuture = sendObj.ethGetTransactionReceipt(moo.getResult()).sendAsync();
+
+                        transactionReceiptCompletableFuture.thenAccept(transactionReceipt -> {
+                            myLog("RECEIPT", transactionReceipt.toString());
+                            String TAG = "RECEIPT";
+
+                            if (transactionReceipt.hasError()) {
+                                Log.d(TAG, "transactionReceipt: Error: " + transactionReceipt.getError().getMessage());
+                            } else if (transactionReceipt.getResult() != null || transactionReceipt.getTransactionReceipt() != null) {
+                                //Log.d(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getTransactionReceipt().getBlockHash());
+                                Log.d(TAG, "transactionReceipt: Root: " + transactionReceipt.getResult().getRoot());
+                                Log.d(TAG, "transactionReceipt: Contract address: " + transactionReceipt.getResult().getContractAddress());
+                                Log.d(TAG, "transactionReceipt: From: " + transactionReceipt.getResult().getFrom());
+                                Log.d(TAG, "transactionReceipt: To: " + transactionReceipt.getResult().getTo());
+                                Log.d(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getResult().getBlockHash());
+                                Log.d(TAG, "transactionReceipt: Block number: " + transactionReceipt.getResult().getBlockNumber());
+                                Log.d(TAG, "transactionReceipt: Block number raw: " + transactionReceipt.getResult().getBlockNumberRaw());
+                                Log.d(TAG, "transactionReceipt: Gas used: " + transactionReceipt.getResult().getGasUsed());
+                                Log.d(TAG, "transactionReceipt: Gas used raw: " + transactionReceipt.getResult().getGasUsedRaw());
+                                Log.d(TAG, "transactionReceipt: Cumulative gas used: " + transactionReceipt.getResult().getCumulativeGasUsed());
+                                Log.d(TAG, "transactionReceipt: Cumulative gas used raw: " + transactionReceipt.getResult().getCumulativeGasUsedRaw());
+                                Log.d(TAG, "transactionReceipt: Transaction hash: " + transactionReceipt.getResult().getTransactionHash());
+                                Log.d(TAG, "transactionReceipt: Transaction index: " + transactionReceipt.getResult().getTransactionIndex());
+                                Log.d(TAG, "transactionReceipt: Transaction index raw: " + transactionReceipt.getResult().getTransactionIndexRaw());
+                                Log.d(TAG, "transactionReceipt: JSON-RPC response: " + transactionReceipt.getJsonrpc());
+                            }
+
+                            // then accept gets transaction receipt only if the transaction is successful
+
+                        }).exceptionally(transactionReceipt -> {
+                            return null;
+                        });
+
+
+                        EthGetTransactionReceipt receipt = sendObj.ethGetTransactionReceipt(moo.getResult()).sendAsync().get();
+
+                        String oot = "";
+                        oot = oot + " " + prefs.getString("csbc_rpc", "");
 //                    Sign.
-                    //          nonce,
-                    //         new BigInteger("41000000000"), //DefaultGasProvider.GAS_PRICE,
-                    //         DefaultGasProvider.GAS_LIMIT,
-                    //          to,
-                    //       new BigInteger("12344"));
+                        //          nonce,
+                        //         new BigInteger("41000000000"), //DefaultGasProvider.GAS_PRICE,
+                        //         DefaultGasProvider.GAS_LIMIT,
+                        //          to,
+                        //       new BigInteger("12344"));
 //rawTransaction.getData();
-                    myLog("CONV",
-                            "\nNonce: " + nonce + "\nOOT: " + oot + " " +
-                                    " \nVal: " + Convert.toWei(amount, Convert.Unit.ETHER).toBigIntegerExact().toString() +
-                                    " \nGasP: " + DefaultGasProvider.GAS_PRICE + " GasL: " + DefaultGasProvider.GAS_LIMIT);
+                        myLog("CONV",
+                                "\nNonce: " + nonce + "\nOOT: " + oot + " " +
+                                        " \nVal: " + Convert.toWei(amount, Convert.Unit.ETHER).toBigIntegerExact().toString() +
+                                        " \nGasP: " + DefaultGasProvider.GAS_PRICE + " GasL: " + DefaultGasProvider.GAS_LIMIT);
 
 /*                    byte[] signedMessage;
 
@@ -512,27 +672,28 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                             Convert.toWei(amount, Convert.Unit.ETHER).toBigIntegerExact());
 */
 
-                    //              String hexValue = "0x" + Hex.toHexString(signedMessage);
-                    //           Log.d("ETHMSG", hexValue);
+                        //              String hexValue = "0x" + Hex.toHexString(signedMessage);
+                        //           Log.d("ETHMSG", hexValue);
 
 
-                    //   sendObj.ethChainId().send().setId(43113);
-                    myLog("CHAINID",
-                            "NetwkID: " + sendObj.netVersion().getId() + "\n" +
-                                    "ChainID: " + sendObj.ethChainId().send().getChainId());
-                    //     Transfer.
-                    //   transactionManager.sendTransaction()
-                    //   TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
-                    //           amount, org.web3j.utils.Convert.Unit.ETHER).send();
+                        //   sendObj.ethChainId().send().setId(43113);
+                        myLog("CHAINID",
+                                "NetwkID: " + sendObj.netVersion().getId() + "\n" +
+                                        "ChainID: " + sendObj.ethChainId().send().getChainId());
+                        //     Transfer.
+                        //   transactionManager.sendTransaction()
+                        //   TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
+                        //           amount, org.web3j.utils.Convert.Unit.ETHER).send();
 //                    sendObj.ethChainId().setId(43113);
 
-                    //sendObj.netVersion().setId(43113);
-                    myLog("CHAINID",
-                            "ChainID: " + sendObj.netVersion().getId() + "\n" +
-                                    "NetwkID: " + sendObj.ethChainId().getId());
+                        //sendObj.netVersion().setId(43113);
+                        myLog("CHAINID",
+                                "ChainID: " + sendObj.netVersion().getId() + "\n" +
+                                        "NetwkID: " + sendObj.ethChainId().getId());
 
-                    //    aRawTransaction moo = new aRawTransaction(sendObj, Utils.getCreds(deets), null, null , 43113);
-                    //    moo.Send(to, amount.toPlainString());
+                        //    aRawTransaction moo = new aRawTransaction(sendObj, Utils.getCreds(deets), null, null , 43113);
+                        //    moo.Send(to, amount.toPlainString());
+                    }
                 }
 
             } catch (Exception e) {
@@ -559,6 +720,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 //String balance = bob.balanceOf(deets.get("walletAddress")
                 theirBalance = new BigDecimal(bal, 18);
             } else {
+
                 try {
                     myBalance = Utils.getMyBalance(myWallet).first;
                 } catch (IOException e) {

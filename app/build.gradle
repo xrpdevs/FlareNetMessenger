@@ -37,7 +37,7 @@ android {
             applicationId "uk.co.xrpdevs.flarenetmessenger"
             versionName name
             versionCode code
-            minSdkVersion 24
+            minSdkVersion 26
             //noinspection ExpiredTargetSdkVersion
             targetSdkVersion 30
 
@@ -146,5 +146,11 @@ dependencies {
    //     exclude group: 'com.squareup.okhttp3'
         exclude group: 'io.github.openfeign', module: 'feign-core'
     }
+    implementation('org.xrpl:xrpl4j-crypto-bouncycastle:2.0.0'){
+        exclude group: 'org.bouncycastle'
+        //     exclude group: 'com.squareup.okhttp3'
+        exclude group: 'io.github.openfeign', module: 'feign-core'
+    }
+    //implementation('org.xrpl:xrpl4j-crypto-bouncycastle:2.0.0');
 
 }
