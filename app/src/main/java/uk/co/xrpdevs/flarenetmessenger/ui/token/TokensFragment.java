@@ -277,35 +277,43 @@ public class TokensFragment extends Fragment {
     public ArrayList<HashMap<String, String>> getAvailTokens(String blockChainName) throws IOException {
         ArrayList<HashMap<String, String>> availTokens = new ArrayList<>();
         HashMap<String, String> primaryAsset = new HashMap<>();
-        primaryAsset.put("Name", "FLR");
-        primaryAsset.put("Address", Utils.getMyBalance(deets.get("walletAddress")).first.toPlainString());
-        Log.d("WBALANCE", Utils.getMyBalance(deets.get("walletAddress")).toString());
+        Log.d("WBALANCE", deets.toString());
+
+        // get asset type from wallets info
+        if (deets.containsKey("walletXaddr")) {
+            primaryAsset.put("Name", "XRP");
+            primaryAsset.put("Address", Utils.getMyXRPBalance(deets.get("walletAddress")).first.toPlainString());
+        } else {
+            primaryAsset.put("Name", "FLR");
+            primaryAsset.put("Address", Utils.getMyBalance(deets.get("walletAddress")).first.toPlainString());
+        }
         primaryAsset.put("primary", "1");
         availTokens.add(primaryAsset);
         String json = null;
-        try {
-            InputStream is = getActivity().getAssets().open("tokens_" + blockChainName + ".json");
-            int size = is.available();
-            byte[] buffer = new byte[size];
-            is.read(buffer);
-            is.close();
-            json = new String(buffer, StandardCharsets.UTF_8);
-            //Log.d("JSON", "== "+json);
-            JSONObject jo = new JSONObject(json);
-            JSONArray key = jo.names ();
-            for (int i = 0; i < key.length (); ++i) {
-                JSONObject obj = jo.getJSONObject(key.getString(i));
-                HashMap<String, String> tmp = jsonToMap(obj.toString());
-                tmp.put("Name", key.getString(i));
-                availTokens.add(tmp);
+        if (!deets.containsKey("walletXaddr")) {
+            try {
+                InputStream is = getActivity().getAssets().open("tokens_" + blockChainName + ".json");
+                int size = is.available();
+                byte[] buffer = new byte[size];
+                is.read(buffer);
+                is.close();
+                json = new String(buffer, StandardCharsets.UTF_8);
+                //Log.d("JSON", "== "+json);
+                JSONObject jo = new JSONObject(json);
+                JSONArray key = jo.names();
+                for (int i = 0; i < key.length(); ++i) {
+                    JSONObject obj = jo.getJSONObject(key.getString(i));
+                    HashMap<String, String> tmp = jsonToMap(obj.toString());
+                    tmp.put("Name", key.getString(i));
+                    availTokens.add(tmp);
+                }
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                return null;
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            return null;
-        } catch (JSONException e) {
-           e.printStackTrace();
         }
-
 
         //myLog("json", availTokens.toString());
 
@@ -392,7 +400,7 @@ public class TokensFragment extends Fragment {
         BigInteger balance = new BigInteger("0");
         @Override
         public void run() {
-            if(contract != null) {
+            if (contract != null) {
 
 
                 try {
@@ -402,22 +410,25 @@ public class TokensFragment extends Fragment {
                     //e.printStackTrace();
                 }
             }
-            mAct.runOnUiThread(new Runnable() {
+            mAct.runOnUiThread(() -> {
+                BigDecimal bd = null;
+                if (contract != null) {
+                    bd = new BigDecimal(balance, 18);
+                } else {
+                    try {
+                        if (deets.containsKey("walletXaddr")) {
 
-                @Override
-                public void run() {
-                    BigDecimal bd = null;
-                    if(contract!=null) {
-                        bd = new BigDecimal(balance, 18);
-                    } else {
-                        try {
+                            bd = Utils.getMyXRPBalance(deets.get("walletAddress")).first;
+                            //  bd = bd.setScale(6, BigDecimal.ROUND_HALF_DOWN);
+                        } else {
                             bd = Utils.getMyBalance(address).first;
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                            // get decimal places from definitions file
                         }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                    updateMe.setText(bd.stripTrailingZeros().toPlainString());
                 }
+                updateMe.setText(bd.stripTrailingZeros().toPlainString());
             });
 
         }

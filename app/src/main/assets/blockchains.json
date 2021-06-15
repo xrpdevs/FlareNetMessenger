@@ -42,6 +42,7 @@
     "ChainID": 0,
     "Icon": "chain_xrp",
     "Type": "XRPL",
+    "DecimalPlaces": 6,
     "Testnet": true
   }
 }

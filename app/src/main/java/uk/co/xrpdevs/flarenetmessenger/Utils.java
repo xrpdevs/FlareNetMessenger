@@ -31,6 +31,10 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.web3j.protocol.http.HttpService;
+import org.xrpl.xrpl4j.client.JsonRpcClientErrorException;
+import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
+import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;
+import org.xrpl.xrpl4j.model.transactions.Address;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,6 +64,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.crypto.Cipher;
+
+import static uk.co.xrpdevs.flarenetmessenger.MyService.xrplClient;
 
 public class Utils {
 
@@ -222,15 +228,41 @@ public class Utils {
         }
 
 
-
-        if(!ErrorMessage.equals("OK")){
+        if (!ErrorMessage.equals("OK")) {
             myLog("TEST", ErrorMessage);
-            FLR=BigDecimal.valueOf(-1);
+            FLR = BigDecimal.valueOf(-1);
         } else {
 
         }
 
         return new Pair<BigDecimal, String>(FLR, ErrorMessage);
+    }
+
+    public static Pair<BigDecimal, String> getMyXRPBalance(String walletAddress) throws IOException {
+        String ErrorMessage = "OK";
+        Web3j FlareConnection = MyService.initWeb3j();
+        BigDecimal wei;
+
+        BigDecimal FLR = BigDecimal.valueOf(1000000000);
+
+        EthGetBalance ethGetBalance = null;
+
+        AccountInfoRequestParams requestParams =
+                AccountInfoRequestParams.of(Address.of(walletAddress));
+        AccountInfoResult accountInfoResult =
+                null;
+        try {
+            accountInfoResult = xrplClient.accountInfo(requestParams);
+        } catch (JsonRpcClientErrorException e) {
+            e.printStackTrace();
+        }
+
+        BigInteger drops = new BigInteger(accountInfoResult.accountData().balance().toString());
+        BigDecimal XRP = new BigDecimal(drops, 6);
+        // XRP = XRP.movePointRight(6);
+        myLog("XRPINFO", accountInfoResult.toString());
+
+        return new Pair<>(XRP, ErrorMessage);
     }
 
     public static HashMap<String, String> jsonToMap(String t) throws JSONException {
@@ -239,8 +271,8 @@ public class Utils {
         JSONObject jObject = new JSONObject(t);
         Iterator<?> keys = jObject.keys();
 
-        while( keys.hasNext() ){
-            String key = (String)keys.next();
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
             String value = jObject.getString(key);
             map.put(key, value);
 

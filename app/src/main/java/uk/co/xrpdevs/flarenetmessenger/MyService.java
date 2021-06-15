@@ -70,7 +70,7 @@ public class MyService extends Service {
     static BigInteger GAS_LIMIT = BigInteger.valueOf(8000000L);
     static BigInteger GAS_PRICE = BigInteger.valueOf(470000000000L);
     public static boolean isXRPL = false;
-
+    public static XrplClient xrplClient;
     HttpUrl rippledUrl;
     //    static int tmpCID = 0x11;
 
@@ -141,7 +141,7 @@ public class MyService extends Service {
         }
         HttpUrl rippledUrl = HttpUrl
                 .get("https://s.altnet.rippletest.net:51234/");
-        XrplClient xrplClient = new XrplClient(rippledUrl);
+        xrplClient = new XrplClient(rippledUrl);
 
 // Create a Wallet using a WalletFactory
         WalletFactory walletFactory = DefaultWalletFactory.getInstance();
@@ -158,6 +158,7 @@ public class MyService extends Service {
         FaucetClient faucetClient = FaucetClient
                 .construct(HttpUrl.get("https://faucet.altnet.rippletest.net"));
         faucetClient.fundAccount(FundAccountRequest.of(classicAddress));
+
 
 // Look up your Account Info
         AccountInfoRequestParams requestParams =
