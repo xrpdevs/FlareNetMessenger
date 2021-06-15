@@ -21,6 +21,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
@@ -178,8 +179,11 @@ public class TokensFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 HashMap<String, String> theItem = lines.get(position);
-                Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
-                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                FragmentManager fm = getFragmentManager();
+                assert fm != null;
+                Fragment currentFragment = fm.findFragmentById(R.id.nav_host_fragment);
+                FragmentTransaction fragmentTransaction = fm.beginTransaction();
+                assert currentFragment != null;
                 fragmentTransaction.remove(currentFragment);
                 ContactsFragment f = new ContactsFragment();
                 Bundle args = new Bundle();
