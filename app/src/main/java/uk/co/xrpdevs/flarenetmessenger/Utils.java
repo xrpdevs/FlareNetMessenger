@@ -240,27 +240,20 @@ public class Utils {
 
     public static Pair<BigDecimal, String> getMyXRPBalance(String walletAddress) throws IOException {
         String ErrorMessage = "OK";
-        Web3j FlareConnection = MyService.initWeb3j();
-        BigDecimal wei;
-
-        BigDecimal FLR = BigDecimal.valueOf(1000000000);
-
-        EthGetBalance ethGetBalance = null;
-
+        BigDecimal XRP;
         AccountInfoRequestParams requestParams =
                 AccountInfoRequestParams.of(Address.of(walletAddress));
         AccountInfoResult accountInfoResult =
                 null;
+
         try {
             accountInfoResult = xrplClient.accountInfo(requestParams);
+            BigInteger drops = new BigInteger(accountInfoResult.accountData().balance().toString());
+            XRP = new BigDecimal(drops, 6);
         } catch (JsonRpcClientErrorException e) {
+            XRP = new BigDecimal("-1");
             e.printStackTrace();
         }
-
-        BigInteger drops = new BigInteger(accountInfoResult.accountData().balance().toString());
-        BigDecimal XRP = new BigDecimal(drops, 6);
-        // XRP = XRP.movePointRight(6);
-        myLog("XRPINFO", accountInfoResult.toString());
 
         return new Pair<>(XRP, ErrorMessage);
     }
