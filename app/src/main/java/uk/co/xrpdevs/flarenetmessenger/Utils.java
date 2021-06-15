@@ -8,6 +8,9 @@ import android.util.Log;
 import android.util.Pair;
 
 import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.ECPointUtil;
+import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
+import org.bouncycastle.jce.spec.ECNamedCurveSpec;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 import org.bouncycastle.util.encoders.Hex;
@@ -55,7 +58,11 @@ import java.security.Security;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.security.spec.ECPoint;
+import java.security.spec.ECPublicKeySpec;
+import java.security.spec.EncodedKeySpec;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -87,7 +94,7 @@ public class Utils {
             ciphertext = iesCipher.doFinal(text.getBytes());
 
             return ciphertext;
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
@@ -96,10 +103,10 @@ public class Utils {
     public static ECPublicKey rawToEncodedECPublicKey(String curveName, byte[] rawBytes) throws GeneralSecurityException {
         java.security.KeyFactory kf = java.security.KeyFactory.getInstance("EC", secP);
 //        KeyFactory kf = KeyFactory.getInstance("EC");
-        byte[] x = Arrays.copyOfRange(rawBytes, 0, rawBytes.length/2);
-        byte[] y = Arrays.copyOfRange(rawBytes, rawBytes.length/2, rawBytes.length);
+        byte[] x = Arrays.copyOfRange(rawBytes, 0, rawBytes.length / 2);
+        byte[] y = Arrays.copyOfRange(rawBytes, rawBytes.length / 2, rawBytes.length);
         // ECPoint w = new ECPoint(new BigInteger(1,x), new BigInteger(1,y));
-        ECPoint w = new ECPoint(new BigInteger(1,x), new BigInteger(1,y));
+        ECPoint w = new ECPoint(new BigInteger(1, x), new BigInteger(1, y));
         return (java.security.interfaces.ECPublicKey) kf.generatePublic(new java.security.spec.ECPublicKeySpec(w, ecParameterSpecForCurve(curveName)));
     }
 
@@ -115,7 +122,7 @@ public class Utils {
         myLog("PRIVATEKEY--", c.getEcKeyPair().getPrivateKey().toString(16));
         try {
             Cipher iesDecipher = Cipher.getInstance("ECIES");
-           ECKeyPair pair = c.getEcKeyPair();
+            ECKeyPair pair = c.getEcKeyPair();
             PrivateKey X509_priv = Utils.getPrivateKeyFromECBigIntAndCurve(pair.getPrivateKey(), "secp256k1");
             iesDecipher.init(Cipher.DECRYPT_MODE, X509_priv);
             String deCipheredText = new String(iesDecipher.doFinal(ciphertext));
@@ -124,26 +131,26 @@ public class Utils {
         } catch (Exception e) {
             myLog("DECRYPTION FAILED", e.getMessage());
             e.printStackTrace();
-            return "DECRYPTION FAILED: "+e.getMessage();
+            return "DECRYPTION FAILED: " + e.getMessage();
         }
     }
 
     public static byte[] toByte2(String s) {
-        Log.d("TOBYTE", s+" len: "+s.length());
+        Log.d("TOBYTE", s + " len: " + s.length());
 
         int len = s.length();
-        if ( (len & 1) == 1 ) s="0"+s;
-        Log.d("TOBYTE", s+" len: "+s.length());
+        if ((len & 1) == 1) s = "0" + s;
+        Log.d("TOBYTE", s + " len: " + s.length());
 
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
             data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i+1), 16));
+                    + Character.digit(s.charAt(i + 1), 16));
         }
         return data;
     }
 
-    public static byte[] toByte(String s){
+    public static byte[] toByte(String s) {
         if (s.length() == 127) {  // make sure we add back leading zeroes. These need to be saved properly in contact details.
             s = "0" + s;
         }
@@ -187,9 +194,16 @@ public class Utils {
         return bob;
     }
 
-    public static Credentials getCreds(HashMap<String, String>  deets){
+    public static Credentials getCreds(HashMap<String, String> deets) {
         return Credentials.create(deets.get("walletPrvKey"));
     }
+
+  /*  public static KeyPair xrpCreds(HashMap<String, String> deets){
+
+        BigInteger privkey_bigInt = new BigInteger(Objects.requireNonNull(deets.get("privKey")), 16);
+        PrivateKey pk = Utils.getPrivateKeyFromECBigIntAndCurve(privkey_bigInt,  "secp256k1");
+      //  KeyPair retPair = new KeyPair(pk);
+    }*/
 
     public static Web3j initWeb3j() {
 
@@ -218,12 +232,12 @@ public class Utils {
             wei = new BigDecimal(ethGetBalance.getBalance());
             FLR = Convert.fromWei(wei, Convert.Unit.ETHER);
         } catch (MessageDecodingException e) {
-            if(e.toString().contains("Value must be in format")){
+            if (e.toString().contains("Value must be in format")) {
                 ErrorMessage = "Not a valid Flare/Coston Adddress";
             }
             e.printStackTrace();
-        } catch (Exception e){
-            ErrorMessage = "Error: "+e.toString();
+        } catch (Exception e) {
+            ErrorMessage = "Error: " + e.toString();
             e.printStackTrace();
         }
 
@@ -243,14 +257,13 @@ public class Utils {
         BigDecimal XRP;
         AccountInfoRequestParams requestParams =
                 AccountInfoRequestParams.of(Address.of(walletAddress));
-        AccountInfoResult accountInfoResult =
-                null;
+        AccountInfoResult accountInfoResult;
 
         try {
             accountInfoResult = xrplClient.accountInfo(requestParams);
             BigInteger drops = new BigInteger(accountInfoResult.accountData().balance().toString());
             XRP = new BigDecimal(drops, 6);
-        } catch (JsonRpcClientErrorException e) {
+        } catch (JsonRpcClientErrorException | NullPointerException e) {
             XRP = new BigDecimal("-1");
             e.printStackTrace();
         }
@@ -272,10 +285,10 @@ public class Utils {
         }
         return map;
         //System.out.println("json : "+jObject);
-     //   System.out.println("map : "+map);
+        //   System.out.println("map : "+map);
     }
 
-    public static Pair<BigInteger, String> xorStrings(BigInteger pKey, String messageText){
+    public static Pair<BigInteger, String> xorStrings(BigInteger pKey, String messageText) {
 
         String XORpKey;
         String pKeyTmpHEX = pKey.toString(16);
@@ -284,27 +297,27 @@ public class Utils {
         String hexMessage = new BigInteger(messageText.getBytes()).toString(16);
         int msgLen = hexMessage.length();
         String XORStringTmp = "";
-        while(XORStringTmp.length() < pkLen){
-            XORStringTmp = XORStringTmp+hexMessage;
+        while (XORStringTmp.length() < pkLen) {
+            XORStringTmp = XORStringTmp + hexMessage;
         }
         Log.d("XOR", "Exited for loop");
-        XORStringTmp = XORStringTmp.substring(0,pkLen);
-        Log.d("XOR", "pkeyTmp: "+pKeyTmpHEX);
-        Log.d("XOR", " msgTmp: "+hexMessage);
-        Log.d("XOR", " XORMsg: "+XORStringTmp);
+        XORStringTmp = XORStringTmp.substring(0, pkLen);
+        Log.d("XOR", "pkeyTmp: " + pKeyTmpHEX);
+        Log.d("XOR", " msgTmp: " + hexMessage);
+        Log.d("XOR", " XORMsg: " + XORStringTmp);
         //XORStringTmp = XORStringTmp.substring(0,pkLen);
 
         BigInteger a = new BigInteger(XORStringTmp, 16);
         BigInteger b = pKey;
         BigInteger c;
 
-            c = b.xor(a);
+        c = b.xor(a);
 
-        Log.d("XOR", " PUBKEY: "+c.toString(16));
+        Log.d("XOR", " PUBKEY: " + c.toString(16));
         Pair<BigInteger, String> rv;
-        rv=new Pair<>(c, c.toString(16));
+        rv = new Pair<>(c, c.toString(16));
 
-        return(rv);
+        return (rv);
     }
 
     public static void myLog(String tag, String logString) {
@@ -465,7 +478,31 @@ public class Utils {
         return newPrivKey;
     }
 
-//0xd4AF405f5ec7F75d270836702bb364081B804A67
+    //0xd4AF405f5ec7F75d270836702bb364081B804A67
+    public static PublicKey getPublicKey(byte[] pk) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(pk);
+        KeyFactory kf = KeyFactory.getInstance("ECDSA", secP);
+        PublicKey pub = kf.generatePublic(publicKeySpec);
+        return pub;
+    }
+
+    public static PrivateKey getPrivateKey(byte[] privk) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privk);
+        KeyFactory kf = KeyFactory.getInstance("EC", secP);
+        //      ParameterSpe
+        PrivateKey privateKey = kf.generatePrivate(privateKeySpec);
+        return privateKey;
+    }
+
+    public static PublicKey getPublicKeyFromBytes(byte[] pubKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
+        KeyFactory kf = KeyFactory.getInstance("ECDSA", new BouncyCastleProvider());
+        ECNamedCurveSpec params = new ECNamedCurveSpec("secp256k1", spec.getCurve(), spec.getG(), spec.getN());
+        ECPoint point = ECPointUtil.decodePoint(params.getCurve(), pubKey);
+        ECPublicKeySpec pubKeySpec = new ECPublicKeySpec(point, params);
+        ECPublicKey pk = (ECPublicKey) kf.generatePublic(pubKeySpec);
+        return pk;
+    }
 
 
 }
