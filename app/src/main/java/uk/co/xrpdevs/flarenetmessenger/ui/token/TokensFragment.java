@@ -81,16 +81,13 @@ public class TokensFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.fragment_menu_tokens, menu);
-
         super.onCreateOptionsMenu(menu,inflater);
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.LAX);
-
         myLog("FRAG", "WalletsFragment");
-
         setHasOptionsMenu(true);
         View root = inflater.inflate(R.layout.fragment_tokens, container, false);
         navView = mThis.getActivity().findViewById(R.id.nav_view);
@@ -110,11 +107,7 @@ public class TokensFragment extends Fragment {
             tokens = jsonToMap(deets.getOrDefault("walletTokens", ""));
         } catch (JSONException e) {
             tokens = null;
-//            e.printStackTrace();
         }
-//        walletName.setText(deets.getOrDefault("walletName", "Wallet "+prefs.getInt("currentWallet", 0)));
-        //  super.onCreate(savedInstanceState);
-
         mAct = this.getActivity();
         if(prefs.getInt("walletCount", 0) > 0 ) {
             myLog("FRAG", "Wallet count is non zero");
@@ -131,16 +124,6 @@ public class TokensFragment extends Fragment {
             }
 
         }
-
-       // FloatingActionButton fab = root.findViewById(R.id.fab);
-       // fab.setOnClickListener(new View.OnClickListener() {
-       //     @Override // TODO: change intent methods to Fragment context switches
-       //     public void onClick(View view) {
-       //         Intent intent = new Intent(mThis.getActivity(), PKeyScanner.class);
-       //         startActivity(intent);
-       //     }
-       // });
-
         return root;
     }
     private ActionBar getActionBar() {
@@ -154,26 +137,24 @@ public class TokensFragment extends Fragment {
         getActionBar().setIcon(R.mipmap.chain_flare);
         Bundle args = getArguments();
         myLog("FRAG", "onStart");
-
-
-
-
-    }
+   }
 
     public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) {
         //myLog("Lines", lines.toString());
+        String bcname = prefs.getString("csbc_name", "");
         simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_tokens, new String[]{"Name", "Addressoo", "Type", "lastval"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
                 TextView cName = view.findViewById(R.id.inboxContent);
                 TextView cType = view.findViewById(R.id.inboxType);
-                cType.setText("Coston");
+
+                cType.setText(bcname);
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
                 HashMap<String, String> item = (HashMap<String, String>) getItem(position);
                 Thread updateBalance;
-                if(!item.containsKey("primary")) {
+                if (!item.containsKey("primary")) {
                     updateBalance = new getERC20Balance(
                             MyService.getERC20link(
                                     item.get("Address"),
@@ -189,8 +170,6 @@ public class TokensFragment extends Fragment {
                 }
                 updateBalance.start();
                 int unread = lines.size();
-                //myLog("TEST", "Number of contaxts: "+unread);
-
                 return view;
             }
         };
@@ -215,8 +194,6 @@ public class TokensFragment extends Fragment {
                 fragmentTransaction.addToBackStack("contacts").commit();
 
             }
-//return false;
-
         });
 
         lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -261,10 +238,6 @@ public class TokensFragment extends Fragment {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                //String balance = bob.balanceOf(deets.get("walletAddress")
-                //   BigDecimal bd = new BigDecimal(bal, 18);
-                //   cBody.setText(bd.stripTrailingZeros().toPlainString());
-                // startActivity(i);
                 return true;
 
             }
@@ -282,6 +255,7 @@ public class TokensFragment extends Fragment {
         // get asset type from wallets info
         if (deets.containsKey("walletXaddr")) {
             primaryAsset.put("Name", "XRP");
+            primaryAsset.put("Type", prefs.getString("csbc_type", ""));
             primaryAsset.put("Address", Utils.getMyXRPBalance(deets.get("walletAddress")).first.toPlainString());
         } else {
             primaryAsset.put("Name", "FLR");
@@ -322,71 +296,23 @@ public class TokensFragment extends Fragment {
 
     public void getTokenList() throws IOException {
         feedList.clear();
-/*
-//        ArrayList<HashMap<String, String>> maplist = new ArrayList<HashMap<String, String>>();
-        ArrayList<HashMap<String, String>> maplist = getAvailTokens("coston");
-
-        try {
-
-            myLog("TEST", "Number of wallets: "+prefs.getInt("walletCount", 0));
-
-            for(int i=0;i<prefs.getInt("walletCount", 0);i++){
-                HashMap<String, String> map = Utils.getPkey(this.getContext(), (i+1));
-                if(!map.containsKey("walletName")){ map.put("walletName", "Wallet "+ (i + 1));}
-
-                maplist.add(map);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-
-        String dtemp;
-        for (int j = 0; j < maplist.size(); j++) {
-            HashMap<String, String> poo = maplist.get(j);
-            // dtemp = getDate(Long.parseLong(poo.get("ts")));
-            myLog("PooPoos", poo.toString());
-            poo.remove("ts");
-            //   poo.put("date", dtemp);
-            // TODO: Local database of names associated with Coston addresses.
-            //      poo.put("cnam", dbHelper.getContactName(this, poo.get("num")));
-
-
-
-            feedList.add(poo);
-
-        }*/
-
         feedList = getAvailTokens("coston");
-
         mThis.getActivity().runOnUiThread(new Runnable() {
 
             @Override
             public void run() {
-                // TODO Auto-generated method stub
-                // mContactList.setAdapter(cursorAdapter);
-
                 TokensAdaptor = fillListView(feedList);
                 lv.setAdapter(TokensAdaptor);
-                //myLog("TEST", "Running UI thread");
-
-
-
             }
         });
-        //myLog("feedList", feedList.toString());
-//        Collections.reverse(feedList);
         TokensAdaptor = fillListView(feedList);
     }
 
     public String getDate(Long ts) {
-        //myLog("mooo", "val: " + ts);
         Date df = new Date(ts * 1000);
         String rc = new SimpleDateFormat("dd MMM yy").format(df);
         return (rc);
     }
-
 
     class getERC20Balance extends Thread {
         public getERC20Balance(ERC20 contract, String address, TextView updateMe){
@@ -407,7 +333,6 @@ public class TokensFragment extends Fragment {
                     balance = contract.balanceOf(address).send();
                 } catch (Exception e) {
                     Log.d("CONTRACT", e.getMessage());
-                    //e.printStackTrace();
                 }
             }
             mAct.runOnUiThread(() -> {
@@ -419,7 +344,6 @@ public class TokensFragment extends Fragment {
                         if (deets.containsKey("walletXaddr")) {
 
                             bd = Utils.getMyXRPBalance(deets.get("walletAddress")).first;
-                            //  bd = bd.setScale(6, BigDecimal.ROUND_HALF_DOWN);
                         } else {
                             bd = Utils.getMyBalance(address).first;
                             // get decimal places from definitions file
@@ -430,11 +354,8 @@ public class TokensFragment extends Fragment {
                 }
                 updateMe.setText(bd.stripTrailingZeros().toPlainString());
             });
-
         }
-
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -476,23 +397,12 @@ public class TokensFragment extends Fragment {
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info, info2;
- /*       MenuItem subItem;
-        if(item.hasSubMenu()){
-            SubMenu abc = item.getSubMenu();
-            subItem = abc.getItem();
-            info = (AdapterView.AdapterContextMenuInfo) subItem.getMenuInfo();
-        } else {*/
         info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
-        //}
         TextView textView;
         String bod;
         View li;
-        //ClipData clip;
-        //ClipboardManager cbm = (ClipboardManager) mAct.getSystemService(CLIPBOARD_SERVICE);;
-        // int idxOfList = (info!=null) ? info.position : this.mParentContextMenuListIndex;
         switch(item.getItemId()) {
             case R.id.mcm_sendfunds:
-
                 li = info.targetView;
                 // add stuff here
                 return true;
