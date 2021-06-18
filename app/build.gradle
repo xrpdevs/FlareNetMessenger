@@ -1,11 +1,11 @@
 plugins {
     id 'com.android.application'
 
-  //  id "org.web3j.solidity" version "0.3.0"
+    //  id "org.web3j.solidity" version "0.3.0"
 }
 
 //repositories {
- //   mavenCentral()
+//   mavenCentral()
 //}
 
 
@@ -38,6 +38,7 @@ android {
             versionName name
             versionCode code
             minSdkVersion 26
+
             //noinspection ExpiredTargetSdkVersion
             targetSdkVersion 30
 
@@ -80,9 +81,11 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
-   // implementation "org.ethereum:ethereumj-core:1.9.+"
-   // implementation 'org.ethereum:rocksdbjni:5.9.2'
-   // implementation 'org.ethereum:solcJ-all:0.4.25'
+    // implementation "org.ethereum:ethereumj-core:1.9.+"
+    // implementation 'org.ethereum:rocksdbjni:5.9.2'
+    // implementation 'org.ethereum:solcJ-all:0.4.25'
+
+    // pre androidX migration
 
     implementation 'net.lingala.zip4j:zip4j:2.8.0'
 
@@ -103,47 +106,47 @@ dependencies {
     implementation 'androidx.annotation:annotation:1.2.0'
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.3.1'
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1'
-   // implementation fileTree(dir: '/home/jp/Work/AndroidStudioProjects/feign', include: ['*'])
+    // implementation fileTree(dir: '/home/jp/Work/AndroidStudioProjects/feign', include: ['*'])
     implementation files('libs/feign-core-11.3-SNAPSHOT.jar')
     //implementation files('/home/jp/Work/AndroidStudioProjects/feignx/buildSrc/build/libs/buildSrc.jar')
-            // QR
+    // QR
 
-   // exclude 'io.github.openfeign'
+    // exclude 'io.github.openfeign'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
     implementation('com.squareup.okhttp3:okhttp:4.9.0'){
-      exclude group: 'io.github.openfeign', module: 'feign-core'
+        exclude group: 'io.github.openfeign', module: 'feign-core'
 
     }
 // /home/jp/Work/AndroidStudioProjects/feign/core/build/libs/feign-core-11.3-SNAPSHOT.jar
- //  implementation('io.github.openfeign:feign-core:10.1.0'){}
-  //      exclude group: 'com.squareup.okhttp3'
-  //  }
- //   implementation('io.github.openfeign:feign-jackson:10.1.0'){}
-  //      exclude group: 'com.squareup.okhttp3'
-  //  }
+    //  implementation('io.github.openfeign:feign-core:10.1.0'){}
+    //      exclude group: 'com.squareup.okhttp3'
+    //  }
+    //   implementation('io.github.openfeign:feign-jackson:10.1.0'){}
+    //      exclude group: 'com.squareup.okhttp3'
+    //  }
 
     implementation('org.xrpl:xrpl4j-address-codec:2.0.0'){
         exclude group: 'org.bouncycastle'
-      //  exclude group: 'com.squareup.okhttp3'
+        //  exclude group: 'com.squareup.okhttp3'
         exclude group: 'io.github.openfeign', module: 'feign-core'
     }
     implementation('org.xrpl:xrpl4j-client:2.0.0'){
         exclude group: 'org.bouncycastle'
-     //   exclude group: 'com.squareup.okhttp3'
+        //   exclude group: 'com.squareup.okhttp3'
         exclude group: 'io.github.openfeign', module: 'feign-core'
     }
     implementation('org.xrpl:xrpl4j-keypairs:2.0.0'){
         exclude group: 'org.bouncycastle'
-  //      exclude group: 'com.squareup.okhttp3'
+        //      exclude group: 'com.squareup.okhttp3'
         exclude group: 'io.github.openfeign', module: 'feign-core'
     }
     implementation('org.xrpl:xrpl4j-model:2.0.0'){
         exclude group: 'org.bouncycastle'
-   //     exclude group: 'com.squareup.okhttp3'
+        //     exclude group: 'com.squareup.okhttp3'
         exclude group: 'io.github.openfeign', module: 'feign-core'
     }
     implementation('org.xrpl:xrpl4j-crypto-bouncycastle:2.0.0'){

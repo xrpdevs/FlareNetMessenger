@@ -60,6 +60,8 @@ import org.xrpl.xrpl4j.model.client.fees.FeeResult;
 import org.xrpl.xrpl4j.model.client.ledger.LedgerRequestParams;
 import org.xrpl.xrpl4j.model.client.transactions.SubmitResult;
 import org.xrpl.xrpl4j.model.transactions.Address;
+import org.xrpl.xrpl4j.model.transactions.Memo;
+import org.xrpl.xrpl4j.model.transactions.MemoWrapper;
 import org.xrpl.xrpl4j.model.transactions.Payment;
 import org.xrpl.xrpl4j.model.transactions.Transaction;
 import org.xrpl.xrpl4j.model.transactions.XrpCurrencyAmount;
@@ -104,7 +106,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
     Activity mThis = this;
     String to, from, theirWallet, myWallet, cNameText, tokenName, tokenAddress, tokenBalance;
     BigDecimal amount;
-    EditText view_Amount;
+    EditText view_Amount, view_XRPMemo;
     PinCodeDialogFragment pinDialog;
     boolean token = false;
     ERC20 bob;  // this is where we need our adapter for different bc's/tokens
@@ -132,6 +134,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
         view_DelContact.setOnClickListener(this);
         view_BalInfo = findViewById(R.id.balancesInfo);
         view_Amount = findViewById(R.id.editTextNumberDecimal);
+        view_XRPMemo = findViewById(R.id.editTextTextXRPLMemo);
         view_SendFunds = findViewById(R.id.viewContactSendFunds);
         view_SendFunds.setOnClickListener(this);
         prefs = this.getSharedPreferences("fnm", 0);
@@ -260,7 +263,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                         PrivateKey XRP_PrivateKey = Utils.getPrivateKeyFromECBigIntAndCurve(pair.getPrivateKey(), "secp256k1");
                         Log.d("Credentials:: ", pubKeyHex);
 
-                        byte[] wpkBytes = Hex.decode(pubKeyHex);
+                        byte[] wpkBytes = Utils.toByte(pubKeyHex);
 
                         PublicKey XRP_PublicKey = Utils.rawToEncodedECPublicKey("secp256k1", wpkBytes);
 
@@ -280,7 +283,10 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
 
                     isXRP = true;
+                    view_XRPMemo.setVisibility(View.VISIBLE);
+
             }
+
 
             String pubkey = ContactsManager.getPubKey(mThis.getApplicationContext(), theirWallet);
 
@@ -510,6 +516,12 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                                 validatedLedger.plus(UnsignedLong.valueOf(4)).unsignedLongValue().intValue()
                         );
 
+                        Memo memo = Memo.builder()
+                                .memoData(String.valueOf(Hex.encode((view_XRPMemo.getText().toString()).getBytes())))
+                                .build();
+                        MemoWrapper mw = MemoWrapper.builder()
+                                .memo(memo).build();
+
 // Construct a Payment
                         Payment payment = Payment.builder()
                                 .account(xrpwallet.classicAddress())
@@ -517,6 +529,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                                 .destination(Address.of(theirWallet))
                                 .sequence(sequence)
                                 .fee(openLedgerFee)
+                                .addMemos(mw)
                                 .signingPublicKey(xrpwallet.publicKey())
                                 .lastLedgerSequence(lastLedgerSequence)
                                 .build();
@@ -722,12 +735,13 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
             } else {
 
                 try {
-                    myBalance = Utils.getMyBalance(myWallet).first;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    theirBalance = Utils.getMyBalance(theirWallet).first;
+                    if (!isXRP) {
+                        myBalance = Utils.getMyBalance(myWallet).first;
+                        theirBalance = Utils.getMyBalance(theirWallet).first;
+                    } else {
+                        myBalance = Utils.getMyXRPBalance(myWallet).first;
+                        theirBalance = Utils.getMyXRPBalance(theirWallet).first;
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

@@ -15,7 +15,10 @@
     <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <uses-feature android:name="android.hardware.camera" />
+    <uses-sdk tools:overrideLibrary="com.google.zxing.client.android"></uses-sdk>
+
     <application
         android:name="uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger"
         android:allowBackup="true"

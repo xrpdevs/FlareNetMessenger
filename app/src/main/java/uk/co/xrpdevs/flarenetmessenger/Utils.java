@@ -322,10 +322,14 @@ public class Utils {
 
     public static void myLog(String tag, String logString) {
         boolean loggingOn = true;
-        if (loggingOn) {
-            String callerClassName = new Exception().getStackTrace()[1].getClassName();
-            Log.d(tag, ">\n" + callerClassName + "\n" + logString);
+        boolean compactLog = true;
+        String sep = "\n";
+
+        if (compactLog) {
+            sep = " :: ";
         }
+        String callerClassName = new Exception().getStackTrace()[1].getClassName();
+        Log.d(tag, sep + callerClassName + sep + logString);
     }
 
     public static boolean isMyServiceRunning(Class<?> serviceClass, Context context) {
