@@ -1,5 +1,8 @@
 package uk.co.xrpdevs.flarenetmessenger.ui.contacts;
 
+import static android.app.Activity.RESULT_OK;
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
 import android.Manifest;
 import android.app.FragmentManager;
 import android.content.ContentUris;
@@ -32,6 +35,9 @@ import androidx.fragment.app.FragmentTransaction;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import org.json.JSONException;
+
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -47,13 +53,11 @@ import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.ViewContact;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.AddWalletDialogFragment;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.AddressEntryFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.ui.messages.MessagesFragment;
 
-import static android.app.Activity.RESULT_OK;
-import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
-
-public class ContactsFragment extends Fragment implements AddWalletDialogFragment.OnResultListener {
+public class ContactsFragment extends Fragment implements AddWalletDialogFragment.OnResultListener, AddressEntryFragment.OnResultListener {
     public String contractAddress, token, tAddr;
     boolean isToken = false;
     public SimpleAdapter InboxAdapter;
@@ -71,7 +75,7 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
     Boolean SendMessage = false;
     PleaseWaitDialog dialogActivity;
     AddWalletDialogFragment addWalletDialog;
-    int ctxcnt = 0;
+    AddressEntryFragment addressEntryDialog;
     Bundle tempContactInfo;
 
     @Override //Handle arguments and setup
@@ -192,22 +196,26 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
     }
 
     // Populate ListView with HashMap contents and set up event listeners
-    public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) {
+    public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) { // lines is initialized here
         myLog("TEST", "FillListView");
-      //  ArrayAdapter<String> adapter;
-        simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_contacts, new String[]{"name", "numb", "type", "id"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}){
+        //  ArrayAdapter<String> adapter;
+        simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_contacts, new String[]{"name", "numb", "type", "id"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}) {
             @Override
-            public View getView (int position, View convertView, ViewGroup parent) {
+            public View getView(int position, View convertView, ViewGroup parent) {
+
                 View view = super.getView(position, convertView, parent);
                 TextView cName = view.findViewById(R.id.inboxAddress);
+                TextView myId = view.findViewById(R.id.inboxLastact);
+                Log.d("pos", position + "");
+                if (myId.getText().equals("-5000")) cName.setText("Enter Manually");
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
-                        HashMap<String, String> item = (HashMap<String, String>) getItem(position);
+                HashMap<String, String> item = (HashMap<String, String>) getItem(position);
                 //myLog("DNSJNI", "item: "+item.toString());
                 int unread = lines.size();
-                myLog("TEST", "Number of contaxts: "+unread);
+                myLog("TEST", "Number of contaxts: " + unread);
                 // int unread = 0;
-                if(unread>0) {
+                if (unread > 0) {
                     cNtext += " (" + unread + ")";
                     cName.setText(cNtext);
                     view.invalidate();
@@ -219,10 +227,14 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
         lv.setAdapter(InboxAdapter);
         lv.setOnItemLongClickListener((parent, v, position, id) -> {
             HashMap<String, String> theItem = lines.get(position);
-            ContactsManager.deleteRawContactID(this.getActivity(), Long.parseLong(theItem.getOrDefault("data_id", "0")));
-            myLog("TEST", "Long Press -> " + Long.parseLong(theItem.getOrDefault("data_id", "0")));
-            maplist = new ArrayList<HashMap<String, String>>();
-            new Contact_thread().start();
+            if (theItem.get("id").equals("-5000")) {
+                // do nothing
+            } else {
+                ContactsManager.deleteRawContactID(this.getActivity(), Long.parseLong(theItem.getOrDefault("data_id", "0")));
+                myLog("TEST", "Long Press -> " + Long.parseLong(theItem.getOrDefault("data_id", "0")));
+                maplist = new ArrayList<HashMap<String, String>>();
+                new Contact_thread().start();
+            }
             return true;
         });
 
@@ -253,23 +265,31 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
                             ViewContact.class);
                     Bundle b = new Bundle();
 
+                    // if theItem id = -5000 then popup asking for wallet address
 
-                    b.putString("name", theItem.get("name"));
-                    b.putString("addr", theItem.get("numb"));
-                    if (isToken) {
-                        b.putString("token", token);
-                        b.putString("tAddr", tAddr);
+                    if (theItem.get("id").equals("-5000")) {
+                        android.app.FragmentManager manager = mThis.getActivity().getFragmentManager();
+                        addressEntryDialog("Enter Wallet Address", "Address:", true);
+
+                    } else {
+
+                        b.putString("name", theItem.get("name"));
+                        b.putString("addr", theItem.get("numb"));
+                        if (isToken) {
+                            b.putString("token", token);
+                            b.putString("tAddr", tAddr);
+                        }
+                        b.putString("id", theItem.get("id"));
+                        i.putExtra("contactInfo", b);
+                        String uriString = new StringBuilder().append("content://com.android.contacts/data/").append(theItem.get("id")).toString();
+
+                        Uri myUri = Uri.parse(uriString);
+                        i.setData(myUri);
+                        String pooo = theItem.get("num");
+                        myLog("smscseeker", "name:" + theItem.toString());
+
+                        startActivity(i);
                     }
-                    b.putString("id", theItem.get("id"));
-                    i.putExtra("contactInfo", b);
-                    String uriString = new StringBuilder().append("content://com.android.contacts/data/").append(theItem.get("id")).toString();
-
-                    Uri myUri = Uri.parse(uriString);
-                    i.setData(myUri);
-                    String pooo = theItem.get("num");
-                    myLog("smscseeker", "name:" + theItem.toString());
-
-                    startActivity(i);
                 }
             } // add address to contact
             if(ListType == 2000) {
@@ -314,6 +334,13 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
         integrator.initiateScan();
     }
 
+    @Override // handle result from AddressEntryFragment
+    public void onResult(String pinCode, String tag) throws IOException, JSONException {
+        Log.d("PINNE", pinCode);
+        addressEntryDialog.dismiss();
+
+    }
+
     // Read contacts and populate the HashMap for the ListView
     class Contact_thread extends Thread {
 
@@ -333,8 +360,10 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
             int contactNameColumn, addressColumnIndex, count = 0;
             int addressColumnId;
             List<Long> ctl = new ArrayList<Long>();
+            HashMap<String, String> addm = new HashMap<String, String>(); // placeholder for manual address entry
 
             if (ListType == WITH_ACCOUNTS) {
+
                 myLog("TEST", "ContactList WITH_ACCOUNTS");
                 yourAccountType = "uk.co.xrpdevs.flarenetmessenger";//ex: "com.whatsapp"
 
@@ -359,11 +388,18 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
             }
             ArrayList<String> contactList = new ArrayList<String>();
 
+            if (ListType == WITH_ACCOUNTS) {
+                addm.put("numb", "Manual");
+                addm.put("id", "-5000");
+                addm.put("name", "Enter Manually");
+                maplist.add(addm);
+            }
 
-            myLog("TEST", "Number of results: "+c.getCount());
+            myLog("TEST", "Number of results: " + c.getCount());
             while (c.moveToNext()) {
                 HashMap<String, String> tmp = new HashMap<String, String>();
-                if(ListType == WITH_ACCOUNTS) {
+
+                if (ListType == WITH_ACCOUNTS) {
 
                     contactNameColumn = c.getColumnIndex(ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY);
                     addressColumnIndex = Integer.parseInt(c.getString(c.getColumnIndex(ContactsContract.RawContacts._ID)));
@@ -503,6 +539,20 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
         addWalletDialog.titleText = title;
         addWalletDialog.cancelable = cancelable;
         addWalletDialog.show(manager, "DialogActivity");
+        return true;
+    }
+
+    // dialog for entering wallet addresses manually
+    private boolean addressEntryDialog(String title, String prompt, Boolean cancelable) {
+        //FragmentManager manager = mThis.getActivity().getFragmentManager();
+        android.app.FragmentManager manager = mThis.getActivity().getFragmentManager();
+
+        // NOTE: When using DialogFragment with an OnResultListener
+        //          use newInstance as opposed to dialog = new Dialog form...
+
+        addressEntryDialog = new AddressEntryFragment().newInstance(this, "Enter Address", "EADD");
+        addressEntryDialog.show(manager, "Dialog");
+
         return true;
     }
 
