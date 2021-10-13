@@ -7,6 +7,9 @@ package uk.co.xrpdevs.flarenetmessenger;
 *
 * */
 
+import static org.web3j.crypto.Credentials.create;
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -45,9 +48,6 @@ import java.util.HashMap;
 import okhttp3.HttpUrl;
 import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.contracts.Fsms;
-
-import static org.web3j.crypto.Credentials.create;
-import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 
 public class MyService extends Service {
@@ -367,7 +367,7 @@ public class MyService extends Service {
         }
     }
     @RequiresApi(api = Build.VERSION_CODES.O)
-    private void startMyOwnForeground(){
+    private void startMyOwnForeground() {
         String NOTIFICATION_CHANNEL_ID = "uk.co.xrpdevs.flarenetmessenger";
         String channelName = "My Background Service";
         NotificationChannel chan = new NotificationChannel(NOTIFICATION_CHANNEL_ID, channelName, NotificationManager.IMPORTANCE_NONE);
@@ -377,10 +377,15 @@ public class MyService extends Service {
         assert manager != null;
         manager.createNotificationChannel(chan);
 
+        Intent intent = new Intent(this, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
+                PendingIntent.FLAG_ONE_SHOT);
+
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
         Notification notification = notificationBuilder.setOngoing(true)
                 .setSmallIcon(R.drawable.ic_wallet)
-                .setContentTitle("App is running in background")
+                .setContentTitle("FlareNetMessenger Service Is Active")
+                .setContentIntent(pendingIntent)
                 .setPriority(NotificationManager.IMPORTANCE_MIN)
                 .setCategory(Notification.CATEGORY_SERVICE)
                 .build();

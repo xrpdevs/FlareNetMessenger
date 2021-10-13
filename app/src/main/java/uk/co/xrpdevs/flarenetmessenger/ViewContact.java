@@ -1,5 +1,9 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
+import static org.web3j.crypto.Credentials.create;
+import static uk.co.xrpdevs.flarenetmessenger.MyService.xrplClient;
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.ComponentName;
@@ -30,7 +34,6 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
-import org.bouncycastle.util.encoders.Hex;
 import org.json.JSONException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
@@ -81,10 +84,6 @@ import java.util.concurrent.CompletableFuture;
 import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
-
-import static org.web3j.crypto.Credentials.create;
-import static uk.co.xrpdevs.flarenetmessenger.MyService.xrplClient;
-import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 /**
  * Todo: Need an abstraction layer to handle generic functions for different types of blockchains.
@@ -489,6 +488,8 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
                         Log.d("Credentials", deets.get("walletPrvKey"));
 
+                        //       String pKeyString
+
                         // Prepare transaction --------------------------------------------------------
 // Look up your Account Info
                         AccountInfoRequestParams requestParams = AccountInfoRequestParams.builder()
@@ -515,13 +516,17 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                         UnsignedInteger lastLedgerSequence = UnsignedInteger.valueOf(
                                 validatedLedger.plus(UnsignedLong.valueOf(4)).unsignedLongValue().intValue()
                         );
+                        String mem = view_XRPMemo.getText().toString();
 
-                        Memo memo = Memo.builder()
-                                .memoData(String.valueOf(Hex.encode((view_XRPMemo.getText().toString()).getBytes())))
-                                .build();
-                        MemoWrapper mw = MemoWrapper.builder()
-                                .memo(memo).build();
 
+                        MemoWrapper mw;
+                        if (mem.length() == 0) {
+                            Memo memo = Memo.builder().build();
+                            mw = MemoWrapper.builder().memo(memo).build();
+                        } else {
+                            Memo memo = Memo.builder().memoData(new BigInteger(mem.getBytes()).toString(16)).build();
+                            mw = MemoWrapper.builder().memo(memo).build();
+                        }
 // Construct a Payment
                         Payment payment = Payment.builder()
                                 .account(xrpwallet.classicAddress())
@@ -533,6 +538,8 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                                 .signingPublicKey(xrpwallet.publicKey())
                                 .lastLedgerSequence(lastLedgerSequence)
                                 .build();
+
+
                         System.out.println("Constructed Payment: " + payment);
 
 
