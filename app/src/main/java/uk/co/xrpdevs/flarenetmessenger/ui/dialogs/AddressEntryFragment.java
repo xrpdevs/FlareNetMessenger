@@ -95,9 +95,22 @@ public class AddressEntryFragment extends android.app.DialogFragment {
         });
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+
+        builder.setItems(new CharSequence[]
+                        {"button 1", "button 2", "button 3", "button 4"},
+                (dialog, which) -> {
+                    // The 'which' argument contains the index position
+                    // of the selected item
+                    switch (which) {
+                        case 0:
+                            break;
+                    }
+                });
+
         builder.setView(content)
                 // Button clicks are handled by the DialogFragment!
                 .setPositiveButton("OK", null)
+                .setNeutralButton("SCAN", null)
                 .setNegativeButton("PASTE", null);
 
         TextView title = new TextView(builder.getContext());
@@ -131,14 +144,22 @@ public class AddressEntryFragment extends android.app.DialogFragment {
         if (dialog != null) {
             Button positiveButton = dialog.getButton(Dialog.BUTTON_POSITIVE);
             Button negativeButton = dialog.getButton(Dialog.BUTTON_NEGATIVE);
-            negativeButton.setOnClickListener(v -> {
+            Button neutralButton = dialog.getButton(Dialog.BUTTON_NEUTRAL);
+
+            neutralButton.setOnClickListener(v -> { // SCAN button
+                // pass a bundle to PKeyScanner.class ?
+                // saves duplicating code - possibly update other flows to work this way too..
+
+            });
+
+            negativeButton.setOnClickListener(v -> { // PASTE button
                 ClipboardManager clipboard = (ClipboardManager) mAct.getSystemService(CLIPBOARD_SERVICE);
 
                 editPinCode.setText(clipboard.getText());
 
             });
 
-            positiveButton.setOnClickListener(v -> {
+            positiveButton.setOnClickListener(v -> { // OK button (confirms pasted wallet address
                 final String pinCode = editPinCode.getText().toString();
                 myLog("PIN", pinCode);
                 if (isFieldValid(pinCode)) {

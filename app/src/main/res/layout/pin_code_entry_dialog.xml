@@ -17,4 +17,12 @@
         android:hint="@string/pin_code"
         android:inputType="" />
 
+    <EditText
+        android:id="@+id/editPinCode2"
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/pin_code_confirm"
+        android:inputType="" />
+
 </LinearLayout>

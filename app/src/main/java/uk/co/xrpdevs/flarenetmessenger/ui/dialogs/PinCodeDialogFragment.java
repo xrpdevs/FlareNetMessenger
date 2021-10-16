@@ -1,4 +1,6 @@
 package uk.co.xrpdevs.flarenetmessenger.ui.dialogs;
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
 import android.app.Dialog;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -15,15 +17,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
-import net.lingala.zip4j.exception.ZipException;
-
 import org.json.JSONException;
 
 import java.io.IOException;
 
 import uk.co.xrpdevs.flarenetmessenger.R;
-
-import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 /**
  * DialogFragment to display a PIN-code entry dialog.
@@ -31,9 +29,11 @@ import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 public class PinCodeDialogFragment extends android.app.DialogFragment {
 
     public static final String TAG = "PinCodeEntryDialog";
+    public boolean confirm = false;
     PinCodeDialogFragment mThis = this;
     String prompt = "Enter Pin Code";
     String tag;
+
 
     public interface OnResultListener {
         void onResult(String pinCode, String tag) throws IOException, JSONException;
@@ -42,10 +42,23 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
     /**
      * Factory method to produce PinCodeEntryDialogFragment instance. Use this method for instantiation.
      */
+   /* public PinCodeDialogFragment newInstance(final OnResultListener listener, String prompt, String tag) {
+        mThis.prompt = prompt;
+        this.prompt = prompt;
+        mThis.tag = tag;
+        mThis.confirm = false;
+        PinCodeDialogFragment fragment = new PinCodeDialogFragment();
+        fragment.prompt = prompt;
+        fragment.tag = tag;
+        fragment.setOnResultListener(listener);
+        return fragment;
+    }*/
     public PinCodeDialogFragment newInstance(final OnResultListener listener, String prompt, String tag) {
         mThis.prompt = prompt;
         this.prompt = prompt;
         mThis.tag = tag;
+        //boolean confirm;
+        mThis.confirm = confirm;
         PinCodeDialogFragment fragment = new PinCodeDialogFragment();
         fragment.prompt = prompt;
         fragment.tag = tag;
@@ -55,7 +68,7 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
 
     private OnResultListener onResultListener;
     private EditText editPinCode;
-
+    private EditText confirmPinCode;
     /**
      * Sets the ConfigSetListener to receive callback when the PIN code is set.
      */
@@ -67,10 +80,12 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         final View content = getActivity().getLayoutInflater().inflate(R.layout.pin_code_entry_dialog, null);
-
         editPinCode = content.findViewById(R.id.editPinCode);
+        confirmPinCode = content.findViewById(R.id.editPinCode2);
+
         int inputType = InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD;
         editPinCode.setInputType(inputType);
+        confirmPinCode.setInputType(inputType);
         editPinCode.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -89,6 +104,30 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
                 }
             }
         });
+        confirmPinCode.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (isFieldValid(s.toString())) {
+                    editPinCode.setError(null);
+                } else {
+                    editPinCode.setError(getString(R.string.empty_field));
+                }
+                if (!editPinCode.getText().toString().equals(confirmPinCode.getText().toString())) {
+                    confirmPinCode.setError("Codes do not match!");
+                } else {
+                    confirmPinCode.setError(null);
+                }
+            }
+        });
+
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(content)
@@ -121,15 +160,16 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
     public void onStart() {
         super.onStart();
         final AlertDialog dialog = (AlertDialog) getDialog();
+        if (!confirm) confirmPinCode.setVisibility(View.GONE);
         if (dialog != null) {
             Button positiveButton = dialog.getButton(Dialog.BUTTON_POSITIVE);
             positiveButton.setOnClickListener(v -> {
                 final String pinCode = editPinCode.getText().toString();
                 myLog("PIN", pinCode);
                 if (isFieldValid(pinCode)) {
-                    myLog("PIN", "ifv: "+isFieldValid(pinCode));
+                    myLog("PIN", "ifv: " + isFieldValid(pinCode));
                     if (onResultListener != null) {
-                        myLog("PIN", "oRL: "+(onResultListener != null));
+                        myLog("PIN", "oRL: " + (onResultListener != null));
                         try {
                             onResultListener.onResult(pinCode, tag);
                         } catch (IOException e) {

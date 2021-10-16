@@ -28,3 +28,5 @@ https://github.com/web3j/web3j
 
 To generate a wallet on the flare testnet to use with this app please see
 https://github.com/flare-dev/coston
+
+TODO: Add "Export to printer" to wallets activity for making hard copies of wallets.

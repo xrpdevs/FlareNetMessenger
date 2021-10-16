@@ -94,5 +94,6 @@
     <string name="create_new_wallet">Create New</string>
     <string name="paste_the_public_key_here_or_click_on_scan_to_scan_a_qr_code">Paste the public key here or click on SCAN to scan a QR code.</string>
     <string name="memo">Memo</string>
+    <string name="pin_code_confirm">Re-enter PIN to confirm</string>
 
 </resources>
