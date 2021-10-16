@@ -1,5 +1,7 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -8,6 +10,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 
 import com.google.common.io.ByteStreams;
 
@@ -20,6 +23,7 @@ import net.lingala.zip4j.model.enums.EncryptionMethod;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -30,8 +34,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.Objects;
-
-import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 public class Zipper {
     Context context;
@@ -77,23 +79,31 @@ public class Zipper {
             int wC = prefs.getInt("walletCount", 0);
 
             for (int i = 1; i < (wC + 1); i++) {
-                wallets.put(prefs.getString("wallet" + i, ""));
+
+                String s1 = prefs.getString("wallet" + i, "");
+                try {
+                    JSONObject jsonObject = new JSONObject(s1);
+                    wallets.put(jsonObject);
+                } catch (JSONException err) {
+                    Log.d("Error", err.toString());
+                }
+
             }
 
             ZipOutputStream zout = new ZipOutputStream(fos, password.toCharArray());
             String[] filenames = new String[]{"wallets.json"};
-            // todo: create QR of each key as PNG and add to zip
+            // todo: create QR of each key as PNG or PDF and add to zip
             for (int i = 0; i < filenames.length; i++) {
                 zipParameters.setFileNameInZip(filenames[0]);
                 zout.putNextEntry(zipParameters);
-                zout.write(wallets.toString().getBytes());//data waiting for compressed...
+                zout.write(wallets.toString(4).getBytes());//data waiting for compressed...
                 zout.closeEntry();
             }
 
             zout.close();
 
             Objects.requireNonNull(fos).close();
-        } catch (IOException e) {
+        } catch (IOException | JSONException e) {
             // Log Message
         }
     }

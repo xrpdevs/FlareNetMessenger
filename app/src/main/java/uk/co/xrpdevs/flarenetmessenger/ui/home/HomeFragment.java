@@ -1,5 +1,8 @@
 package uk.co.xrpdevs.flarenetmessenger.ui.home;
 
+import static android.content.Context.CLIPBOARD_SERVICE;
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
 import android.app.Activity;
 import android.app.Service;
 import android.content.ClipData;
@@ -45,6 +48,7 @@ import org.web3j.protocol.Web3j;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
+import java.util.Date;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,9 +62,6 @@ import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.SelectBlockChainDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.token.TokensFragment;
-
-import static android.content.Context.CLIPBOARD_SERVICE;
-import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 //import android.net.Credentials;
 
@@ -237,8 +238,9 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                 //    } catch (Exception e) {
                 //         e.printStackTrace();
                 //     }
+
                 showDialog("Version: " + BuildConfig.VERSION_NAME + "\n\nBuild: " + BuildConfig.VERSION_CODE + "\n\n" +
-                        "FCoin Balance: " + balance, true);
+                        "Built: \n" + new Date(Long.parseLong(BuildConfig.BUILD_TIME)).toString() + "\n\nFCoin Balance: " + balance, true);
                 return true;
             case R.id.ma1:
                 Intent aa = new Intent(this.getActivity(), MainActivity.class);

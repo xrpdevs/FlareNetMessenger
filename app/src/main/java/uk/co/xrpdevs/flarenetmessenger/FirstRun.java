@@ -89,10 +89,10 @@ setPIN("0");
                 myLog("PINS", "Pin1: " + pin1 + ", Pin2: " + pin2);
                 //if (pin1.equals(pin2)) {
                 //    pin_progress = 3;
-                pEdit.putString("pinCode", pin1);
+                pEdit.putString("pinCode", pin);
                 pEdit.commit();
                 checkState();
-                return pin1;
+                return pin;
 //                } else {
             //                  showDialog("Pin codes did not match\nPlease try again", true);
             //                pin1 = "abcd";

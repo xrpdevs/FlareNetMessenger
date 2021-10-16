@@ -34,6 +34,8 @@ android {
         versionProps.store(versionPropsFile.newWriter(), null)
 
         defaultConfig {
+            buildConfigField("String", "BUILD_TIME", "\"" + System.currentTimeMillis().toString() + "\"")
+            //buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
             applicationId "uk.co.xrpdevs.flarenetmessenger"
             versionName name
             versionCode code

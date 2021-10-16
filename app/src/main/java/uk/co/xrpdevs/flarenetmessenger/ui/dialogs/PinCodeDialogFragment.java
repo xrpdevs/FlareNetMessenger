@@ -59,6 +59,7 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
         mThis.tag = tag;
         //boolean confirm;
         mThis.confirm = confirm;
+        setCancelable(false);
         PinCodeDialogFragment fragment = new PinCodeDialogFragment();
         fragment.prompt = prompt;
         fragment.tag = tag;
@@ -85,7 +86,6 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
 
         int inputType = InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD;
         editPinCode.setInputType(inputType);
-        confirmPinCode.setInputType(inputType);
         editPinCode.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -104,30 +104,38 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
                 }
             }
         });
-        confirmPinCode.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+        if (confirm) {
+            confirmPinCode.setInputType(inputType);
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (isFieldValid(s.toString())) {
-                    editPinCode.setError(null);
-                } else {
-                    editPinCode.setError(getString(R.string.empty_field));
+            setCancelable(false);
+            mThis.setCancelable(false);
+            confirmPinCode.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 }
-                if (!editPinCode.getText().toString().equals(confirmPinCode.getText().toString())) {
-                    confirmPinCode.setError("Codes do not match!");
-                } else {
-                    confirmPinCode.setError(null);
-                }
-            }
-        });
 
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    if (isFieldValid(s.toString())) {
+                        editPinCode.setError(null);
+                    } else {
+                        editPinCode.setError(getString(R.string.empty_field));
+                    }
+                    if (!editPinCode.getText().toString().equals(confirmPinCode.getText().toString())) {
+                        confirmPinCode.setError("Codes do not match!");
+                    } else {
+                        confirmPinCode.setError(null);
+                        if (!editPinCode.getText().toString().equals("")) {
+                            setCancelable(true);
+                        }
+                    }
+                }
+            });
+        } // only validate the second field if we have asked for initial confirmation
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setView(content)
@@ -144,8 +152,9 @@ public class PinCodeDialogFragment extends android.app.DialogFragment {
         title.setTextSize(20);
 
         builder.setCustomTitle(title);
-
-        setCancelable(true);
+        if (confirm) {
+            builder.setCancelable(false);
+        }
         return builder.create();
     }
 
