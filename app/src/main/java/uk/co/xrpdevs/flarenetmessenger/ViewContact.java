@@ -140,6 +140,8 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
         pEdit = prefs.edit();
         String pinCode = prefs.getString("pinCode", "abcd");
 
+        String Wallet_Address = null;
+
         try {
             deets = Utils.getPkey(this, prefs.getInt("currentWallet", 0));
         } catch (JSONException e) {
@@ -157,6 +159,11 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 bcType = "ETH_TOKEN";
                 bob = MyService.getERC20link(tokenAddress, MyService.c, MyService.rpc);
                 myLog("bundle", ci.toString());
+            }
+            if (ci.containsKey("addr") && ci.containsKey("noContact")) {
+                Wallet_Address = ci.getString("addr");
+                cNameText = "Unsaved Wallet";
+                view_Address.setText(Wallet_Address);
             }
         }
 
@@ -176,127 +183,130 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
 
         // Querying the table ContactsContract.Contacts to retrieve all the contacts
+        if (uri != null) {
+            Cursor contactsCursor = getContentResolver().query(uri, null, null, null,
+                    null);
 
-        Cursor contactsCursor = getContentResolver().query(uri, null, null, null,
-                null);
+            //    Log.d("TEST", action);
+            Log.d("TEST", "ViewContact URI: " + uri.toString());
 
-        //    Log.d("TEST", action);
-        Log.d("TEST", "ViewContact URI: " + uri.toString());
-        if (contactsCursor.moveToFirst()) {
-            Log.d("TEST", "UriData: " + DatabaseUtils.dumpCurrentRowToString(contactsCursor));
-            int addressColumnIndex = contactsCursor.getColumnIndex(ContactsContract.RawContacts.Entity.DATA3);
-            int cNameIndex = contactsCursor.getColumnIndex(ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY);
+            if (contactsCursor.moveToFirst()) {
+                Log.d("TEST", "UriData: " + DatabaseUtils.dumpCurrentRowToString(contactsCursor));
+                int addressColumnIndex = contactsCursor.getColumnIndex(ContactsContract.RawContacts.Entity.DATA3);
+                int cNameIndex = contactsCursor.getColumnIndex(ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY);
 
-            rawContactID = contactsCursor.getLong(contactsCursor.getColumnIndex("raw_contact_id"));
+                rawContactID = contactsCursor.getLong(contactsCursor.getColumnIndex("raw_contact_id"));
 
-            //  rawContactID = Long.getLong(rcID);
+                //  rawContactID = Long.getLong(rcID);
 
-            Log.d("TEST", "RAWCONTACTID " + rawContactID + "\nADDRESSCOLINDEX " + addressColumnIndex);
+                Log.d("TEST", "RAWCONTACTID " + rawContactID + "\nADDRESSCOLINDEX " + addressColumnIndex);
 
-            String Wallet_Address = contactsCursor.getString(addressColumnIndex);
-            cNameText = contactsCursor.getString(cNameIndex);
+                Wallet_Address = contactsCursor.getString(addressColumnIndex);
+                cNameText = contactsCursor.getString(cNameIndex);
+            }
 
             Log.d("TEST", "Wallet Address: " + Wallet_Address + " Cname: " + cNameText);
             view_Address.setText(Wallet_Address);
 
-            myWallet = deets.get("walletAddress");
-            switch (bcType) {
-                case "ETH":
-                    theirWallet = Wallet_Address;
+        }
+        myWallet = deets.get("walletAddress");
+        switch (bcType) {
+            case "ETH":
+                theirWallet = Wallet_Address;
 
-                    BigInteger bal = new BigInteger("0");
-                    try {
-                        bal = bob.balanceOf(myWallet).send();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    //String balance = bob.balanceOf(deets.get("walletAddress")
-                    myBalance = new BigDecimal(bal, 18);
-                    try {
-                        bal = bob.balanceOf(theirWallet).send();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    //String balance = bob.balanceOf(deets.get("walletAddress")
-                    theirBalance = new BigDecimal(bal, 18);
-                case "ETH_TOKEN":
-                    // check BC type here
+                BigInteger bal = new BigInteger("0");
+                try {
+                    bal = bob.balanceOf(myWallet).send();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                //String balance = bob.balanceOf(deets.get("walletAddress")
+                myBalance = new BigDecimal(bal, 18);
+                try {
+                    bal = bob.balanceOf(theirWallet).send();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                //String balance = bob.balanceOf(deets.get("walletAddress")
+                theirBalance = new BigDecimal(bal, 18);
+            case "ETH_TOKEN":
+                // check BC type here
 
-                    try {
-                        myBalance = Utils.getMyBalance(myWallet).first;
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    theirWallet = Wallet_Address;
-                    try {
-                        theirBalance = Utils.getMyBalance(theirWallet).first;
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                case "XRPL":
-                    try {
-                        myBalance = Utils.getMyXRPBalance(myWallet).first;
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    theirWallet = Wallet_Address;
-                    try {
-                        theirBalance = Utils.getMyXRPBalance(theirWallet).first;
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    WalletFactory walletFactory = DefaultWalletFactory.getInstance();
+                try {
+                    myBalance = Utils.getMyBalance(myWallet).first;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                theirWallet = Wallet_Address;
+                try {
+                    theirBalance = Utils.getMyBalance(theirWallet).first;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            case "XRPL":
+                try {
+                    myBalance = Utils.getMyXRPBalance(myWallet).first;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                theirWallet = Wallet_Address;
+                try {
+                    theirBalance = Utils.getMyXRPBalance(theirWallet).first;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                WalletFactory walletFactory = DefaultWalletFactory.getInstance();
 
-                    Log.d("Credentials", deets.toString());
+                Log.d("Credentials", deets.toString());
 
-                    String pkeyHex = deets.get("walletPrvKey");
-                    String pubHex = deets.get("walletPubKey");
-                    pkeyHex = pkeyHex.replace("Optional[", "");
-                    pkeyHex = pkeyHex.replace("]", "");
-                    Credentials c = create(pkeyHex);
+                String pkeyHex = deets.get("walletPrvKey");
+                String pubHex = deets.get("walletPubKey");
+                pkeyHex = pkeyHex.replace("Optional[", "");
+                pkeyHex = pkeyHex.replace("]", "");
+                Credentials c = create(pkeyHex);
 
-                    try {
-                        ECKeyPair pair = c.getEcKeyPair();
-                        String pubKeyHex = pair.getPublicKey().toString(16);
+                try {
+                    ECKeyPair pair = c.getEcKeyPair();
+                    String pubKeyHex = pair.getPublicKey().toString(16);
 
-                        PrivateKey XRP_PrivateKey = Utils.getPrivateKeyFromECBigIntAndCurve(pair.getPrivateKey(), "secp256k1");
-                        Log.d("Credentials:: ", pubKeyHex);
+                    PrivateKey XRP_PrivateKey = Utils.getPrivateKeyFromECBigIntAndCurve(pair.getPrivateKey(), "secp256k1");
+                    Log.d("Credentials:: ", pubKeyHex);
 
-                        byte[] wpkBytes = Utils.toByte(pubKeyHex);
+                    byte[] wpkBytes = Utils.toByte(pubKeyHex);
 
-                        PublicKey XRP_PublicKey = Utils.rawToEncodedECPublicKey("secp256k1", wpkBytes);
-
-
-                        org.xrpl.xrpl4j.keypairs.KeyPair xrpKeys = KeyPair.builder().privateKey(pkeyHex).publicKey(pubHex).build();
-                        xrpwallet = walletFactory.fromKeyPair(xrpKeys, true);
-
-                        System.out.println(xrpwallet);
-
-                    } catch (GeneralSecurityException e) {
-                        e.printStackTrace();
+                    PublicKey XRP_PublicKey = Utils.rawToEncodedECPublicKey("secp256k1", wpkBytes);
 
 
-                        //   Log.d("KEEZ:", "= "+xrpKeys.toString());
+                    org.xrpl.xrpl4j.keypairs.KeyPair xrpKeys = KeyPair.builder().privateKey(pkeyHex).publicKey(pubHex).build();
+                    xrpwallet = walletFactory.fromKeyPair(xrpKeys, true);
 
-                    }
+                    System.out.println(xrpwallet);
 
-
-                    isXRP = true;
-                    view_XRPMemo.setVisibility(View.VISIBLE);
-
-            }
+                } catch (GeneralSecurityException e) {
+                    e.printStackTrace();
 
 
-            String pubkey = ContactsManager.getPubKey(mThis.getApplicationContext(), theirWallet);
+                    //   Log.d("KEEZ:", "= "+xrpKeys.toString());
 
-            info = "Your balance: " + myBalance.stripTrailingZeros().toPlainString() + "\n" +
-                    "Their balance: " + theirBalance.stripTrailingZeros().toPlainString() + "\n";
+                }
 
-            if (pubkey != null) {
-                info = info + "Pubkey Present";
-            }
 
-            view_BalInfo.setText(info);
+                isXRP = true;
+                view_XRPMemo.setVisibility(View.VISIBLE);
+
+        }
+
+
+        String pubkey = ContactsManager.getPubKey(mThis.getApplicationContext(), theirWallet);
+
+        info = "Your balance: " + myBalance.stripTrailingZeros().toPlainString() + "\n" +
+                "Their balance: " + theirBalance.stripTrailingZeros().toPlainString() + "\n";
+
+        if (pubkey != null) {
+            info = info + "Pubkey Present";
+        }
+
+        view_BalInfo.setText(info);
 
             /*sendFunds.setOnClickListener((View v) -> {
 
@@ -308,33 +318,33 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
             });*/
 
-            // contactName.setText(cNameText);
-            if (token) {
-                this.getSupportActionBar().setTitle(cNameText + " (" + tokenName + ")");
-            } else {
-                this.getSupportActionBar().setTitle(cNameText);
-            }
-            QRCodeWriter writer = new QRCodeWriter();
-            if (Wallet_Address != null) {
-                try {
-                    BitMatrix bitMatrix = writer.encode(Wallet_Address, BarcodeFormat.QR_CODE, 512, 512);
-                    int width = bitMatrix.getWidth();
-                    int height = bitMatrix.getHeight();
-                    Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
-                    for (int x = 0; x < width; x++) {
-                        for (int y = 0; y < height; y++) {
-                            bmp.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
-                        }
+        // contactName.setText(cNameText);
+        if (token) {
+            this.getSupportActionBar().setTitle(cNameText + " (" + tokenName + ")");
+        } else {
+            this.getSupportActionBar().setTitle(cNameText);
+        }
+        QRCodeWriter writer = new QRCodeWriter();
+        if (Wallet_Address != null) {
+            try {
+                BitMatrix bitMatrix = writer.encode(Wallet_Address, BarcodeFormat.QR_CODE, 512, 512);
+                int width = bitMatrix.getWidth();
+                int height = bitMatrix.getHeight();
+                Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+                for (int x = 0; x < width; x++) {
+                    for (int y = 0; y < height; y++) {
+                        bmp.setPixel(x, y, bitMatrix.get(x, y) ? Color.BLACK : Color.WHITE);
                     }
-                    ((ImageView) findViewById(R.id.imageView2)).setImageBitmap(bmp);
-
-                } catch (WriterException e) {
-                    e.printStackTrace();
                 }
+                ((ImageView) findViewById(R.id.imageView2)).setImageBitmap(bmp);
+
+            } catch (WriterException e) {
+                e.printStackTrace();
             }
         }
-
     }
+
+
 
 
     @Override
@@ -776,6 +786,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
             });
 
         }
+
     }
 
     private boolean showDialog(String prompt, Boolean cancelable) {

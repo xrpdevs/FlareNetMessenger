@@ -6,11 +6,13 @@ import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.ClipboardManager;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
@@ -21,11 +23,17 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+
 import org.json.JSONException;
 
 import java.io.IOException;
 
+import uk.co.xrpdevs.flarenetmessenger.CaptureActivityPortrait;
+import uk.co.xrpdevs.flarenetmessenger.PKeyScanner;
 import uk.co.xrpdevs.flarenetmessenger.R;
+import uk.co.xrpdevs.flarenetmessenger.ViewContact;
 
 /**
  * DialogFragment to display a PIN-code entry dialog.
@@ -40,6 +48,22 @@ public class AddressEntryFragment extends android.app.DialogFragment {
 
     public interface OnResultListener {
         void onResult(String pinCode, String tag) throws IOException, JSONException;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+        if (result != null) {
+            if (result.getContents() == null) {
+                //Cancelled
+            } else {
+                editPinCode.setText(result.getContents());
+                Log.d("PATAKS", "Scanned Result=" + result.getContents());
+            }
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
+
     }
 
     /**
@@ -96,16 +120,6 @@ public class AddressEntryFragment extends android.app.DialogFragment {
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 
-        builder.setItems(new CharSequence[]
-                        {"button 1", "button 2", "button 3", "button 4"},
-                (dialog, which) -> {
-                    // The 'which' argument contains the index position
-                    // of the selected item
-                    switch (which) {
-                        case 0:
-                            break;
-                    }
-                });
 
         builder.setView(content)
                 // Button clicks are handled by the DialogFragment!
@@ -149,7 +163,28 @@ public class AddressEntryFragment extends android.app.DialogFragment {
             neutralButton.setOnClickListener(v -> { // SCAN button
                 // pass a bundle to PKeyScanner.class ?
                 // saves duplicating code - possibly update other flows to work this way too..
+                Log.d("TEST", "QR Scan Button Pressed");
+                IntentIntegrator integrator;
 
+                integrator = IntentIntegrator.forFragment(mThis);
+
+
+                //      new IntentIntegrator(getActivity());
+                Log.d("DEST_ACTIV", this.getActivity().getLocalClassName());
+
+                IntentIntegrator.forFragment(mThis).setPrompt("QR code will be scanned automatically on focus");
+                IntentIntegrator.forFragment(mThis).setCameraId(0);
+                IntentIntegrator.forFragment(mThis).setRequestCode(PKeyScanner.PRIV_KEY_REQUEST_CODE);
+                IntentIntegrator.forFragment(mThis).setOrientationLocked(true);
+                IntentIntegrator.forFragment(mThis).setBeepEnabled(true);
+                IntentIntegrator.forFragment(mThis).setCaptureActivity(CaptureActivityPortrait.class);
+                IntentIntegrator.forFragment(mThis).setBarcodeImageEnabled(false);
+                IntentIntegrator.forFragment(mThis).initiateScan();
+
+                // integrator.start
+
+                //Intent intent = new Intent(mThis.getActivity(), PKeyScanner.class);
+                //startActivity(intent);
             });
 
             negativeButton.setOnClickListener(v -> { // PASTE button
@@ -162,7 +197,7 @@ public class AddressEntryFragment extends android.app.DialogFragment {
             positiveButton.setOnClickListener(v -> { // OK button (confirms pasted wallet address
                 final String pinCode = editPinCode.getText().toString();
                 myLog("PIN", pinCode);
-                if (isFieldValid(pinCode)) {
+                /*if (isFieldValid(pinCode)) {
                     myLog("PIN", "ifv: " + isFieldValid(pinCode));
                     if (onResultListener != null) {
                         myLog("PIN", "oRL: " + (onResultListener != null));
@@ -177,7 +212,20 @@ public class AddressEntryFragment extends android.app.DialogFragment {
                     }
                 } else {
                     editPinCode.setError(getString(R.string.empty_field));
-                }
+                }*/
+                Intent abc = new Intent(mThis.getContext(), ViewContact.class);
+
+                Bundle bundle = new Bundle();
+
+                bundle.putString("addr", pinCode);
+                bundle.putString("noContact", "1");
+                abc.putExtra("contactInfo", bundle);
+                //abc.setData(myUri);
+                startActivity(abc);
+                //    } else {
+                //        Log.d("doAddContact", "Empty bundle :(");
+                //    }
+
             });
         }
     }

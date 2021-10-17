@@ -391,7 +391,7 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
             if (ListType == WITH_ACCOUNTS) {
                 addm.put("numb", "Manual");
                 addm.put("id", "-5000");
-                addm.put("name", "Enter Manually");
+                addm.put("name", "Scan or Paste");
                 maplist.add(addm);
             }
 
@@ -478,12 +478,13 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
                 public void run() {
                     // TODO Auto-generated method stub
                     // mContactList.setAdapter(cursorAdapter);
+
                     String noContacts = "It appears that you have no accounts for " + prefs.getString("csbc_name", "") + "! Please add " + prefs.getString("csbc_name", "") + " address to one of your contacts, or manually enter an address.";
                     if (finalCount < 1) {
                         if (ListType != WITH_ACCOUNTS) {
                             noContacts = "You have no contacts in your phone at all. [FNM] relies on your phone's contact database to save wallet addresses to. Please create some contacts and then (in this app) associate those contacts with the corresponding wallet addresses for " + MyService.currentChain;
                         }
-                        showDialog("No Contacts", noContacts, true);
+                        //     showDialog("No Contacts", noContacts, true);
                     }
                     InboxAdapter = fillListView(maplist);
                     lv.setAdapter(InboxAdapter);
