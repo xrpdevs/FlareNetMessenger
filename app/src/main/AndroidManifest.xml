@@ -35,6 +35,7 @@
             </intent-filter>-->
         </receiver>
         <activity android:name=".FirstRun"></activity>
+        <activity android:name=".TransactionsActivity" />
         <activity
             android:name=".MainActivity"
             android:label="FlareNetMessenger" >

@@ -266,6 +266,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
             // Map<EncodeHintType, ?> hints = new
             Map<EncodeHintType, Object> hints = new EnumMap<EncodeHintType, Object>(EncodeHintType.class);
             hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
+            hints.put(EncodeHintType.MARGIN, 1);
             if (XRPAddress != null) {
                 try {
                     BitMatrix bitMatrix = writer.encode(XRPAddress, BarcodeFormat.QR_CODE, 512, 512, hints);

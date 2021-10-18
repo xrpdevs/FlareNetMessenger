@@ -1,5 +1,8 @@
 package uk.co.xrpdevs.flarenetmessenger.ui.token;
 
+import static uk.co.xrpdevs.flarenetmessenger.Utils.jsonToMap;
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -44,14 +47,12 @@ import java.util.HashMap;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.R;
+import uk.co.xrpdevs.flarenetmessenger.TransactionsActivity;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.ui.contacts.ContactsFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
-
-import static uk.co.xrpdevs.flarenetmessenger.Utils.jsonToMap;
-import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 /* TODO:
     Add token dialog. Detect chain wallet is on and offer up lists from resources.
@@ -82,7 +83,7 @@ public class TokensFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.fragment_menu_tokens, menu);
-        super.onCreateOptionsMenu(menu,inflater);
+        super.onCreateOptionsMenu(menu, inflater);
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -110,7 +111,7 @@ public class TokensFragment extends Fragment {
             tokens = null;
         }
         mAct = this.getActivity();
-        if(prefs.getInt("walletCount", 0) > 0 ) {
+        if (prefs.getInt("walletCount", 0) > 0) {
             myLog("FRAG", "Wallet count is non zero");
 
             try {
@@ -127,9 +128,11 @@ public class TokensFragment extends Fragment {
         }
         return root;
     }
+
     private ActionBar getActionBar() {
         return ((MainActivity) getActivity()).getSupportActionBar();
     }
+
     @Override
     public void onStart() {
         super.onStart();
@@ -138,7 +141,7 @@ public class TokensFragment extends Fragment {
         getActionBar().setIcon(R.mipmap.chain_flare);
         Bundle args = getArguments();
         myLog("FRAG", "onStart");
-   }
+    }
 
     public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) {
         //myLog("Lines", lines.toString());
@@ -188,61 +191,14 @@ public class TokensFragment extends Fragment {
                 ContactsFragment f = new ContactsFragment();
                 Bundle args = new Bundle();
                 myLog("item", theItem.toString());
-                args.putInt("ltype", 4000);
-                if (!theItem.containsKey("primary")) {
+                args.putInt("ltype", 4000); // send funds to contact
+                if (!theItem.containsKey("primary")) { // indicate that we're dealing with an ETH style contract
                     args.putString("token", theItem.get("Name"));
-                    args.putString("tAddr", theItem.get("Address"));
+                    args.putString("tAddr", theItem.get("Address")); // the Address of the smart contract for the token
                 }
                 f.setArguments(args);
                 fragmentTransaction.replace(R.id.nav_host_fragment, f);
                 fragmentTransaction.addToBackStack("contacts").commit();
-
-            }
-        });
-
-        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-
-                Intent i = new Intent(mThis.getActivity(),
-                        MainActivity.class);
-                HashMap<String, String> theItem = lines.get(position);
-                //String pooo = theItem.get("num");
-                Log.d("AAAA", theItem.toString());
-                TextView cBody = view.findViewById(R.id.inboxContent);
-                //Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
-                //FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-//                fragmentTransaction.setCustomAnimations(R.animator.
-//                        R.anim.slide_in,  // enter
-//                        R.anim.slide_out // exi
-                //fragmentTransaction.remove(currentFragment);
-                String addr = theItem.get("Address");
-
-                BigInteger bal = new BigInteger("0");
-                Thread updateBalance;
-                try {
-                    if (theItem.containsKey("primary")) {
-                        // bal = new BigInteger("100");
-                        updateBalance = new getERC20Balance(
-                                null,
-                                deets.get("walletAddress"),
-                                cBody);
-                    } else {
-
-                        updateBalance = new getERC20Balance(
-                                MyService.getERC20link(
-                                        theItem.get("Address"),
-                                        MyService.c,
-                                        MyService.rpc),
-                                deets.get("walletAddress"),
-                                cBody);
-
-                    }
-                    updateBalance.start();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return true;
 
             }
         });
@@ -319,15 +275,17 @@ public class TokensFragment extends Fragment {
     }
 
     class getERC20Balance extends Thread {
-        public getERC20Balance(ERC20 contract, String address, TextView updateMe){
+        public getERC20Balance(ERC20 contract, String address, TextView updateMe) {
             this.contract = contract;
             this.address = address;
             this.updateMe = updateMe;
         }
+
         ERC20 contract;
         String address;
         TextView updateMe;
         BigInteger balance = new BigInteger("0");
+
         @Override
         public void run() {
             if (contract != null) {
@@ -361,7 +319,7 @@ public class TokensFragment extends Fragment {
         }
     }
 
-    @Override
+    @Override // THIS IS FOR THE MENU AT TOP OF ACTIVITY/FRAGMENT
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
         switch (item.getItemId()) {
@@ -385,56 +343,82 @@ public class TokensFragment extends Fragment {
         }
     }
 
-    public void exportWallets(){
+    public void exportWallets() {
         //
     }
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        if (v.getId()==R.id.tokens_list) {
+        if (v.getId() == R.id.tokens_list) {
             MenuInflater inflater = mAct.getMenuInflater();
-            inflater.inflate(R.menu.message_item_longclick, menu);
+            inflater.inflate(R.menu.assets_item_context, menu);
         }
     }
 
-    @Override
+    @Override // T
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info, info2;
         info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         TextView textView;
         String bod;
-        View li;
-        switch(item.getItemId()) {
-            case R.id.mcm_sendfunds:
+        // View li;
+
+
+        info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        View li = info.targetView;
+        HashMap<String, String> theItem = feedList.get(info.position);
+        // Handle item selection
+        TextView cBody = li.findViewById(R.id.inboxContent);
+        Log.d("MITEM", item.toString() + " ");
+        switch (item.getItemId()) {
+            case R.id.aic_updatebalance:
+                String addr = theItem.get("Address");
+                BigInteger bal = new BigInteger("0");
+                Thread updateBalance;
+                try {
+                    if (theItem.containsKey("primary")) {
+                        // bal = new BigInteger("100");
+                        updateBalance = new getERC20Balance(
+                                null,
+                                deets.get("walletAddress"),
+                                cBody);
+                    } else {
+                        updateBalance = new getERC20Balance(
+                                MyService.getERC20link(
+                                        theItem.get("Address"),
+                                        MyService.c,
+                                        MyService.rpc),
+                                deets.get("walletAddress"),
+                                cBody);
+
+                    }
+                    updateBalance.start();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return true;
+            case R.id.aic_sendfunds:
                 li = info.targetView;
                 // add stuff here
                 return true;
-            case R.id.mcm_submenu:
-                subInfo = info;
-            case R.id.mcm_copyaddr: case R.id.mcm_copytext:
+            case R.id.aic_transactions:
+                // open the "Transactions" activity.
+                // Todo: keep track of balances of primary assets and tokens
+                //      these can be periodically updated by the service, and a
+                //      notification can be generated if amounts have changed.
+                // Todo: Activity will show transactions only for the currently
+                //      selected blockchain. This is a resource intensive process
+                //      so makes sense to keep context relevant. General updates
+                //      can be managed by the previous entry, with a link to the
+                //      transactions activity from the notifications.
+                Bundle b = new Bundle(); // store info for transaction activity
+                Intent i = new Intent(this.getContext(), TransactionsActivity.class);
+                i.putExtra("data", b);
+                startActivity(i);
+                //    subInfo = info;
+                return true;
 
-                Log.d("SUBMENU", "ID: "+item.getItemId());
-                switch (item.getItemId()) {
-                    /*case R.id.mcm_copytext:
-                        Log.d("SUBMENU", "copytext");
-                        li = ((View) subInfo.targetView);
-                        textView = li.findViewById(R.id.inboxContent);
-                        bod = textView.getText().toString();
-                        clip = ClipData.newPlainText("Copied", bod);
-                        cbm.setPrimaryClip(clip);
-                        return true;
-                    case R.id.mcm_copyaddr:
-                        Log.d("SUBMENU", "copytext");
-                        li = ((View) subInfo.targetView);
-                        textView = li.findViewById(R.id.inboxAddress);
-                        bod = textView.getText().toString();
-                        clip = ClipData.newPlainText("Copied", bod);
-                        cbm.setPrimaryClip(clip);
-                        return true;*/
-                    default:
-                        return true;
-                }
             default:
                 return super.onContextItemSelected(item);
         }

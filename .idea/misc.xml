@@ -3,8 +3,10 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/layout/activity_transactions.xml" value="0.51484375" />
         <entry key="app/src/main/res/layout/addrentrydialog.xml" value="0.51484375" />
         <entry key="app/src/main/res/layout/pin_code_entry_dialog.xml" value="0.51484375" />
+        <entry key="app/src/main/res/menu/assets_item_context.xml" value="0.51484375" />
       </map>
     </option>
   </component>

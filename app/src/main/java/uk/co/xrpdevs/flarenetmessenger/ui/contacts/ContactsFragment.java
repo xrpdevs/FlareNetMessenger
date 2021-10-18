@@ -67,6 +67,9 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
     ListView lv;
     public int ListType;
     int WITH_ACCOUNTS = 1000;
+    int ALL_CONTACTS = 2000;
+    int WITH_ACCOUNTS_MESSAGE = 3000;
+    int WITH_ACCOUNTS_SENDFUNDS = 4000;
     IntentIntegrator integrator;
     ContactsFragment mThis = this;
     HashMap<String, String> contactItem;
@@ -87,29 +90,29 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
 
             myLog("FRAG", args.toString());
         }
-        if(args != null){
+        if (args != null) {
 
-            if(args.containsKey("ltype")){
+            if (args.containsKey("ltype")) {
                 ListType = args.getInt("ltype");
             }
         }
-        if (ListType == 2000) {
+        if (ListType == WITH_ACCOUNTS) {
 
             getActionBar().setTitle("Add to Contact");
         }
-        if (ListType == 3000) {
-            ListType = 1000;
+        if (ListType == WITH_ACCOUNTS_MESSAGE) {
+            ListType = WITH_ACCOUNTS;
             SendMessage = true;
         }
-        if (ListType == 4000) {
-            ListType = 1000;
+        if (ListType == WITH_ACCOUNTS_SENDFUNDS) {
+            ListType = WITH_ACCOUNTS;
             if (args.containsKey("token")) {
                 isToken = true;
                 token = args.getString("token");
                 tAddr = args.getString("tAddr");
             }
         }
-        if (ListType == 1000) {
+        if (ListType == WITH_ACCOUNTS) {
 
             getActionBar().setTitle("Select Contact");
         }
@@ -161,25 +164,25 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
         // Handle item selection
         switch (item.getItemId()) {
             case R.id.menu_contacts_add_to_existing:
-                ListType = 2000;
+                ListType = ALL_CONTACTS;
                 Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
                 FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
                 fragmentTransaction.remove(currentFragment);
                 ContactsFragment f = new ContactsFragment();
                 Bundle args = new Bundle();
-                args.putInt("ltype", 2000);
+                args.putInt("ltype", ALL_CONTACTS);
                 f.setArguments(args);
                 fragmentTransaction.replace(R.id.nav_host_fragment, f);
                 fragmentTransaction.addToBackStack("contacts").commit();
                 return true;
             case R.id.menu_contacts_show_associated: // Todo: startActivityForResult add contact then call scanner.
-                ListType = 2000;
+                ListType = WITH_ACCOUNTS;
                 Fragment currentFragment2 = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
                 FragmentTransaction fragmentTransaction2 = getFragmentManager().beginTransaction();
                 fragmentTransaction2.remove(currentFragment2);
                 ContactsFragment f2 = new ContactsFragment();
                 Bundle args2 = new Bundle();
-                args2.putInt("ltype", 1000);
+                args2.putInt("ltype", WITH_ACCOUNTS);
                 f2.setArguments(args2);
                 fragmentTransaction2.replace(R.id.nav_host_fragment, f2);
                 fragmentTransaction2.addToBackStack("contacts").commit();
@@ -241,9 +244,11 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
 
         lv.setOnItemClickListener((parent, v, position, id) -> {
             HashMap<String, String> theItem = lines.get(position);
-            if (ListType == 1000) { // use contact
+            if (ListType == WITH_ACCOUNTS) { // use contact
 
                 if (SendMessage) {  // handle click-through from Messages Fragment
+
+                    // todo: handle sending messages for non-contacts for ETH style BC's or XRP
                     TextView cNam = v.findViewById(R.id.inboxAddress);
                     TextView cAddr = v.findViewById(R.id.inboxContent);
                     Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
@@ -292,7 +297,7 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
                     }
                 }
             } // add address to contact
-            if(ListType == 2000) {
+            if (ListType == ALL_CONTACTS) {
                 myLog("TEST", "Button Pressed");
                 Bundle b = new Bundle();
                 b.putString("name", theItem.get("name"));
