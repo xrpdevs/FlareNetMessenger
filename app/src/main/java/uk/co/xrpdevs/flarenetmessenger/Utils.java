@@ -1,5 +1,7 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
+import static uk.co.xrpdevs.flarenetmessenger.MyService.xrplClient;
+
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -37,6 +39,7 @@ import org.web3j.protocol.http.HttpService;
 import org.xrpl.xrpl4j.client.JsonRpcClientErrorException;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;
+import org.xrpl.xrpl4j.model.client.accounts.AccountTransactionsResult;
 import org.xrpl.xrpl4j.model.transactions.Address;
 
 import java.io.IOException;
@@ -71,8 +74,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.crypto.Cipher;
-
-import static uk.co.xrpdevs.flarenetmessenger.MyService.xrplClient;
 
 public class Utils {
 
@@ -258,8 +259,25 @@ public class Utils {
         AccountInfoRequestParams requestParams =
                 AccountInfoRequestParams.of(Address.of(walletAddress));
         AccountInfoResult accountInfoResult;
+        AccountTransactionsResult eek;
+
 
         try {
+            // AccountTransactionsRequestParams bob = AccountTransactionsRequestParams.builder()
+            //         .account(Address.of(walletAddress))
+            //         .limit(UnsignedInteger.valueOf(20))
+            //         .build();
+
+
+            //  eek = xrplClient.accountTransactions(bob);
+
+            //   Iterator<AccountTransactionsTransactionResult<? extends Transaction>> itr=eek.transactions().iterator();
+
+            //   while(itr.hasNext())
+            //   {
+            //    System.out.println(itr.next());
+            //   }
+
             accountInfoResult = xrplClient.accountInfo(requestParams);
             BigInteger drops = new BigInteger(accountInfoResult.accountData().balance().toString());
             XRP = new BigDecimal(drops, 6);

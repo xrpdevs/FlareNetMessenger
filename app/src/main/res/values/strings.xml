@@ -45,7 +45,8 @@
     <string name="send_funds">Send Funds</string>
     <string name="delete">Delete</string>
     <string name="change">Change</string>
-    <string name="textview">TextView</string>
+
+
     <string name="amount_to_send">Amount to send</string>
     <string name="wallet_address">Wallet Address</string>
     <string name="qr_code">QR Code</string>
@@ -95,5 +96,6 @@
     <string name="paste_the_public_key_here_or_click_on_scan_to_scan_a_qr_code">Paste the public key here or click on SCAN to scan a QR code.</string>
     <string name="memo">Memo</string>
     <string name="pin_code_confirm">Re-enter PIN to confirm</string>
+    <string name="textview">TextView</string>
 
 </resources>
