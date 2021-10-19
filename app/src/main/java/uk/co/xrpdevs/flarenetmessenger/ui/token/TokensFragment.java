@@ -4,7 +4,6 @@ import static uk.co.xrpdevs.flarenetmessenger.Utils.jsonToMap;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -412,11 +411,27 @@ public class TokensFragment extends Fragment {
                 //      so makes sense to keep context relevant. General updates
                 //      can be managed by the previous entry, with a link to the
                 //      transactions activity from the notifications.
-                Bundle b = new Bundle(); // store info for transaction activity
-                Intent i = new Intent(this.getContext(), TransactionsActivity.class);
-                i.putExtra("data", b);
-                startActivity(i);
-                //    subInfo = info;
+                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+//                fragmentTransaction.setCustomAnimations(R.animator.
+//                        R.anim.slide_in,  // enter
+//                        R.anim.slide_out // exi
+                //fragmentTransaction.remove(currentFragment);
+                Fragment f = new TransactionsActivity();
+                Bundle args = new Bundle();
+                args.putInt("ltype", 2000);
+                args.putString("selectFragment", "home");
+                f.setArguments(args);
+
+
+                fragmentTransaction.replace(R.id.nav_host_fragment, f);
+                fragmentTransaction.addToBackStack("tokens").commit();
+                //------------------
+
+                //   Bundle b = new Bundle(); // store info for transaction activity
+                ///   Intent i = new Intent(this.getContext(), TransactionsActivity.class);
+                ///   i.putExtra("data", b);
+                ///   startActivity(i);
+                ///   //    subInfo = info;
                 return true;
 
             default:

@@ -3,13 +3,20 @@ package uk.co.xrpdevs.flarenetmessenger;
 import static uk.co.xrpdevs.flarenetmessenger.MyService.xrplClient;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
-import android.content.Intent;
+import android.app.FragmentManager;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.common.primitives.UnsignedInteger;
@@ -30,48 +37,63 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class TransactionsActivity extends AppCompatActivity {
+public class TransactionsActivity extends Fragment {
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
-    private Object Payment;
 
+    MyRecyclerView mylist;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    FragmentManager manager;
+    BottomNavigationView navView;
+    TransactionsActivity mThis = this;
 
+    public View onCreateView(@NonNull LayoutInflater inflater,
+                             ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        View root = inflater.inflate(R.layout.activity_transactions, container, false);
+        navView = mThis.getActivity().findViewById(R.id.nav_view);
+        navView.getMenu().findItem(R.id.navigation_wallets).setChecked(true);
+        manager = mThis.getActivity().getFragmentManager();
 
-        if (!Utils.isMyServiceRunning(MyService.class, this)) {
-            try {
-                Intent serviceIntent = new Intent(this, MyService.class);
-                startService(serviceIntent);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
         myLog("TRANSACTIONS", "onCreateCalled");
 
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
-        prefs = this.getSharedPreferences("fnm", 0);
+        prefs = this.getActivity().getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
-        BottomNavigationView navView = findViewById(R.id.nav_view);
+        // BottomNavigationView navView = findViewById(R.id.nav_view);
 
         if (!prefs.contains("walletCount")) {
             pEdit.putInt("walletCount", 0);
             pEdit.putInt("currentWallet", 0);
             pEdit.commit();
         } else {
-            setContentView(R.layout.activity_transactions);
+            //  setContentView(R.layout.activity_transactions);
         }
-        TextView tv = findViewById(R.id.textView4);
-        setTitle("Transaction History");
-        ArrayList<HashMap<String, String>> poo = getXRPtransactions("rJCdNPsfemPexCzCeZbr7Jin83LtJmpmNn");
+        TextView tv = root.findViewById(R.id.textView4);
+        RecyclerView rv = root.findViewById(R.id.rv1);
+        getActionBar().setTitle("Transaction History");
+        String myAddress = "rJCdNPsfemPexCzCeZbr7Jin83LtJmpmNn";
+        ArrayList<HashMap<String, String>> poo = getXRPtransactions(myAddress);
 
+        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this.getActivity());
+
+        rv.setLayoutManager(mLayoutManager);
         Log.d("OUTPUT", poo.toString());
-        tv.setText(poo.toString());
 
+        String[] data = new String[]{"My name", "is geoffery", "and i live in", "a tree", "I sell condoms", "for 59 pee"};
+        mylist = new MyRecyclerView(poo, myAddress, manager);
+        //   rv.setHasFixedSize(true);
 
+        rv.setAdapter(mylist);
+        mylist.notifyDataSetChanged();
+        Log.d("pooo", mylist.getItemCount() + "_");
+
+        return root;
+    }
+
+    private ActionBar getActionBar() {
+        return ((MainActivity) getActivity()).getSupportActionBar();
     }
 
     public ArrayList<HashMap<String, String>> getXRPtransactions(String address) {
@@ -87,7 +109,7 @@ public class TransactionsActivity extends AppCompatActivity {
         try {
             AccountTransactionsRequestParams bob = AccountTransactionsRequestParams.builder()
                     .account(Address.of(address))
-                    .limit(UnsignedInteger.valueOf(20))
+                    .limit(UnsignedInteger.valueOf(200))
                     .build();
 
 
@@ -163,11 +185,24 @@ public class TransactionsActivity extends AppCompatActivity {
         Map<String, String> map = new HashMap<>();
         for (Field field : obj.getClass().getDeclaredFields()) {
             field.setAccessible(true);
+            String n = "", f = "";
             try {
-                map.put(field.getName(), field.get(obj).toString());
+                n = field.getName();
+                f = field.get(obj).toString();
+//                map.put(field.getName(), field.get(obj).toString());
             } catch (Exception e) {
             }
+
+            if (n.equals("fee") || n.equals("amount")) {
+                BigDecimal bd = new BigDecimal(f).movePointLeft(6).stripTrailingZeros();
+                Log.d("Bigint", bd + " dd");
+                f = bd.toPlainString();
+            }
+            map.put(n, f);
+
         }
         return map;
     }
+
+
 }
