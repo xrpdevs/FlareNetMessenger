@@ -418,8 +418,8 @@ public class TokensFragment extends Fragment {
                 //fragmentTransaction.remove(currentFragment);
                 Fragment f = new TransactionsActivity();
                 Bundle args = new Bundle();
-                args.putInt("ltype", 2000);
-                args.putString("selectFragment", "home");
+                args.putString("wAddr", deets.get("walletAddress"));
+                // args.putString("selectFragment", "home");
                 f.setArguments(args);
 
 

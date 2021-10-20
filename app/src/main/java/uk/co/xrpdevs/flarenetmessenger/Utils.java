@@ -174,6 +174,32 @@ public class Utils {
         }
     }
 
+    public static HashMap<String, String> walletAddressesToWalletNamesOrContactsToHashMap(Context mC /*possibly specify type ie XRP/ETH*/) throws JSONException {
+        SharedPreferences prefs = mC.getSharedPreferences("fnm", 0);
+        String pKey;
+        HashMap<String, String> wAddrs = new HashMap<String, String>();
+        int wC = prefs.getInt("walletCount", 0);
+        for (int i = 1; i < (wC); i++) {
+            String wD = prefs.getString("wallet" + i, "");
+            HashMap<String, String> bob;
+//        myLog("WD-", wD);
+            if (wD.contains("wallet")) {
+                bob = jsonToMap(wD);
+                String cWname = bob.getOrDefault("walletName", "Wallet " + i);
+                if (bob.containsKey("walletAddress")) {
+                    wAddrs.put(bob.get("walletAddress"), cWname);
+                }
+                if (bob.containsKey("walletXaddr")) {
+                    wAddrs.put(bob.get("walletXaddr"), cWname);
+                }
+            }
+
+
+        }
+
+        return wAddrs;
+    }
+
     public static HashMap<String, String> getPkey(Context mC, int wN) throws JSONException {
         SharedPreferences prefs = mC.getSharedPreferences("fnm", 0);
         String pKey;

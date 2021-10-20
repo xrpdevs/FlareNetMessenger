@@ -1,5 +1,8 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
+import android.annotation.SuppressLint;
 import android.content.ContentProviderOperation;
 import android.content.ContentProviderResult;
 import android.content.ContentResolver;
@@ -20,8 +23,6 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 public class ContactsManager {
     private static final String MIMETYPE = "vnd.android.cursor.item/com.sample.profile";
@@ -71,7 +72,7 @@ public class ContactsManager {
         Cursor cursor = context.getContentResolver().query(uri, projection, filter, filterParams, null);
         if (cursor != null) {
             while (cursor.moveToFirst()) {
-                String pubKey = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA4));
+                @SuppressLint("Range") String pubKey = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA4));
                 myLog("temp", DatabaseUtils.dumpCurrentRowToString(cursor));
                 return pubKey;
             }
@@ -169,7 +170,7 @@ public class ContactsManager {
         String[] selectionArgs = new String[]{String.valueOf(contactId)};
         Cursor c = context.getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI, projection, selection, selectionArgs, null);
         if (c.moveToFirst()) {
-            int rawContactId = c.getInt(c.getColumnIndex(ContactsContract.RawContacts._ID));
+            @SuppressLint("Range") int rawContactId = c.getInt(c.getColumnIndex(ContactsContract.RawContacts._ID));
             Log.d("TEST", "Contact Id: " + contactId + " Raw Contact Id: " + rawContactId);
             return rawContactId;
         } else return 0;
@@ -272,16 +273,59 @@ public class ContactsManager {
 
             try {
                 context.getContentResolver().applyBatch(ContactsContract.AUTHORITY, ops);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-        else {
-            Log.i("info" ,"id not found");
+        } else {
+            Log.i("info", "id not found");
         }
 
 
+    }
+
+    @SuppressLint("Range")
+    public static String findContactByAddress(Context context, String address) {
+        // Build the Entity URI.
+        Cursor cursor;
+        String ACCOUNT_TYPE = "uk.co.xrpdevs.flarenetmessenger";
+        String filter = "( " + ContactsContract.RawContacts.ACCOUNT_TYPE + " =? AND " + ContactsContract.Data.DATA3 + " = ?) ";
+        filter = ContactsContract.Data.DATA3 + " =? ";
+        // String[] filter = new String[] {"data3 =?", "data5 =?"};
+        Uri uri = ContactsContract.Data.CONTENT_URI;
+        String[] projection = new String[]{ContactsContract.Data.DISPLAY_NAME,
+                ContactsContract.Data.DATA3,
+                ContactsContract.Data.DATA5};
+        // projection = null;
+        String[] filterParams = new String[]{
+                /*ACCOUNT_TYPE,*/ address};
+        cursor = FlareNetMessenger.getContext().getContentResolver().query(
+                uri, projection,
+                filter,
+                filterParams,
+                null);
+        String name = address;
+
+        int dataIdx = cursor.getColumnIndex(ContactsContract.Contacts.Entity.DISPLAY_NAME);
+        Log.d("SQL DATAIDX", dataIdx + " Records: " + cursor.getCount() + "Qu: " + address);
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                try {
+                    name = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DISPLAY_NAME));
+                    String data3 = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DATA3));
+
+                    myLog("tempbacons", name + " " + data3);
+                    // cName.setText(name);
+
+                } catch (Exception e) {
+                    Log.d("CURSOR EXCEPTION", "" + e);
+                }
+            }
+            cursor.close();
+        } else {
+            myLog("temp", "Cursor = null");
+            name = address + " ";
+        }
+        return name;
     }
 
 }

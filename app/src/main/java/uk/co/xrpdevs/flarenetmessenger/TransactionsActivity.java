@@ -3,24 +3,31 @@ package uk.co.xrpdevs.flarenetmessenger;
 import static uk.co.xrpdevs.flarenetmessenger.MyService.xrplClient;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
+import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.common.primitives.UnsignedInteger;
 
+import org.json.JSONException;
 import org.xrpl.xrpl4j.client.JsonRpcClientErrorException;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;
@@ -37,15 +44,25 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class TransactionsActivity extends Fragment {
+public class TransactionsActivity extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
+    public static long theID = 0;
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
 
     MyRecyclerView mylist;
-
+    HashMap<String, String> deets;
     FragmentManager manager;
+    Activity mAct;
+    RecyclerView rv;
     BottomNavigationView navView;
     TransactionsActivity mThis = this;
+    public static String myAddress = "";
+    static int thepos = 0;
+    static ArrayList<HashMap<String, String>> poo = new ArrayList<HashMap<String, String>>();
+    SwipeRefreshLayout mSwipeRefreshLayout;
+
+
+    // SwipeRefreshLayout
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -56,13 +73,27 @@ public class TransactionsActivity extends Fragment {
         manager = mThis.getActivity().getFragmentManager();
 
         myLog("TRANSACTIONS", "onCreateCalled");
+        mSwipeRefreshLayout = root.findViewById(R.id.swipe_container);
+
+        mSwipeRefreshLayout.setOnRefreshListener(this);
+//        mSwipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary,
+        mSwipeRefreshLayout.setColorSchemeResources(
+                android.R.color.holo_green_dark,
+                android.R.color.holo_orange_dark,
+                android.R.color.holo_blue_dark);
+
+        /**
+         * Showing Swipe Refresh animation on activity create
+         * As animation won't start on onCreate, post runnable is used
+         */
+
 
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         prefs = this.getActivity().getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
         // BottomNavigationView navView = findViewById(R.id.nav_view);
-
+        mAct = this.getActivity();
         if (!prefs.contains("walletCount")) {
             pEdit.putInt("walletCount", 0);
             pEdit.putInt("currentWallet", 0);
@@ -70,30 +101,155 @@ public class TransactionsActivity extends Fragment {
         } else {
             //  setContentView(R.layout.activity_transactions);
         }
+        try {
+            deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
         TextView tv = root.findViewById(R.id.textView4);
-        RecyclerView rv = root.findViewById(R.id.rv1);
+        rv = root.findViewById(R.id.rv1);
         getActionBar().setTitle("Transaction History");
-        String myAddress = "rJCdNPsfemPexCzCeZbr7Jin83LtJmpmNn";
-        ArrayList<HashMap<String, String>> poo = getXRPtransactions(myAddress);
 
-        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this.getActivity());
-
-        rv.setLayoutManager(mLayoutManager);
-        Log.d("OUTPUT", poo.toString());
-
-        String[] data = new String[]{"My name", "is geoffery", "and i live in", "a tree", "I sell condoms", "for 59 pee"};
-        mylist = new MyRecyclerView(poo, myAddress, manager);
-        //   rv.setHasFixedSize(true);
-
-        rv.setAdapter(mylist);
-        mylist.notifyDataSetChanged();
-        Log.d("pooo", mylist.getItemCount() + "_");
 
         return root;
     }
 
     private ActionBar getActionBar() {
-        return ((MainActivity) getActivity()).getSupportActionBar();
+        return ((MainActivity) mThis.getActivity()).getSupportActionBar();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        Bundle args = getArguments();
+        myLog("FRAG", "onStart");
+        mAct = mThis.getActivity();
+
+        if (args != null) {
+            if (args.containsKey("wAddr")) {
+                myAddress = args.getString("wAddr");
+            }
+        }
+        update();
+
+    }
+
+    public void update() {
+        if (prefs.contains("currentWallet") && deets != null) {
+            try {
+                deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            if (deets.containsKey("walletXaddr")) {
+
+            } else {
+                //c = org.web3j.crypto.Credentials.create(deets.get("walletPrvKey"));
+
+            }
+
+            Log.d("DEETS", deets.toString());
+            if (myAddress.equals("")) {
+                myAddress = deets.get("walletAddress");
+                Log.d("Address: ", myAddress);
+            }
+        }
+        poo = getXRPtransactions(myAddress);
+        LinearLayoutManager mLayoutManager = new LinearLayoutManager(this.getActivity());
+
+        rv.setLayoutManager(mLayoutManager);
+        Log.d("OUTPUT", poo.toString());
+
+
+        try {
+            mylist = new MyRecyclerView(poo, myAddress, manager);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        //   rv.setHasFixedSize(true);
+        rv.setAdapter(mylist);
+        //registerForContextMenu(rv);
+        mylist.notifyDataSetChanged();
+
+
+    }
+
+    /*   public ArrayList<HashMap<String, String>> getETHtransactions(String Address) {
+           return null;
+       }
+
+       public ArrayList<HashMap<String, String>> getERC20transactions(String Address, String contract) {
+           return null;
+       }*/
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        registerForContextMenu(view);
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        //menuInfo.toString();
+        // inflate menu here
+        ///PopupMenu popup = new PopupMenu(mAct, v);
+        //MenuInflater inflater = popup.getMenuInflater();
+        //inflater.inflate(R.menu.transactions_item_context, popup.getMenu());
+        // popup.show();
+        MenuInflater inflater = mAct.getMenuInflater();
+        //PopupMenu pu
+        inflater.inflate(R.menu.transactions_item_context, menu);
+        // If you want the position of the item for which we're creating the context menu (perhaps to add a header or something):
+        //int itemIndex = (ContextMenu.ContextMenuInfo ) menuInfo.
+        //int itemIndex = ((ContextMenuRecyclerView.RecyclerViewContextMenuInfo) menuInfo).position;
+        //Log.d("MENU", menuInfo.toString()+"");
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+
+        ContextMenuRecyclerView.RecyclerViewContextMenuInfo info = (ContextMenuRecyclerView.RecyclerViewContextMenuInfo) item.getMenuInfo();
+        // handle menu here - get item index or ID from info
+        //item.get
+        //long id = info.id;
+
+        //int pos = info.position;
+        Log.d("MENU", item.toString() + " Position: " + thepos + " ID " + item.getItemId());
+        switch (item.getItemId()) {
+            case R.id.tic_copyaddress:
+                if (poo.get(thepos).containsKey("isrx")) {
+                    Log.d("MENU: ", "Copied  sender's  Address: " + poo.get(thepos).get("account"));
+                } else {
+                    Log.d("MENU: ", "Copied reciever's Address: " + poo.get(thepos).get("destination"));
+
+                }
+                return super.onContextItemSelected(item);
+            case R.id.tic_transactions:
+                String wa;
+                Log.d("poo debug: ", poo.get(thepos).toString());
+                if (poo.get(thepos).containsKey("isrx")) {
+                    wa = poo.get(thepos).get("o_acco");
+                } else {
+                    wa = poo.get(thepos).get("o_dest");
+                }
+                poo = getXRPtransactions(wa);
+                try {
+                    mylist = new MyRecyclerView(poo, myAddress, manager);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                myAddress = wa;
+                rv.setAdapter(mylist);
+                mylist.notifyDataSetChanged();
+                return super.onContextItemSelected(item);
+            default:
+                return super.onContextItemSelected(item);
+        }
+
+
     }
 
     public ArrayList<HashMap<String, String>> getXRPtransactions(String address) {
@@ -157,6 +313,7 @@ public class TransactionsActivity extends Fragment {
         Map<String, String> map = parameters(obj);
         for (Map.Entry<String, String> entry : map.entrySet()) {
             tmp.putAll(map);
+
             System.out.println(entry.getKey() + ": " + entry.getValue());
         }
 
@@ -205,4 +362,32 @@ public class TransactionsActivity extends Fragment {
     }
 
 
+    @Override
+    public void onRefresh() {
+        mSwipeRefreshLayout.setRefreshing(false);
+        mSwipeRefreshLayout.post(new Runnable() {
+
+            @Override
+            public void run() {
+
+                //    if(mSwipeRefreshLayout != null) {
+                //      mSwipeRefreshLayout.setRefreshing(true);
+                //   }
+                poo = getXRPtransactions(myAddress);
+                try {
+                    mylist = new MyRecyclerView(poo, myAddress, manager);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                // myAddress = wa;
+                rv.setAdapter(mylist);
+                mylist.notifyDataSetChanged();
+                // TODO Fetching data from server
+                Log.d("REFRESH", "SSSSS");
+            }
+        });
+
+        //  Log.d("REFRESH", "SSSSS");
+        mSwipeRefreshLayout.setRefreshing(false);
+    }
 }
