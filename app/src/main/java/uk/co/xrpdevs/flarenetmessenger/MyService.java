@@ -40,12 +40,17 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.http.HttpService;
+import org.xrpl.xrpl4j.client.JsonRpcClient;
 import org.xrpl.xrpl4j.client.XrplClient;
 
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 
 import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.WebSocketListener;
 import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.contracts.Fsms;
 
@@ -61,6 +66,7 @@ public class MyService extends Service {
     static BigInteger GAS_PRICE = BigInteger.valueOf(470000000000L);
     public static boolean isXRPL = false;
     public static XrplClient xrplClient;
+    public XrplClient _xrplClient;
     HttpUrl rippledUrl;
     //    static int tmpCID = 0x11;
 
@@ -126,6 +132,20 @@ public class MyService extends Service {
         HttpUrl rippledUrl = HttpUrl
                 .get("https://s.altnet.rippletest.net:51234/");
         xrplClient = new XrplClient(rippledUrl);
+        JsonRpcClient bob = xrplClient.getJsonRpcClient();
+        String jsub = "{\"id\": \"76\"," +
+                "\"command\": \"subscribe\"," +
+                "\"accounts\": [\"rJCdNPsfemPexCzCeZbr7Jin83LtJmpmNn\"]}";
+
+
+        WSock socket = WSock.Builder.with("wss://s.altnet.rippletest.net/").build().connect();
+        socket.sendOnOpen("76", jsub);
+        socket.onEventResponse("76", oevrl);
+
+        // .createSocket("ws://localhost/endpoint");
+        // bob.
+        //   _xrplClient = xrplClient;
+
   /*    //  if (Build.VERSION.SDK_INT >= 28) {
 
           //  StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
@@ -187,6 +207,13 @@ public class MyService extends Service {
             context.startService(new Intent(context, MyService.class));
         }
     }
+
+    WSock.OnEventResponseListener oevrl = new WSock.OnEventResponseListener() {
+        @Override
+        public void onMessage(String event, String data) {
+            Log.d("WS RESPONSE", "Event: " + event + " Data: " + data);
+        }
+    };
 
     /**
      * Restart Service Interval
@@ -310,6 +337,7 @@ public class MyService extends Service {
     class BGThread extends Thread {
         Boolean a;
         BGThread(Boolean a){this.a = a;}
+
         public void run() {
             //      @ReflectionSupport(ReflectionSupport.Level.FULL);
             //     XrplClient fucker = new XrplClient(rippledUrl);
@@ -353,6 +381,8 @@ public class MyService extends Service {
 
         }
     }
+
+    //public void doAlert
     public void doAlert(Fsms.MessageNotificationEventResponse mno){
         myLog("EVENT", "_to   = walletaddress: "+mno._to.equals(deets.get("walletAddress")));
         if(mno._to.equals(deets.get("walletAddress"))) {
@@ -417,6 +447,29 @@ public class MyService extends Service {
         Web3j myEtherWallet = Web3j.build(new HttpService(rpc));
         //  myEtherWallet.ethChainId().setId(tmpCID);
         return myEtherWallet;
+    }
+
+    public final class WebSocketResponse extends WebSocketListener {
+        OkHttpClient client;
+        String url;
+
+        private void setURL(String _url) {
+            url = _url;
+        }
+
+        private void run() {
+            client = new OkHttpClient.Builder()
+                    .readTimeout(0, TimeUnit.MILLISECONDS)
+                    .build();
+
+            Request request = new Request.Builder()
+                    .url("ws://echo.websocket.org")
+                    .build();
+            client.newWebSocket(request, this);
+
+            // Trigger shutdown of the dispatcher's executor so this process can exit cleanly.
+            client.dispatcher().executorService().shutdown();
+        }
     }
 
 }
