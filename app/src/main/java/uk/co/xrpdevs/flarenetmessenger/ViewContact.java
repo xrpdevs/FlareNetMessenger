@@ -361,8 +361,6 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
             bob.cNameText = cNameText;
             bob.start();
         } else {
-
-
             showDialog("Incorrect PIN", true);
         }
     }
