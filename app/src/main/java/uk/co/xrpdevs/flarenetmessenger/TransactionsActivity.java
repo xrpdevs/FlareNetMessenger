@@ -163,7 +163,7 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
 
             }
 
-            Log.d("DEETS", deets.toString());
+            myLog("DEETS", deets.toString());
             if (myAddress.equals("")) {
                 myAddress = deets.get("walletAddress");
                 Log.d("Address: ", myAddress);

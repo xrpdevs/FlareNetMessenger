@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
@@ -58,7 +57,7 @@ public class AddressEntryFragment extends android.app.DialogFragment {
                 //Cancelled
             } else {
                 editPinCode.setText(result.getContents());
-                Log.d("PATAKS", "Scanned Result=" + result.getContents());
+                myLog("PATAKS", "Scanned Result=" + result.getContents());
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
@@ -163,14 +162,14 @@ public class AddressEntryFragment extends android.app.DialogFragment {
             neutralButton.setOnClickListener(v -> { // SCAN button
                 // pass a bundle to PKeyScanner.class ?
                 // saves duplicating code - possibly update other flows to work this way too..
-                Log.d("TEST", "QR Scan Button Pressed");
+                myLog("TEST", "QR Scan Button Pressed");
                 IntentIntegrator integrator;
 
                 integrator = IntentIntegrator.forFragment(mThis);
 
 
                 //      new IntentIntegrator(getActivity());
-                Log.d("DEST_ACTIV", this.getActivity().getLocalClassName());
+                myLog("DEST_ACTIV", this.getActivity().getLocalClassName());
 
                 IntentIntegrator.forFragment(mThis).setPrompt("QR code will be scanned automatically on focus");
                 IntentIntegrator.forFragment(mThis).setCameraId(0);
@@ -223,7 +222,7 @@ public class AddressEntryFragment extends android.app.DialogFragment {
                 //abc.setData(myUri);
                 startActivity(abc);
                 //    } else {
-                //        Log.d("doAddContact", "Empty bundle :(");
+                //        myLog("doAddContact", "Empty bundle :(");
                 //    }
 
             });

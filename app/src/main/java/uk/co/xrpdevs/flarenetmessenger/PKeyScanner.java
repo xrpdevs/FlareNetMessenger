@@ -1,5 +1,7 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
 import android.Manifest;
 import android.app.FragmentManager;
 import android.content.Context;
@@ -126,7 +128,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
 
                     String scanContent = scanningResult.getContents();
                     String scanFormat = scanningResult.getFormatName();
-                    Log.d("TEST", scanContent);
+                    myLog("TEST", scanContent);
 
 
                     Credentials cs = Credentials.create(scanContent);
@@ -194,11 +196,11 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.savePrivKey:
-                Log.d("TEST", "Save private key button pressed");
-                Log.d("TEST", Utils.getAvailChains().toString());
+                myLog("TEST", "Save private key button pressed");
+                myLog("TEST", Utils.getAvailChains().toString());
                 break;
             case R.id.importPrvKeyQR:
-                Log.d("TEST", "QR Scan Button Pressed");
+                myLog("TEST", "QR Scan Button Pressed");
                 integrator = new IntentIntegrator(this);
                 integrator.setPrompt("QR code will be scanned automatically on focus");
                 integrator.setCameraId(0);
@@ -212,7 +214,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
             case R.id.importPrvKeyQR2:
 
                 String bcType = prefs.getString("csbc_type", "ETH");
-                Utils.myLog("bcData", bcData.toString());
+                myLog("bcData", bcData.toString());
                 if (bcType.equals("XRPL")) {  // todo: check sql database here for blockchain type
                     newXrplWallet();          // todo: probably use a switch() statement here
                 } else {
@@ -239,7 +241,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         String xaddr = testWallet.xAddress().value();
 
         if (bcData.containsKey("Testnet")) {
-            Utils.myLog("BCDATA", bcData.toString());
+            myLog("BCDATA", bcData.toString());
             //if (bcData.get("Testnet").toString().equals("true")) {
                 FaucetClient faucetClient = FaucetClient
                         .construct(HttpUrl.get("https://faucet.altnet.rippletest.net"));

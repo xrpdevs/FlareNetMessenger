@@ -37,9 +37,9 @@ public class ContactsManager {
                 .withValue(Data.DATA4, pubkey)
                 .build());
         try {
-            Log.d("DATABASE", ops.toString());
+            myLog("DATABASE", ops.toString());
             ContentProviderResult[] results = resolver.applyBatch(ContactsContract.AUTHORITY, ops);
-            Log.d("TEST", "RAWCONTACT UPDATE (count = "+results.length+") "+Arrays.toString(results));
+            myLog("TEST", "RAWCONTACT UPDATE (count = " + results.length + ") " + Arrays.toString(results));
 
 
          //   int contactId = Integer.parseInt(results[results.length-1].uri.getLastPathSegment());
@@ -51,7 +51,7 @@ public class ContactsManager {
 
 
             retval = "1";//String.valueOf(contactId);
-           // Log.d("TEST", "Generated RAWContact ID: "+contactId);
+            // myLog("TEST", "Generated RAWContact ID: "+contactId);
 //            cursor.close();
             if (results.length == 0)
                 ;
@@ -95,10 +95,10 @@ public class ContactsManager {
 
         int rcID = getRawContactId(context, contact.id);
 
-        Log.d("TEST", "contact vals: " + contact.tag);
-        Log.d("TEST", "contact vals: "+contact.id);
-        Log.d("TEST", "contact vals: "+contact.XRPAddr);
-        Log.d("TEST", "contact vals: "+contact.displayname);
+        myLog("TEST", "contact vals: " + contact.tag);
+        myLog("TEST", "contact vals: " + contact.id);
+        myLog("TEST", "contact vals: " + contact.XRPAddr);
+        myLog("TEST", "contact vals: " + contact.displayname);
 
         ops.add(ContentProviderOperation.newInsert(addCallerIsSyncAdapterParameter(RawContacts.CONTENT_URI, true))
                 .withValue(RawContacts.ACCOUNT_NAME, blockChainID)
@@ -143,7 +143,7 @@ public class ContactsManager {
                 .build());
         try {
             ContentProviderResult[] results = resolver.applyBatch(ContactsContract.AUTHORITY, ops);
-            Log.d("TEST", "RAWCONTACT Add "+Arrays.toString(results));
+            myLog("TEST", "RAWCONTACT Add " + Arrays.toString(results));
 
             int contactId = Integer.parseInt(results[results.length-1].uri.getLastPathSegment());
 
@@ -152,7 +152,7 @@ public class ContactsManager {
 //            cursor.moveToNext();
 //            long contactId = cursor.getLong(0);
             retval = String.valueOf(contactId);
-            Log.d("TEST", "Generated RAWContact ID: "+contactId);
+            myLog("TEST", "Generated RAWContact ID: " + contactId);
 //            cursor.close();
             if (results.length == 0)
                 ;
@@ -164,14 +164,14 @@ public class ContactsManager {
     }
 
     public static int getRawContactId(Context context, int contactId) {
-        Log.d("TEST", "Contact Id: " + contactId);
+        myLog("TEST", "Contact Id: " + contactId);
         String[] projection = new String[]{ContactsContract.RawContacts._ID};
         String selection = ContactsContract.RawContacts.CONTACT_ID + "=?";
         String[] selectionArgs = new String[]{String.valueOf(contactId)};
         Cursor c = context.getContentResolver().query(ContactsContract.RawContacts.CONTENT_URI, projection, selection, selectionArgs, null);
         if (c.moveToFirst()) {
             @SuppressLint("Range") int rawContactId = c.getInt(c.getColumnIndex(ContactsContract.RawContacts._ID));
-            Log.d("TEST", "Contact Id: " + contactId + " Raw Contact Id: " + rawContactId);
+            myLog("TEST", "Contact Id: " + contactId + " Raw Contact Id: " + rawContactId);
             return rawContactId;
         } else return 0;
     }

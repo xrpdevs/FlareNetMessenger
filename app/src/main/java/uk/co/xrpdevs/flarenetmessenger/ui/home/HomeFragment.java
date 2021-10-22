@@ -15,7 +15,6 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -153,7 +152,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                              ViewGroup container, Bundle savedInstanceState) {
 
         setHasOptionsMenu(true);
-        Log.d("FRAG", "HomeFragment");
+        myLog("FRAG", "HomeFragment");
         HomeViewModel homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
         root = inflater.inflate(R.layout.fragment_home, container, false);
         final TextView textView = root.findViewById(R.id.text_home);
@@ -266,7 +265,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
             // Map<EncodeHintType, ?> hints = new
             Map<EncodeHintType, Object> hints = new EnumMap<EncodeHintType, Object>(EncodeHintType.class);
             hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.H);
-            hints.put(EncodeHintType.MARGIN, 1);
+            hints.put(EncodeHintType.MARGIN, 0);
             if (XRPAddress != null) {
                 try {
                     BitMatrix bitMatrix = writer.encode(XRPAddress, BarcodeFormat.QR_CODE, 512, 512, hints);

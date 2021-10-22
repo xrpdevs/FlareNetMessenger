@@ -265,7 +265,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                                 cName.setText(name);
                                 namesCache.put(listName, name);
                             } catch (Exception e) {
-                                Log.d("CURSOR EXCEPTION", "" + e);
+                                myLog("CURSOR EXCEPTION", "" + e);
                             }
                         }
                         cursor.close();
@@ -388,10 +388,10 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
             case R.id.mcm_copyaddr:
             case R.id.mcm_copytext:
 
-                Log.d("SUBMENU", "ID: "+item.getItemId());
+                myLog("SUBMENU", "ID: " + item.getItemId());
                 switch (item.getItemId()) {
                     case R.id.mcm_copytext:
-                        Log.d("SUBMENU", "copytext");
+                        myLog("SUBMENU", "copytext");
                         li = subInfo.targetView;
                         textView = li.findViewById(R.id.inboxContent);
                         bod = textView.getText().toString();
@@ -399,7 +399,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                         cbm.setPrimaryClip(clip);
                         return true;
                     case R.id.mcm_copyaddr:
-                        Log.d("SUBMENU", "copytext");
+                        myLog("SUBMENU", "copytext");
                         li = subInfo.targetView;
                         textView = li.findViewById(R.id.inboxAddress);
                         bod = textView.getText().toString();
@@ -462,12 +462,12 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                     } else {
                         if(i==pkPos){
                             String XORpKey = new String(Base64.decode(pubKeyTmp.substring(2)));
-                            Log.d("RXOR", XORpKey);
+                            myLog("RXOR", XORpKey);
 
                             if (ContactsManager.getPubKey(mThis.getContext(), list2.get(i)) == null) {
                                 BigInteger a = new BigInteger(XORpKey, 16);
                                 String HexPubKey = Utils.xorStrings(a, body).second;
-                                Log.d("RXOR", HexPubKey);
+                                myLog("RXOR", HexPubKey);
                                 ContactsManager.updatePubKey(mThis.getContext(), list2.get(i), HexPubKey);
                             }
                         }
@@ -586,11 +586,11 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                         showDialog("Error", "No public key available for address", true);
                     }
                 } else {
-                    Log.d("TXOR", c.getEcKeyPair().getPublicKey().toString(16));
+                    myLog("TXOR", c.getEcKeyPair().getPublicKey().toString(16));
                     String xorTmp = Utils.xorStrings(c.getEcKeyPair().getPublicKey(), message).first.toString(16);
-                    Log.d("TXOR", xorTmp);
+                    myLog("TXOR", xorTmp);
                     String xorTst = Utils.xorStrings(new BigInteger(xorTmp, 16), message).first.toString(16);
-                    Log.d("TXOR", xorTst);
+                    myLog("TXOR", xorTst);
 
                     String XORpKey = "RZ" + new String(Base64.encode(xorTmp.getBytes()));
                     BigDecimal gtemp;

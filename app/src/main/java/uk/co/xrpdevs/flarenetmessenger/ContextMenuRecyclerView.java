@@ -1,8 +1,9 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
 import android.content.Context;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.View;
 
@@ -46,13 +47,13 @@ public class ContextMenuRecyclerView extends RecyclerView {
         final int longPressPosition = getChildAdapterPosition(originalView);
         final int bPosition = getChildPosition(originalView);
         final int cPosition = getChildAdapterPosition(originalView);
-        Log.d("MENU:", "CHAD " + longPressPosition);
+        myLog("MENU:", "CHAD " + longPressPosition);
         TransactionsActivity.thepos = longPressPosition;
 
         if (longPressPosition >= 0) {
             final long longPressId = getAdapter().getItemId(bPosition);
             TransactionsActivity.theID = longPressId;
-            Log.d("MENU:", " posa: " + longPressPosition + " posb: " + bPosition + " posc: " + cPosition + " id: " + longPressId);
+            myLog("MENU:", " posa: " + longPressPosition + " posb: " + bPosition + " posc: " + cPosition + " id: " + longPressId);
             mContextMenuInfo = new RecyclerViewContextMenuInfo(longPressPosition, longPressId);
             return super.showContextMenuForChild(originalView);
         }

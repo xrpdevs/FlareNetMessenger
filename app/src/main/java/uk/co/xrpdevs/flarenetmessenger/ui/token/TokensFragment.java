@@ -210,11 +210,11 @@ public class TokensFragment extends Fragment {
     public ArrayList<HashMap<String, String>> getAvailTokens(String blockChainName) throws IOException {
         ArrayList<HashMap<String, String>> availTokens = new ArrayList<>();
         HashMap<String, String> primaryAsset = new HashMap<>();
-        Log.d("WBALANCE", deets.toString());
+        myLog("WBALANCE", deets.toString());
 
         // get asset type from wallets info
         if (deets.containsKey("walletXaddr") || (deets.containsKey("walletType") && deets.get("walletType").equals("XRPL"))) {
-            Log.d("DEBUG", "We are XRPL!(" + blockChainName + ") " + prefs.getString("csbc_type", ""));
+            myLog("DEBUG", "We are XRPL!(" + blockChainName + ") " + prefs.getString("csbc_type", ""));
             primaryAsset.put("Name", "XRP");
             primaryAsset.put("Type", prefs.getString("csbc_type", ""));
             primaryAsset.put("Address", Utils.getMyXRPBalance(deets.get("walletAddress")).first.toPlainString());
@@ -235,7 +235,7 @@ public class TokensFragment extends Fragment {
                 is.read(buffer);
                 is.close();
                 json = new String(buffer, StandardCharsets.UTF_8);
-                //Log.d("JSON", "== "+json);
+                //myLog("JSON", "== "+json);
                 JSONObject jo = new JSONObject(json);
                 JSONArray key = jo.names();
                 for (int i = 0; i < key.length(); ++i) {
@@ -251,7 +251,7 @@ public class TokensFragment extends Fragment {
                 e.printStackTrace();
             }
         } else {
-            Log.d("DEBUG", "We are XRPL2!" + prefs.getString("csbc_type", ""));
+            myLog("DEBUG", "We are XRPL2!" + prefs.getString("csbc_type", ""));
         }
 
         //myLog("json", availTokens.toString());
@@ -299,7 +299,7 @@ public class TokensFragment extends Fragment {
                 try {
                     balance = contract.balanceOf(address).send();
                 } catch (Exception e) {
-                    Log.d("CONTRACT", e.getMessage());
+                    myLog("CONTRACT", e.getMessage());
                 }
             }
             mAct.runOnUiThread(() -> {
@@ -375,7 +375,7 @@ public class TokensFragment extends Fragment {
         HashMap<String, String> theItem = feedList.get(info.position);
         // Handle item selection
         TextView cBody = li.findViewById(R.id.inboxContent);
-        Log.d("MITEM", item.toString() + " ");
+        myLog("MITEM", item.toString() + " ");
         switch (item.getItemId()) {
             case R.id.aic_updatebalance:
                 String addr = theItem.get("Address");

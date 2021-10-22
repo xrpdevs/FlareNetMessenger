@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -311,7 +310,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
             }
         }
         if (tag.equals("export")) {
-            Log.d("Motherfucker", prefs.getString("pinCode", "ffnf"));
+            myLog("Motherfucker", prefs.getString("pinCode", "ffnf"));
             if (pinCode.equals(prefs.getString("pinCode", "asas"))) {
                 pinDialog.dismiss();
                 Zipper zipArchive = new Zipper(prefs.getString("pinCode", "0000"), mThis.getContext());

@@ -11,6 +11,7 @@ import android.util.Pair;
 
 import androidx.annotation.Nullable;
 
+import org.bouncycastle.crypto.generators.SCrypt;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.ECPointUtil;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
@@ -100,6 +101,13 @@ public class Utils {
             return null;
         }
     }
+
+    public static String pinHash(String pin) {
+        byte[] encoded = SCrypt.generate(pin.getBytes(), "DEADFEED".getBytes(), 16, 16, 16, 16);
+        BigInteger bi = new BigInteger(encoded);
+        return (bi.toString(16));
+    }
+
     public static ECPublicKey rawToEncodedECPublicKey(String curveName, byte[] rawBytes) throws GeneralSecurityException {
         java.security.KeyFactory kf = java.security.KeyFactory.getInstance("EC", secP);
 //        KeyFactory kf = KeyFactory.getInstance("EC");
@@ -109,6 +117,7 @@ public class Utils {
         ECPoint w = new ECPoint(new BigInteger(1, x), new BigInteger(1, y));
         return (java.security.interfaces.ECPublicKey) kf.generatePublic(new java.security.spec.ECPublicKeySpec(w, ecParameterSpecForCurve(curveName)));
     }
+
     public static java.security.spec.ECParameterSpec ecParameterSpecForCurve(String curveName) throws java.security.GeneralSecurityException {
         AlgorithmParameters params = AlgorithmParameters.getInstance("EC", secP);
         params.init(new ECGenParameterSpec(curveName));
@@ -133,11 +142,11 @@ public class Utils {
         }
     }
     public static byte[] toByte2(String s) {
-        Log.d("TOBYTE", s + " len: " + s.length());
+        myLog("TOBYTE", s + " len: " + s.length());
 
         int len = s.length();
         if ((len & 1) == 1) s = "0" + s;
-        Log.d("TOBYTE", s + " len: " + s.length());
+        myLog("TOBYTE", s + " len: " + s.length());
 
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
@@ -171,7 +180,6 @@ public class Utils {
     public static HashMap<String, String> walletAddressesToWalletNamesOrContactsToHashMap(Context mC) throws JSONException {
         return walletAddressesToWalletNamesOrContactsToHashMap(mC, null);
     }
-
     public static HashMap<String, String> walletAddressesToWalletNamesOrContactsToHashMap(Context mC, @Nullable String bcType/*possibly specify type ie XRP/ETH*/) throws JSONException {
         SharedPreferences prefs = mC.getSharedPreferences("fnm", 0);
         String pKey;
@@ -340,11 +348,11 @@ public class Utils {
         while (XORStringTmp.length() < pkLen) {
             XORStringTmp = XORStringTmp + hexMessage;
         }
-        Log.d("XOR", "Exited for loop");
+        myLog("XOR", "Exited for loop");
         XORStringTmp = XORStringTmp.substring(0, pkLen);
-        Log.d("XOR", "pkeyTmp: " + pKeyTmpHEX);
-        Log.d("XOR", " msgTmp: " + hexMessage);
-        Log.d("XOR", " XORMsg: " + XORStringTmp);
+        myLog("XOR", "pkeyTmp: " + pKeyTmpHEX);
+        myLog("XOR", " msgTmp: " + hexMessage);
+        myLog("XOR", " XORMsg: " + XORStringTmp);
         //XORStringTmp = XORStringTmp.substring(0,pkLen);
 
         BigInteger a = new BigInteger(XORStringTmp, 16);
@@ -353,7 +361,7 @@ public class Utils {
 
         c = b.xor(a);
 
-        Log.d("XOR", " PUBKEY: " + c.toString(16));
+        myLog("XOR", " PUBKEY: " + c.toString(16));
         Pair<BigInteger, String> rv;
         rv = new Pair<>(c, c.toString(16));
 
@@ -367,8 +375,10 @@ public class Utils {
         if (compactLog) {
             sep = " :: ";
         }
-        String callerClassName = new Exception().getStackTrace()[1].getClassName();
-        Log.d(tag, sep + callerClassName + sep + logString);
+        if (FlareNetMessenger.loggingOn) {
+            String callerClassName = new Exception().getStackTrace()[1].getClassName();
+            Log.d(tag, sep + callerClassName + sep + logString);
+        }
     }
     public static boolean isMyServiceRunning(Class<?> serviceClass, Context context) {
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
@@ -390,7 +400,7 @@ public class Utils {
             is.read(buffer);
             is.close();
             json = new String(buffer, StandardCharsets.UTF_8);
-            //Log.d("JSON", "== "+json);
+            //myLog("JSON", "== "+json);
             JSONArray jo = new JSONArray(json);
             //JSONArray key = jo.names();
             for (int i = 0; i < json.length(); ++i) {
@@ -507,7 +517,7 @@ public class Utils {
         newKeys.put("d_prv", privateKey);
         newKeys.put("d_pub", publicKey);
 
-        Log.d("KEYZ", Utils.dumpMap(newKeys));
+        myLog("KEYZ", Utils.dumpMap(newKeys));
 
         String newPrivKey = "0x" + sPrivatekeyInHex;
 

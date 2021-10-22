@@ -49,12 +49,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.WebSocketListener;
 import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.contracts.Fsms;
 
@@ -216,7 +212,7 @@ public class MyService extends Service {
 */
 
         prefs = getSharedPreferences("fnm", 0);
-        Log.d("PREFS", Utils.dumpMap(prefs.getAll()));
+        myLog("PREFS", Utils.dumpMap(prefs.getAll()));
 
 
         if (prefs.contains("csbc_rpc") && prefs.contains("csbc_cid")) {
@@ -306,7 +302,7 @@ public class MyService extends Service {
         //    stopSelf();
         //}
         prefs = getSharedPreferences("fnm", 0);
-        Log.d("PREFS", Utils.dumpMap(prefs.getAll()));
+        myLog("PREFS", Utils.dumpMap(prefs.getAll()));
         if (prefs.contains("walletCount") && prefs.getInt("walletCount", 0) > 0) {
             try {
                 deets = Utils.getPkey(this.getApplicationContext(), prefs.getInt("currentWallet", 0));
@@ -350,12 +346,12 @@ public class MyService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         // TODO: Return the communication channel to the service.
-        Log.d("SERVICE", "Message recieved: " + intent.getStringExtra("message"));
+        myLog("SERVICE", "Message recieved: " + intent.getStringExtra("message"));
         //   Bundle extras = arg0.getExtras();
-        Log.d("service", "onBind");
+        myLog("service", "onBind");
         // Get messager from the Activity
         // if (extras != null) {
-        //     Log.d("service","onBind with extra");
+        //     myLog("service","onBind with extra");
         //     outMessenger = (Messenger) extras.get("MESSENGER");
         //  }
         return mBinder;
@@ -379,8 +375,8 @@ public class MyService extends Service {
                 try {
                     BigInteger bal = fcoin.balanceOf(c.getAddress()).send();
                     String cn = fcoin.name().send();
-                    Log.d("uk.co.xrpdevs.flarenetmessenger.contracts.ERC20-name", cn);
-                    Log.d("BALANCE", bal.toString());
+                    myLog("uk.co.xrpdevs.flarenetmessenger.contracts.ERC20-name", cn);
+                    myLog("BALANCE", bal.toString());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -516,28 +512,7 @@ public class MyService extends Service {
         return myEtherWallet;
     }
 
-    public final class WebSocketResponse extends WebSocketListener {
-        OkHttpClient client;
-        String url;
 
-        private void setURL(String _url) {
-            url = _url;
-        }
-
-        private void run() {
-            client = new OkHttpClient.Builder()
-                    .readTimeout(0, TimeUnit.MILLISECONDS)
-                    .build();
-
-            Request request = new Request.Builder()
-                    .url("ws://echo.websocket.org")
-                    .build();
-            client.newWebSocket(request, this);
-
-            // Trigger shutdown of the dispatcher's executor so this process can exit cleanly.
-            client.dispatcher().executorService().shutdown();
-        }
-    }
 
     /**
      * @param context
@@ -577,6 +552,6 @@ public class MyService extends Service {
         }
         notificationManager.notify(reqCode, notificationBuilder.build()); // 0 is the request code, it should be unique id
 
-        Log.d("showNotification", "showNotification: " + reqCode);
+        myLog("showNotification", "showNotification: " + reqCode);
     }
 }

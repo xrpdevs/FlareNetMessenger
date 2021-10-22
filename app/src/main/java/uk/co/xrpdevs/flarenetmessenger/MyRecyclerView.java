@@ -1,9 +1,10 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
 import android.app.FragmentManager;
 import android.content.Context;
 import android.graphics.Color;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -127,18 +128,19 @@ class MyRecyclerView extends RecyclerView.Adapter<MyRecyclerView.ViewHolder> {
         // Get element from your dataset at this position and replace the
         // contents of the view with that element
         // viewHolder.setContactName(localDataSet[position]);
-        //  Log.d("View contents:", viewHolder.getItemId()+" "+viewHolder.getTextView().getText().toString());
+        //  myLog("View contents:", viewHolder.getItemId()+" "+viewHolder.getTextView().getText().toString());
 
         int pos = viewHolder.getBindingAdapterPosition();
-        Log.d("MENU: pos", pos + " itemid " + viewHolder.itemView.getId());
+        myLog("MENU: pos", pos + " itemid " + viewHolder.itemView.getId());
         HashMap<String, String> items = localDataSet.get(pos);
 
+        String sign = "+";
 
         if (!items.get("destination").equals(myAddress)) { // outgoing funds
-            viewHolder.itemView.setBackgroundColor(Color.parseColor("#30CC3030"));
-
+            viewHolder.itemView.findViewById(R.id.linlay_recycler).setBackgroundColor(Color.parseColor("#30CC3030"));
+            sign = "-";
         } else { // incoming funds
-            viewHolder.itemView.setBackgroundColor(Color.parseColor("#3030CC30"));
+            viewHolder.itemView.findViewById(R.id.linlay_recycler).setBackgroundColor(Color.parseColor("#3030CC30"));
             localDataSet.get(pos).put("isrx", "true");
             items.put("isrx", "true");
         }
@@ -165,9 +167,9 @@ class MyRecyclerView extends RecyclerView.Adapter<MyRecyclerView.ViewHolder> {
         }
 
 
-        viewHolder.getTextView().setText(account);
-        viewHolder.getTextView2().setText(items.get("amount"));
-        viewHolder.getTextView3().setText(destina);
+        viewHolder.getTextView().setText("From: " + account);
+        viewHolder.getTextView2().setText("Dest: " + destina);
+        viewHolder.getTextView3().setText("Amount: " + sign + items.get("amount"));
 
         String finalAccount = account;
         String finalDestina = destina;
@@ -199,7 +201,7 @@ class MyRecyclerView extends RecyclerView.Adapter<MyRecyclerView.ViewHolder> {
                         JSONArray memos = new JSONArray(items.get("memos"));
 
                         for (int m = 0; m < memos.length(); m++) {
-                            Log.d("MEMO", memos.getString(m));
+                            myLog("MEMO", memos.getString(m));
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
@@ -212,7 +214,7 @@ class MyRecyclerView extends RecyclerView.Adapter<MyRecyclerView.ViewHolder> {
                 d.setCancelable(true);
                 d.cancelable = true;
                 d.show(fm, "oin k");
-                Log.d("waddrs", wAddrs.toString());
+                myLog("waddrs", wAddrs.toString());
             }
         });
 

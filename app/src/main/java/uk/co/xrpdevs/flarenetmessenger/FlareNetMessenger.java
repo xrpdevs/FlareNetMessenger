@@ -6,6 +6,8 @@ import android.content.Context;
 public class FlareNetMessenger extends Application {
     private static FlareNetMessenger instance;
 
+    public static boolean loggingOn = false;
+
     @Override
     public void onCreate() {
         instance = this;

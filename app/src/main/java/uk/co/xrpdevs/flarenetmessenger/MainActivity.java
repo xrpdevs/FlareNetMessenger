@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        if (!prefs.contains("pinCode") || prefs.getInt("walletCount", 0) == 0) {
+        if (!prefs.contains("pin") || prefs.getInt("walletCount", 0) == 0) {
             Intent firstRun = new Intent(this, FirstRun.class);
             startActivity(firstRun);
         } else {
@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
 
         super.onResume();
-        if (!prefs.contains("pinCode") || prefs.getInt("walletCount", 0) == 0) {
+        if (!prefs.contains("pin") || prefs.getInt("walletCount", 0) == 0) {
             Intent firstRun = new Intent(this, FirstRun.class);
             startActivity(firstRun);
         } else {

@@ -7,6 +7,7 @@ import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -45,16 +46,18 @@ setPIN("0");
     }
 
     public void checkState(){
-        if (!prefs.contains("pinCode")){
+        if (!prefs.contains("pin")) {
             content.setText(R.string.firstRun_noPin);
             cButton.setOnClickListener(v -> {
                 myLog("setPIN", setPIN("0"));
             });
-        } else {
+        } else if (!prefs.contains("walletCount")) {
             content.setText(R.string.firstRun_noWallet);
             cButton.setOnClickListener(v -> {
                 FirstWallet();
             });
+        } else {
+            finish();
         }
     }
 
@@ -89,9 +92,15 @@ setPIN("0");
                 myLog("PINS", "Pin1: " + pin1 + ", Pin2: " + pin2);
                 //if (pin1.equals(pin2)) {
                 //    pin_progress = 3;
-                pEdit.putString("pinCode", pin);
+                pEdit.remove("pinHash");
+                pEdit.remove("pinCode");
+                pEdit.remove("_pin");
+                pEdit.commit();
+
+                pEdit.putString("pin", Utils.pinHash(pin));
                 pEdit.commit();
                 checkState();
+                Log.d("PINZ", prefs.getAll().toString());
                 return pin;
 //                } else {
             //                  showDialog("Pin codes did not match\nPlease try again", true);

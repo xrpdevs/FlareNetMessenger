@@ -85,7 +85,7 @@ public class Zipper {
                     JSONObject jsonObject = new JSONObject(s1);
                     wallets.put(jsonObject);
                 } catch (JSONException err) {
-                    Log.d("Error", err.toString());
+                    myLog("Error", err.toString());
                 }
 
             }

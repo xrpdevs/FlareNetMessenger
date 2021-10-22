@@ -4,6 +4,7 @@ import static org.web3j.crypto.Credentials.create;
 import static uk.co.xrpdevs.flarenetmessenger.MyService.xrplClient;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.ComponentName;
@@ -114,6 +115,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
     Wallet xrpwallet;
 
 
+    @SuppressLint("Range")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -138,7 +140,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
         view_SendFunds.setOnClickListener(this);
         prefs = this.getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
-        String pinCode = prefs.getString("pinCode", "abcd");
+        String pinCode = prefs.getString("_pin", "0000");
 
         String Wallet_Address = null;
 
@@ -172,7 +174,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
         } else {
             bcType = "ETH";
         }
-        Log.d("bcType", "BcType = " + bcType);
+        myLog("bcType", "BcType = " + bcType);
 
         Uri uri = myIntent.getData();
         if (bundle != null) {
@@ -187,11 +189,11 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
             Cursor contactsCursor = getContentResolver().query(uri, null, null, null,
                     null);
 
-            //    Log.d("TEST", action);
-            Log.d("TEST", "ViewContact URI: " + uri.toString());
+            //    myLog("TEST", action);
+            myLog("TEST", "ViewContact URI: " + uri.toString());
 
             if (contactsCursor.moveToFirst()) {
-                Log.d("TEST", "UriData: " + DatabaseUtils.dumpCurrentRowToString(contactsCursor));
+                myLog("TEST", "UriData: " + DatabaseUtils.dumpCurrentRowToString(contactsCursor));
                 int addressColumnIndex = contactsCursor.getColumnIndex(ContactsContract.RawContacts.Entity.DATA3);
                 int cNameIndex = contactsCursor.getColumnIndex(ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY);
 
@@ -199,13 +201,13 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
                 //  rawContactID = Long.getLong(rcID);
 
-                Log.d("TEST", "RAWCONTACTID " + rawContactID + "\nADDRESSCOLINDEX " + addressColumnIndex);
+                myLog("TEST", "RAWCONTACTID " + rawContactID + "\nADDRESSCOLINDEX " + addressColumnIndex);
 
                 Wallet_Address = contactsCursor.getString(addressColumnIndex);
                 cNameText = contactsCursor.getString(cNameIndex);
             }
 
-            Log.d("TEST", "Wallet Address: " + Wallet_Address + " Cname: " + cNameText);
+            myLog("TEST", "Wallet Address: " + Wallet_Address + " Cname: " + cNameText);
             view_Address.setText(Wallet_Address);
 
         }
@@ -257,7 +259,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 }
                 WalletFactory walletFactory = DefaultWalletFactory.getInstance();
 
-                Log.d("Credentials", deets.toString());
+                myLog("Credentials", deets.toString());
 
                 String pkeyHex = deets.get("walletPrvKey");
                 String pubHex = deets.get("walletPubKey");
@@ -270,7 +272,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                     String pubKeyHex = pair.getPublicKey().toString(16);
 
                     PrivateKey XRP_PrivateKey = Utils.getPrivateKeyFromECBigIntAndCurve(pair.getPrivateKey(), "secp256k1");
-                    Log.d("Credentials:: ", pubKeyHex);
+                    myLog("Credentials:: ", pubKeyHex);
 
                     byte[] wpkBytes = Utils.toByte(pubKeyHex);
 
@@ -286,7 +288,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                     e.printStackTrace();
 
 
-                    //   Log.d("KEEZ:", "= "+xrpKeys.toString());
+                    //   myLog("KEEZ:", "= "+xrpKeys.toString());
 
                 }
 
@@ -349,10 +351,9 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
     @Override
     public void onResult(String pinCode, String tag) {
-        myLog("PIN", "Onresult called - PINCODE = " + pinCode);
-        if (pinCode.equals(prefs.getString("pinCode", "abcd"))) {
+        pinCode = Utils.pinHash(pinCode);
+        if (pinCode.equals(prefs.getString("pin", "abcd"))) {
             pinDialog.dismiss();
-
             to = theirWallet;
             from = myWallet;
             amount = BigDecimal.valueOf(Double.parseDouble(view_Amount.getText().toString()));
@@ -366,11 +367,11 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
     @Override
     public void onClick(View v) {
-        Log.d("ONCLICK", "id: " + v.getId());
+        myLog("ONCLICK", "id: " + v.getId());
         switch (v.getId()) {
             case R.id.button7:
                 // delete contact
-                Log.d("TEST", "Deleted: " + ContactsManager.deleteRawContactID(ViewContact.this, rawContactID));
+                myLog("TEST", "Deleted: " + ContactsManager.deleteRawContactID(ViewContact.this, rawContactID));
                 break;
             case R.id.viewContactSendFunds:
                 FragmentManager manager = getFragmentManager();
@@ -418,12 +419,12 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
     protected ServiceConnection mServerConn = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
-            Log.d("BUMOLE", "onServiceConnected");
+            myLog("BUMOLE", "onServiceConnected");
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            Log.d("BUMOLE", "onServiceDisconnected");
+            myLog("BUMOLE", "onServiceDisconnected");
         }
     };
 
@@ -458,7 +459,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                     BigDecimal bd = amount.multiply(scale);
                     BigInteger value = bd.toBigIntegerExact();
 
-                    Log.d("POO", value.toString());
+                    myLog("POO", value.toString());
 
 
                     // Todo: This blocks the UI thread, move to completableFuture as in the EIP-155 code for non-ERC20 sends.
@@ -469,19 +470,19 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                     bindService(snotifi, mServerConn, BIND_AUTO_CREATE);
 
                     if (!transactionReceipt.isStatusOK()) {
-                        Log.d(TAG, "transactionReceipt: Error: " + transactionReceipt.getStatus());
+                        myLog(TAG, "transactionReceipt: Error: " + transactionReceipt.getStatus());
                     } else {
-                        //Log.d(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getTransactionReceipt().getBlockHash());
-                        Log.d(TAG, "transactionReceipt: Root: " + transactionReceipt.getRoot());
-                        Log.d(TAG, "transactionReceipt: Contract address: " + transactionReceipt.getContractAddress());
-                        Log.d(TAG, "transactionReceipt: From: " + transactionReceipt.getFrom());
-                        Log.d(TAG, "transactionReceipt: To: " + transactionReceipt.getTo());
-                        Log.d(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getBlockHash());
-                        Log.d(TAG, "transactionReceipt: Block number: " + transactionReceipt.getBlockNumber());
-                        Log.d(TAG, "transactionReceipt: Block number raw: " + transactionReceipt.getBlockNumberRaw());
-                        Log.d(TAG, "transactionReceipt: Gas used: " + transactionReceipt.getGasUsed());
-                        Log.d(TAG, "transactionReceipt: Gas used raw: " + transactionReceipt.getGasUsedRaw());
-                        Log.d(TAG, "transactionReceipt: Cumulative gas used: " + transactionReceipt.getCumulativeGasUsed());
+                        //myLog(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getTransactionReceipt().getBlockHash());
+                        myLog(TAG, "transactionReceipt: Root: " + transactionReceipt.getRoot());
+                        myLog(TAG, "transactionReceipt: Contract address: " + transactionReceipt.getContractAddress());
+                        myLog(TAG, "transactionReceipt: From: " + transactionReceipt.getFrom());
+                        myLog(TAG, "transactionReceipt: To: " + transactionReceipt.getTo());
+                        myLog(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getBlockHash());
+                        myLog(TAG, "transactionReceipt: Block number: " + transactionReceipt.getBlockNumber());
+                        myLog(TAG, "transactionReceipt: Block number raw: " + transactionReceipt.getBlockNumberRaw());
+                        myLog(TAG, "transactionReceipt: Gas used: " + transactionReceipt.getGasUsed());
+                        myLog(TAG, "transactionReceipt: Gas used raw: " + transactionReceipt.getGasUsedRaw());
+                        myLog(TAG, "transactionReceipt: Cumulative gas used: " + transactionReceipt.getCumulativeGasUsed());
                         Log.d(TAG, "transactionReceipt: Cumulative gas used raw: " + transactionReceipt.getCumulativeGasUsedRaw());
                         Log.d(TAG, "transactionReceipt: Transaction hash: " + transactionReceipt.getTransactionHash());
                         Log.d(TAG, "transactionReceipt: Transaction index: " + transactionReceipt.getTransactionIndex());

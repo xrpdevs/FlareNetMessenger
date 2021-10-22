@@ -49,5 +49,16 @@
     "Type": "XRPL",
     "DecimalPlaces": 6,
     "Testnet": true
+  },
+  {
+    "Name": "XRP MainNet",
+    "NativeCurrency": "XRP",
+    "Symbol": "XRP",
+    "RPC": "https://s1.ripple.com/",
+    "ChainID": 0,
+    "Icon": "chain_xrp",
+    "Type": "XRPL",
+    "DecimalPlaces": 6,
+    "Testnet": false
   }
 ]

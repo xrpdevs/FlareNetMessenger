@@ -209,7 +209,7 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
                 View view = super.getView(position, convertView, parent);
                 TextView cName = view.findViewById(R.id.inboxAddress);
                 TextView myId = view.findViewById(R.id.inboxLastact);
-                Log.d("pos", position + "");
+                myLog("pos", position + "");
                 if (myId.getText().equals("-5000")) cName.setText("Enter Manually");
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....

@@ -1,7 +1,8 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
+import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
+
 import android.os.AsyncTask;
-import android.util.Log;
 
 import org.spongycastle.util.encoders.Hex;
 import org.web3j.crypto.Credentials;
@@ -82,8 +83,8 @@ public class aRawTransaction {
 
                 byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, mChainID, mCredentials);
                 String hexValue = "0x" + Hex.toHexString(signedMessage);
-                Log.d("ETHMSG", hexValue);
-                Log.d("ETHMSG", "Transaction hash" + mWeb3j.ethSendRawTransaction(hexValue).send().getTransactionHash());
+                myLog("ETHMSG", hexValue);
+                myLog("ETHMSG", "Transaction hash" + mWeb3j.ethSendRawTransaction(hexValue).send().getTransactionHash());
                 return null;//mWeb3j.ethSendRawTransaction(hexValue.toString()).sendAsync().get();
 
             } catch (ExecutionException | InterruptedException | IOException e) {
