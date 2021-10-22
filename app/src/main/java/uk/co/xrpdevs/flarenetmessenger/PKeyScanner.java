@@ -213,8 +213,8 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
 
                 String bcType = prefs.getString("csbc_type", "ETH");
                 Utils.myLog("bcData", bcData.toString());
-                if (bcType.equals("XRPL")) {
-                    newXrplWallet();
+                if (bcType.equals("XRPL")) {  // todo: check sql database here for blockchain type
+                    newXrplWallet();          // todo: probably use a switch() statement here
                 } else {
                     newEthWallet();
                 }
@@ -257,13 +257,14 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         if (wName.getText().toString().equals("")) {
             tmp.put("walletName", "Wallet " + wC);
         } else {
-            tmp.put("walletName", wName.getText().toString());
+            tmp.put("walletName", wName.getText().toString()); // wallet name
         }
-        tmp.put("walletPrvKey", privateKey);
-        tmp.put("walletPubKey", publicKey);
-        tmp.put("walletAddress", addr);
-        tmp.put("walletXaddr", xaddr);
-        tmp.put("walletType", "XRPL");
+        tmp.put("walletPrvKey", privateKey);// private key
+        tmp.put("walletPubKey", publicKey); // public key
+        tmp.put("walletAddress", addr);     // primary wallet address
+        tmp.put("walletAltAddress", xaddr); // generify so we can support hex and alternate addresses
+        tmp.put("walletType", "XRPL");      // remove later as will be referenced from blockchain sql table
+        tmp.put("bcid", String.valueOf(bcData.get("bcid"))); // blockchain identifier
 
         pEdit.putString("wallet" + wC, new JSONObject(tmp).toString());
         pEdit.putInt("walletCount", wC);
@@ -283,7 +284,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
     private void newEthWallet() {
         String scanContent = null;
 
-        Log.d("MOO", "MOOOOOOOOOOOOOOOOOOOOOOOOOO");
+
         try {
             scanContent = Utils.newKeys();
         } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException e) {
@@ -315,6 +316,8 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
             tmp.put("walletPrvKey", scanContent);
             tmp.put("walletPubKey", "0x" + publicKey);
             tmp.put("walletAddress", addr);
+            tmp.put("walletType", "ETH");
+            tmp.put("bcid", String.valueOf(bcData.get("bcid")));
 
             pEdit.putString("wallet" + wC, new JSONObject(tmp).toString());
             pEdit.putInt("walletCount", wC);
@@ -347,6 +350,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         MyService.rpc = RPC;
         MyService.tmpCID = CID;
         MyService.isXRPL = true;
+        // restart the service here?
 
 
     }

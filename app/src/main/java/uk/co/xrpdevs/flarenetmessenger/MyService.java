@@ -34,7 +34,9 @@ import android.util.Log;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.web3j.abi.EventEncoder;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
@@ -43,8 +45,10 @@ import org.web3j.protocol.http.HttpService;
 import org.xrpl.xrpl4j.client.JsonRpcClient;
 import org.xrpl.xrpl4j.client.XrplClient;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.HttpUrl;
@@ -100,6 +104,7 @@ public class MyService extends Service {
     public static String currentChain = "Coston";
     String cChain = currentChain;
 
+    HashMap<String, String> addresses;
 
     public static final String TAG = MyService.class.getSimpleName();
     private static boolean started = false;
@@ -126,6 +131,8 @@ public class MyService extends Service {
     public void onCreate() {
         super.onCreate();
 
+        mC = getApplicationContext();
+
 
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.LAX);
 
@@ -135,8 +142,29 @@ public class MyService extends Service {
         JsonRpcClient bob = xrplClient.getJsonRpcClient();
         String jsub = "{\"id\": \"76\"," +
                 "\"command\": \"subscribe\"," +
-                "\"accounts\": [\"rJCdNPsfemPexCzCeZbr7Jin83LtJmpmNn\"]}";
+                "\"accounts\": [";
+        try {
+            addresses = Utils.walletAddressesToWalletNamesOrContactsToHashMap(mC, "XRPL");
+        } catch (JSONException e) {
+            myLog("WAT", "Error: " + e);
+            e.printStackTrace();
+        }
+        int end = addresses.size();
+        int a = 0;
 
+
+        for (Map.Entry<String, String> pair : addresses.entrySet()) {
+            //System.out.format("key: %s, value: %d%n", pair.getKey(), pair.getValue());
+
+            jsub = jsub + "\"" + pair.getKey() + "\"";
+            if (a != (end - 1)) jsub += ", ";
+            a++;
+        }
+
+        jsub += "]}";
+
+        myLog("FUCKYOU", addresses.toString());
+        myLog("FUCKYOU", jsub);
 
         WSock socket = WSock.Builder.with("wss://s.altnet.rippletest.net/").build().connect();
         socket.sendOnOpen("76", jsub);
@@ -211,7 +239,11 @@ public class MyService extends Service {
     WSock.OnEventResponseListener oevrl = new WSock.OnEventResponseListener() {
         @Override
         public void onMessage(String event, String data) {
-            Log.d("WS RESPONSE", "Event: " + event + " Data: " + data);
+            try {
+                doAlert(data);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     };
 
@@ -281,7 +313,7 @@ public class MyService extends Service {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            if (!deets.containsKey("walletXaddr")) {
+            if (deets.containsKey("walletType") && !deets.get("walletType").equals("XRPL")) {
                 c = create(deets.get("walletPrvKey"));
                 //   fsms = uk.co.xrpdevs.flarenetmessenger.contracts.Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
                 //    fcoin = uk.co.xrpdevs.flarenetmessenger.contracts.ERC20.load(fCoinAddr, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
@@ -292,8 +324,9 @@ public class MyService extends Service {
             if (!isAlarmScheduled()) {
                 setAlarm();
             }
-
             mC = getApplicationContext();
+
+
             // AsyncTask will take place here to get data from web.
             subscribeNotifications();
         }
@@ -382,10 +415,44 @@ public class MyService extends Service {
         }
     }
 
+    public void doAlert(String XRPLJSONdata) throws JSONException {
+        JSONObject data = new JSONObject(XRPLJSONdata);
+        JSONObject transaction = data.getJSONObject("transaction");
+        String account = transaction.optString("Account");
+        String destination = transaction.optString("Destination");
+        String amount = transaction.optString("Amount");
+        amount = new BigDecimal(amount).movePointLeft(6).stripTrailingZeros().toPlainString();
+        String acc_name = addresses.getOrDefault(account, account);
+        String des_name = addresses.getOrDefault(destination, destination);
+        myLog("EVENT", "address: " + account);
+        String title = "FNM";
+        if (addresses.containsKey(destination)) {
+            title = "FNM: You've got XRP!";
+        } else {
+            title = "FNM: You sent XRP!";
+        }
+        JSONArray memos = transaction.getJSONArray("Memos");
+        String memo = null;
+        if (!memos.isNull(0)) {
+            JSONObject memoData = memos.getJSONObject(0);
+            memo = MyRecyclerView.hexToAscii(memoData.getJSONObject("Memo").optString("MemoData"));
+        }
+        //if(mno._to.equals(deets.get("walletAddress"))) {
+        //    mno.
+        int reqCode = 1;
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        String message = acc_name + " sent " + amount + " XRP to " + des_name;
+        if (memo != null) {
+            message += " \nMemo: " + memo;
+        }
+        showNotification(this, title, message, intent, reqCode);
+
+    }
+
     //public void doAlert
-    public void doAlert(Fsms.MessageNotificationEventResponse mno){
-        myLog("EVENT", "_to   = walletaddress: "+mno._to.equals(deets.get("walletAddress")));
-        if(mno._to.equals(deets.get("walletAddress"))) {
+    public void doAlert(Fsms.MessageNotificationEventResponse mno) {
+        myLog("EVENT", "_to   = walletaddress: " + mno._to.equals(deets.get("walletAddress")));
+        if (mno._to.equals(deets.get("walletAddress"))) {
             //    mno.
             try {
                 Uri notification = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
@@ -472,4 +539,44 @@ public class MyService extends Service {
         }
     }
 
+    /**
+     * @param context
+     * @param title   --> title to show
+     * @param message --> details to show
+     * @param intent  --> What should happen on clicking the notification
+     * @param reqCode --> unique code for the notification
+     */
+
+    public void showNotification(Context context, String title, String message, Intent intent, int reqCode) {
+        //SharedPreferenceManager sharedPreferenceManager = SharedPreferenceManager.getInstance(context);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, reqCode, intent, PendingIntent.FLAG_ONE_SHOT);
+        String CHANNEL_ID = "channel_name";// The id of the channel.
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.mipmap.chain_xrp)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
+                .setAutoCancel(false)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                .setContentIntent(pendingIntent);
+
+      /*  NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
+                 .setSmallIcon(R.mipmap.chain_xrp)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setAutoCancel(false)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                .setContentIntent(pendingIntent);*/
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Channel Name";// The user-visible name of the channel.
+            int importance = NotificationManager.IMPORTANCE_HIGH;
+            NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, name, importance);
+            notificationManager.createNotificationChannel(mChannel);
+        }
+        notificationManager.notify(reqCode, notificationBuilder.build()); // 0 is the request code, it should be unique id
+
+        Log.d("showNotification", "showNotification: " + reqCode);
+    }
 }

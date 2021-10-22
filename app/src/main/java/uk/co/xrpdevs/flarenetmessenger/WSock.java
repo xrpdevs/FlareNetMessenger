@@ -370,13 +370,15 @@ public class WSock {
             try {
                 // Parse message text
                 JSONObject response = new JSONObject(text);
-                String event = response.getString("id");
+                //         String event = response.getString("id");
                 JSONObject data = response;
+                String event = "76";
+
 
                 // call event listener with received data
-                if (eventResponseListener.get(event) != null) {
-                    eventResponseListener.get(event).onMessage(WSock.this, event, data);
-                }
+//                if (eventResponseListener.get(event) != null) {
+                eventResponseListener.get(event).onMessage(WSock.this, event, data);
+                //              }
                 // call event listener
                 if (eventListener.get(event) != null) {
                     eventListener.get(event).onMessage(WSock.this, event);

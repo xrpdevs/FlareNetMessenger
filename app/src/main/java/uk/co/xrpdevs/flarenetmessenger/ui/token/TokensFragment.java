@@ -156,6 +156,7 @@ public class TokensFragment extends Fragment {
                 String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
                 HashMap<String, String> item = (HashMap<String, String>) getItem(position);
+
                 Thread updateBalance;
                 if (!item.containsKey("primary")) {
                     updateBalance = new getERC20Balance(
@@ -212,7 +213,8 @@ public class TokensFragment extends Fragment {
         Log.d("WBALANCE", deets.toString());
 
         // get asset type from wallets info
-        if (deets.containsKey("walletXaddr")) {
+        if (deets.containsKey("walletXaddr") || (deets.containsKey("walletType") && deets.get("walletType").equals("XRPL"))) {
+            Log.d("DEBUG", "We are XRPL!(" + blockChainName + ") " + prefs.getString("csbc_type", ""));
             primaryAsset.put("Name", "XRP");
             primaryAsset.put("Type", prefs.getString("csbc_type", ""));
             primaryAsset.put("Address", Utils.getMyXRPBalance(deets.get("walletAddress")).first.toPlainString());
@@ -223,8 +225,10 @@ public class TokensFragment extends Fragment {
         primaryAsset.put("primary", "1");
         availTokens.add(primaryAsset);
         String json = null;
-        if (!deets.containsKey("walletXaddr")) {
-            try {
+        //pain in the arse logic statement.. roll on simple SQL lookups!
+        if (!(deets.containsKey("walletXaddr") || (deets.containsKey("walletType") && deets.get("walletType").equals("XRPL")))) {
+
+            try { // much simpler with SQL.
                 InputStream is = getActivity().getAssets().open("tokens_" + blockChainName + ".json");
                 int size = is.available();
                 byte[] buffer = new byte[size];
@@ -246,6 +250,8 @@ public class TokensFragment extends Fragment {
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+        } else {
+            Log.d("DEBUG", "We are XRPL2!" + prefs.getString("csbc_type", ""));
         }
 
         //myLog("json", availTokens.toString());
@@ -302,7 +308,7 @@ public class TokensFragment extends Fragment {
                     bd = new BigDecimal(balance, 18);
                 } else {
                     try {
-                        if (deets.containsKey("walletXaddr")) {
+                        if (deets.containsKey("walletXaddr") || (deets.containsKey("walletType") && deets.get("walletType").equals("XRPL"))) {
 
                             bd = Utils.getMyXRPBalance(deets.get("walletAddress")).first;
                         } else {

@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
@@ -134,10 +135,10 @@ class MyRecyclerView extends RecyclerView.Adapter<MyRecyclerView.ViewHolder> {
 
 
         if (!items.get("destination").equals(myAddress)) { // outgoing funds
-            viewHolder.itemView.setBackgroundColor(Color.parseColor("#FFFFCCCC"));
+            viewHolder.itemView.setBackgroundColor(Color.parseColor("#30CC3030"));
 
         } else { // incoming funds
-            viewHolder.itemView.setBackgroundColor(Color.parseColor("#FFCCFFCC"));
+            viewHolder.itemView.setBackgroundColor(Color.parseColor("#3030CC30"));
             localDataSet.get(pos).put("isrx", "true");
             items.put("isrx", "true");
         }
@@ -194,6 +195,15 @@ class MyRecyclerView extends RecyclerView.Adapter<MyRecyclerView.ViewHolder> {
                                 "Fee : " + items.get("fee") + "\n" +
                                 "Hash: " + items.get("hash");
                 if (items.get("memos").contains("memoData")) {
+                    try {
+                        JSONArray memos = new JSONArray(items.get("memos"));
+
+                        for (int m = 0; m < memos.length(); m++) {
+                            Log.d("MEMO", memos.getString(m));
+                        }
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
                     String mt = items.get("memos");
                     mt = mt.substring(mt.indexOf("memoData") + 9, mt.indexOf("}"));
                     mt = hexToAscii(mt);
@@ -208,7 +218,7 @@ class MyRecyclerView extends RecyclerView.Adapter<MyRecyclerView.ViewHolder> {
 
     }
 
-    private static String hexToAscii(String hexStr) {
+    public static String hexToAscii(String hexStr) {
         StringBuilder output = new StringBuilder();
 
         for (int i = 0; i < hexStr.length(); i += 2) {

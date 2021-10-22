@@ -1,10 +1,13 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
+import static android.content.Context.CLIPBOARD_SERVICE;
 import static uk.co.xrpdevs.flarenetmessenger.MyService.xrplClient;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 import android.app.Activity;
 import android.app.FragmentManager;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
@@ -24,6 +27,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.common.primitives.UnsignedInteger;
 
@@ -46,12 +51,14 @@ import java.util.Map;
 
 public class TransactionsActivity extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
     public static long theID = 0;
+    private static ObjectMapper mapper;
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
 
     MyRecyclerView mylist;
     HashMap<String, String> deets;
     FragmentManager manager;
+
     Activity mAct;
     RecyclerView rv;
     BottomNavigationView navView;
@@ -132,11 +139,17 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
                 myAddress = args.getString("wAddr");
             }
         }
-        update();
+        try {
+            update();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
 
     }
 
-    public void update() {
+    public void update() throws JsonProcessingException, IllegalAccessException {
         if (prefs.contains("currentWallet") && deets != null) {
             try {
                 deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
@@ -222,8 +235,14 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
             case R.id.tic_copyaddress:
                 if (poo.get(thepos).containsKey("isrx")) {
                     Log.d("MENU: ", "Copied  sender's  Address: " + poo.get(thepos).get("account"));
+                    ClipboardManager clipboard = (ClipboardManager) mAct.getSystemService(CLIPBOARD_SERVICE);
+                    ClipData clip = ClipData.newPlainText("Copied", poo.get(thepos).get("account"));
+                    clipboard.setPrimaryClip(clip);
                 } else {
                     Log.d("MENU: ", "Copied reciever's Address: " + poo.get(thepos).get("destination"));
+                    ClipboardManager clipboard = (ClipboardManager) mAct.getSystemService(CLIPBOARD_SERVICE);
+                    ClipData clip = ClipData.newPlainText("Copied", poo.get(thepos).get("destination"));
+                    clipboard.setPrimaryClip(clip);
 
                 }
                 return super.onContextItemSelected(item);
@@ -235,7 +254,13 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
                 } else {
                     wa = poo.get(thepos).get("o_dest");
                 }
-                poo = getXRPtransactions(wa);
+                try {
+                    poo = getXRPtransactions(wa);
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
                 try {
                     mylist = new MyRecyclerView(poo, myAddress, manager);
                 } catch (JSONException e) {
@@ -252,15 +277,16 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
 
     }
 
-    public ArrayList<HashMap<String, String>> getXRPtransactions(String address) {
+    public ArrayList<HashMap<String, String>> getXRPtransactions(String address) throws JsonProcessingException, IllegalAccessException {
         ArrayList<HashMap<String, String>> list = new ArrayList<>();
+        ArrayList<String> jlist = new ArrayList<>();
         String ErrorMessage = "OK";
         BigDecimal XRP;
         AccountInfoRequestParams requestParams =
                 AccountInfoRequestParams.of(Address.of(address));
         AccountInfoResult accountInfoResult;
         AccountTransactionsResult eek;
-
+        mapper = new ObjectMapper();
 
         try {
             AccountTransactionsRequestParams bob = AccountTransactionsRequestParams.builder()
@@ -273,13 +299,26 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
 
             Iterator<AccountTransactionsTransactionResult<? extends Transaction>> itr = eek.transactions().iterator();
 
-            String tmp;
+
 
             // list.add(items);
             while (itr.hasNext()) {
                 HashMap<String, String> items = new HashMap<>();
-                HashMap mapl = toHashMap(itr.next().transaction());
+                AccountTransactionsTransactionResult tmp = itr.next();
+                try {
+                    //  Log.d("META", mapper.writeValueAsString(tmp.transaction().memos().get(0).memo().memoData().get()));
+                    tmp.transaction().memos().size();
+                    for (int z = 0; z < tmp.transaction().memos().size(); z++) {
+                        Log.d("MEMOZ " + (z + 1), tmp.transaction().memos().get(z).memo().memoData().get());
+                    }
+                } catch (Exception e) {
+
+                }
+                HashMap mapl = toHashMap(tmp.transaction());
                 list.add(mapl);
+                String tjson = mapper.writeValueAsString(tmp);
+                jlist.add(tjson);
+                Log.d("JSON output: ", tjson);
 
                 // HashMap<String, String> map =
                 //        (HashMap<String, String>) Arrays.asList(tmp.split(",")).stream().map(s -> s.split(":")).collect(Collectors.toMap(e -> e[0], e -> e[1]));
@@ -308,7 +347,7 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
         return list;
     }
 
-    public HashMap<String, String> toHashMap(Object obj) {
+    public HashMap<String, String> toHashMap(Object obj) throws JsonProcessingException, IllegalAccessException {
         HashMap<String, String> tmp = new HashMap<>();
         Map<String, String> map = parameters(obj);
         for (Map.Entry<String, String> entry : map.entrySet()) {
@@ -338,7 +377,7 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
 
     }
 
-    public static Map<String, String> parameters(Object obj) {
+    public static Map<String, String> parameters(Object obj) throws IllegalAccessException, JsonProcessingException {
         Map<String, String> map = new HashMap<>();
         for (Field field : obj.getClass().getDeclaredFields()) {
             field.setAccessible(true);
@@ -346,6 +385,7 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
             try {
                 n = field.getName();
                 f = field.get(obj).toString();
+
 //                map.put(field.getName(), field.get(obj).toString());
             } catch (Exception e) {
             }
@@ -356,7 +396,10 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
                 f = bd.toPlainString();
             }
             map.put(n, f);
-
+            if (n.equals("memos")) {
+                f = mapper.writeValueAsString(field.get(obj));
+                map.put("_" + n, f);
+            }
         }
         return map;
     }
@@ -373,7 +416,13 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
                 //    if(mSwipeRefreshLayout != null) {
                 //      mSwipeRefreshLayout.setRefreshing(true);
                 //   }
-                poo = getXRPtransactions(myAddress);
+                try {
+                    poo = getXRPtransactions(myAddress);
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
                 try {
                     mylist = new MyRecyclerView(poo, myAddress, manager);
                 } catch (JSONException e) {
