@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -305,15 +306,16 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
             JSONArray wallets;
             if ((wallets = zipDecode.extractWithZipInputStream(walletsImportURI, pinCode)) != null) {
                 // todo: do something with our JSONobject
+                Log.d("IMPORT", wallets.toString());
             } else {
                 // todo: tell user they entered an incorrect PIN.
             }
         }
         if (tag.equals("export")) {
             myLog("Motherfucker", prefs.getString("pinCode", "ffnf"));
-            if (pinCode.equals(prefs.getString("pinCode", "asas"))) {
+            if (Utils.pinHash(pinCode).equals(prefs.getString("pin", "asas"))) {
                 pinDialog.dismiss();
-                Zipper zipArchive = new Zipper(prefs.getString("pinCode", "0000"), mThis.getContext());
+                Zipper zipArchive = new Zipper(pinCode, mThis.getContext());
                 zipArchive.pack("/sdcard/Downloads/wallets.zip");
 
                 // TODO: Save as a passworded ZIP file in default location on phone.

@@ -4,6 +4,7 @@ import static android.content.Context.CLIPBOARD_SERVICE;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -13,6 +14,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
@@ -68,7 +70,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
 
     PleaseWaitDialog notify;
     SelectBlockChainDialogFragment sbcdf;
-
+    private NfcAdapter adapter = null;
     HomeFragment mThis = this;
     View root;
     String XRPAddress;
@@ -79,7 +81,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
     TextView walletName;
     Activity mAct;
     Button hShare, hCopy, hAssets;
-
+    private PendingIntent pendingIntent = null;
     Credentials c;
     Web3j fc = MyService.initWeb3j();
     Thread qrThread;// = new QR_Thread();
@@ -109,6 +111,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
         Bundle args = getArguments();
         myLog("FRAG", "onStart");
         mAct = mThis.getActivity();
+        adapter = NfcAdapter.getDefaultAdapter(mAct);
 
         if (args != null) {
 
@@ -146,6 +149,20 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
             qrThread = new QR_Thread();
             qrThread.start();
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (pendingIntent == null) {
+            pendingIntent = PendingIntent.getActivity(mAct, 0,
+                    new Intent(mAct, mAct.getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
+
+            //currentTagView.setText("Scan a tag");
+        }
+
+
+        adapter.enableForegroundDispatch(mAct, pendingIntent, null, null);
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater,
