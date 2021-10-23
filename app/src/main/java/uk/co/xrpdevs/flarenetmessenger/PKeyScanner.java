@@ -268,6 +268,12 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         tmp.put("walletType", "XRPL");      // remove later as will be referenced from blockchain sql table
         tmp.put("bcid", String.valueOf(bcData.get("bcid"))); // blockchain identifier
 
+        privateKey = privateKey.replace("Optional[", "").replace("]", "");
+
+        // Utils.xorStrings()
+
+        boolean b = FlareNetMessenger.dbH.addWallet(tmp.get("walletName"), Integer.valueOf(tmp.get("bcid")), publicKey, privateKey, addr, xaddr, 0, "0");
+
         pEdit.putString("wallet" + wC, new JSONObject(tmp).toString());
         pEdit.putInt("walletCount", wC);
         pEdit.putInt("currentWallet", wC);

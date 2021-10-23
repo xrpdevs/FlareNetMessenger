@@ -162,7 +162,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
         }
 
 
-        adapter.enableForegroundDispatch(mAct, pendingIntent, null, null);
+        if (adapter != null) adapter.enableForegroundDispatch(mAct, pendingIntent, null, null);
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater,

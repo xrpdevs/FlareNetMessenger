@@ -213,6 +213,7 @@ public class Utils {
                         String cWname = bob.getOrDefault("walletName", "Wallet " + i);
                         if (bob.containsKey("walletAddress")) {
                             wAddrs.put(bob.get("walletAddress"), cWname);
+                         //   boolean b = FlareNetMessenger.dbH.addWallet(bob.get("walletName"), Integer.valueOf(bob.getOrDefault("bcid", "0")), bob.get(""), privateKey, addr, xaddr, 0, "0");
                         }
                         break; // note: don't forget those break statements or you might want to break something lol
                 }
@@ -375,10 +376,10 @@ public class Utils {
         if (compactLog) {
             sep = " :: ";
         }
-        if (FlareNetMessenger.loggingOn) {
+        // if (FlareNetMessenger.loggingOn) {
             String callerClassName = new Exception().getStackTrace()[1].getClassName();
             Log.d(tag, sep + callerClassName + sep + logString);
-        }
+        // }
     }
     public static boolean isMyServiceRunning(Class<?> serviceClass, Context context) {
         ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);

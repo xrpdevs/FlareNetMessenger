@@ -162,6 +162,12 @@ public class MyService extends Service {
         myLog("FUCKYOU", addresses.toString());
         myLog("FUCKYOU", jsub);
 
+        try {
+            addresses = Utils.walletAddressesToWalletNamesOrContactsToHashMap(mC, "ALL");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
         WSock socket = WSock.Builder.with("wss://s.altnet.rippletest.net/").build().connect();
         socket.sendOnOpen("76", jsub);
         socket.onEventResponse("76", oevrl);
