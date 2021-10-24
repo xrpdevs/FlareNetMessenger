@@ -35,7 +35,6 @@ import com.google.zxing.WriterException;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
-import org.json.JSONException;
 import org.web3j.crypto.Credentials;
 import org.web3j.crypto.ECKeyPair;
 import org.web3j.crypto.RawTransaction;
@@ -76,9 +75,6 @@ import org.xrpl.xrpl4j.wallet.WalletFactory;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.security.GeneralSecurityException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 
@@ -140,18 +136,16 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
         view_SendFunds.setOnClickListener(this);
         prefs = this.getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
-        String pinCode = prefs.getString("_pin", "0000");
+
 
         String Wallet_Address = null;
 
-        try {
-            deets = Utils.getPkey(this, prefs.getInt("currentWallet", 0));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        deets = FlareNetMessenger.deets;
+        bcType = deets.get("TYPE");
+
         if (bundle.containsKey("contactInfo")) {
             Bundle ci = bundle.getBundle("contactInfo");
-            if (ci.containsKey("token")) {
+            if (ci.containsKey("token")) { // expand this to work with XRPL tokens
                 myLog("TOKEN", "dealing with a token");
                 // we're dealing with a token, rather than base asset
 
@@ -159,7 +153,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 tokenAddress = ci.getString("tAddr");
                 token = true;
                 bcType = "ETH_TOKEN";
-                bob = MyService.getERC20link(tokenAddress, MyService.c, MyService.rpc);
+                bob = MyService.getERC20link(tokenAddress, MyService.c, deets.get("RPC"), deets.get("CHAINID"));
                 myLog("bundle", ci.toString());
             }
             if (ci.containsKey("addr") && ci.containsKey("noContact")) {
@@ -169,11 +163,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
             }
         }
 
-        if ((bcType == null) && deets.containsKey("walletXaddr")) {
-            bcType = "XRPL";
-        } else {
-            bcType = "ETH";
-        }
+
         myLog("bcType", "BcType = " + bcType);
 
         Uri uri = myIntent.getData();
@@ -211,9 +201,9 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
             view_Address.setText(Wallet_Address);
 
         }
-        myWallet = deets.get("walletAddress");
+        myWallet = deets.get("ADDRESS");
         switch (bcType) {
-            case "ETH":
+            case "ETH_TOKEN":
                 theirWallet = Wallet_Address;
 
                 BigInteger bal = new BigInteger("0");
@@ -230,8 +220,9 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                     e.printStackTrace();
                 }
                 //String balance = bob.balanceOf(deets.get("walletAddress")
-                theirBalance = new BigDecimal(bal, 18);
-            case "ETH_TOKEN":
+                theirBalance = new BigDecimal(bal, 18); // perhaps define scale in blockchains database....
+                break;
+            case "ETH":
                 // check BC type here
 
                 try {
@@ -245,6 +236,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                break;
             case "XRPL":
                 try {
                     myBalance = Utils.getMyXRPBalance(myWallet).first;
@@ -259,10 +251,10 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 }
                 WalletFactory walletFactory = DefaultWalletFactory.getInstance();
 
-                myLog("Credentials", deets.toString());
+                // myLog("Credentials", deets.toString());
 
-                String pkeyHex = deets.get("walletPrvKey");
-                String pubHex = deets.get("walletPubKey");
+                String pkeyHex = deets.get("PRIVKEY");
+                String pubHex = deets.get("PUBKEY");
                 pkeyHex = pkeyHex.replace("Optional[", "");
                 pkeyHex = pkeyHex.replace("]", "");
                 Credentials c = create(pkeyHex);
@@ -270,32 +262,19 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                 try {
                     ECKeyPair pair = c.getEcKeyPair();
                     String pubKeyHex = pair.getPublicKey().toString(16);
-
-                    PrivateKey XRP_PrivateKey = Utils.getPrivateKeyFromECBigIntAndCurve(pair.getPrivateKey(), "secp256k1");
+                    //PrivateKey XRP_PrivateKey = Utils.getPrivateKeyFromECBigIntAndCurve(pair.getPrivateKey(), "secp256k1");
                     myLog("Credentials:: ", pubKeyHex);
-
-                    byte[] wpkBytes = Utils.toByte(pubKeyHex);
-
-                    PublicKey XRP_PublicKey = Utils.rawToEncodedECPublicKey("secp256k1", wpkBytes);
-
-
+                    //byte[] wpkBytes = Utils.toByte(pubKeyHex);
+                    //PublicKey XRP_PublicKey = Utils.rawToEncodedECPublicKey("secp256k1", wpkBytes);
                     org.xrpl.xrpl4j.keypairs.KeyPair xrpKeys = KeyPair.builder().privateKey(pkeyHex).publicKey(pubHex).build();
                     xrpwallet = walletFactory.fromKeyPair(xrpKeys, true);
-
                     System.out.println(xrpwallet);
-
-                } catch (GeneralSecurityException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
-
-
-                    //   myLog("KEEZ:", "= "+xrpKeys.toString());
-
                 }
-
-
                 isXRP = true;
                 view_XRPMemo.setVisibility(View.VISIBLE);
-
+                break;
         }
 
 
@@ -497,7 +476,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
                         WalletFactory walletFactory = DefaultWalletFactory.getInstance();
 
-                        Log.d("Credentials", deets.get("walletPrvKey"));
+                        //Log.d("Credentials", deets.get("walletPrvKey"));
 
                         //       String pKeyString
 
@@ -585,9 +564,9 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                         //    TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
                         //             amount, org.web3j.utils.Convert.Unit.ETHER).send();
                         Web3j sendObj = MyService.initConnection(
-                                prefs.getString("csbc_rpc", ""),
+                                deets.get("RPC"),
                                 //Integer.decode(prefs.getString("csbc_cid", "0"))
-                                43113
+                                Integer.parseInt(deets.get("CHAINID"))
                         );
 
                         //  String address;
@@ -614,7 +593,7 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                         RawTransactionManager transactionManager = new RawTransactionManager(
                                 sendObj,
                                 Utils.getCreds(deets),
-                                Integer.decode(prefs.getString("csbc_cid", "1")),
+                                Integer.decode(deets.get("CHAINID")),
                                 transactionReceiptProcessor);
 
 

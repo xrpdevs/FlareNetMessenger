@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -161,6 +162,7 @@ public class SelectBlockChainDialogFragment extends android.app.DialogFragment {
             SharedPreferences sp = getActivity().getSharedPreferences("fnm", 0);
             SharedPreferences.Editor se = sp.edit();
             HashMap<String, String> data = lines.get(position);
+            Log.e("abcdef", data.toString());
             data.put("id", String.valueOf(position));
             se.putInt("csbc_id", Integer.parseInt(Objects.requireNonNull(data.get("INTID"))));
             se.putString("csbc_name", data.get("NAME"));

@@ -10,6 +10,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
@@ -42,7 +43,6 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONException;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 
@@ -56,10 +56,11 @@ import java.util.Map;
 
 import uk.co.xrpdevs.flarenetmessenger.BuildConfig;
 import uk.co.xrpdevs.flarenetmessenger.FirstRun;
+import uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.R;
-import uk.co.xrpdevs.flarenetmessenger.Utils;
+import uk.co.xrpdevs.flarenetmessenger.dbHelper;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.SelectBlockChainDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.token.TokensFragment;
@@ -80,6 +81,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
     BottomNavigationView navView;
     TextView walletName;
     Activity mAct;
+    dbHelper dbH = FlareNetMessenger.dbH;
     Button hShare, hCopy, hAssets;
     private PendingIntent pendingIntent = null;
     Credentials c;
@@ -100,11 +102,10 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
     public void onStart() {
         super.onStart();
         Service bob = new MyService();
-        try {
-            deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+
+        Cursor c = dbH.getWalletDetails(String.valueOf(prefs.getInt("currentWallet", 0)));
+        deets = dbHelper.cursorToHashMapArray(c).get(0);
+        FlareNetMessenger.deets = deets;
 
         navView = mThis.getActivity().findViewById(R.id.nav_view);
         navView.getMenu().findItem(R.id.navigation_home).setChecked(true);
@@ -118,6 +119,11 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
             myLog("FRAG", args.toString());
         }
         if (args != null) {
+            if (args.containsKey("updatewallet")) {
+                Cursor cur = dbH.getWalletDetails(String.valueOf(prefs.getInt("currentWallet", 0)));
+                deets = dbHelper.cursorToHashMapArray(cur).get(0);
+                FlareNetMessenger.deets = deets;
+            }
             if (args.containsKey("selectFragment")) {
                 if (args.getString("selectFragment", "").equals("home")) {
                     myLog("FRAG", "Has selectFragment = home");
@@ -131,25 +137,14 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                 }
             }
         }
-        if (prefs.contains("currentWallet") && deets != null) {
-            try {
-                deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            if (deets.containsKey("walletXaddr")) {
 
-            } else {
-                //c = org.web3j.crypto.Credentials.create(deets.get("walletPrvKey"));
-
-            }
-            XRPAddress = deets.get("walletAddress");
-            // c = Credentials.create(deets.get("walletPrvKey"));
-            walletName.setText(deets.getOrDefault("walletName", "Wallet " + prefs.getInt("currentWallet", 0)));
-            qrThread = new QR_Thread();
-            qrThread.start();
-        }
+        XRPAddress = deets.get("ADDRESS");
+        // c = Credentials.create(deets.get("walletPrvKey"));
+        walletName.setText(deets.getOrDefault("NAME", "Wallet " + prefs.getInt("currentWallet", 0)));
+        qrThread = new QR_Thread();
+        qrThread.start();
     }
+
 
     @Override
     public void onResume() {
@@ -183,20 +178,13 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
 
         prefs = mThis.getActivity().getSharedPreferences("fnm", 0);
 
-        try {
-            deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-
         //webview.loadUrl("https://xrpdevs.co.uk/");
 
         hCopy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 ClipboardManager clipboard = (ClipboardManager) mAct.getSystemService(CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("Copied", deets.get("walletAddress"));
+                ClipData clip = ClipData.newPlainText("Copied", deets.get("ADDRESS"));
                 clipboard.setPrimaryClip(clip);
             }
         });
@@ -209,7 +197,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                 ImageView imageView = root.findViewById(R.id.imageView2);
                 Bitmap bitmap = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
 
-                String bitmapPath = MediaStore.Images.Media.insertImage(mAct.getContentResolver(), bitmap, "Wallet", deets.get("walletAddress"));
+                String bitmapPath = MediaStore.Images.Media.insertImage(mAct.getContentResolver(), bitmap, "Wallet", deets.get("ADDRESS"));
                 Uri bitmapUri = Uri.parse(bitmapPath);
 
                 Intent intent = new Intent(Intent.ACTION_SEND);
@@ -219,20 +207,18 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
 
             }
         });
-        hAssets.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
-                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-                //fragmentTransaction.remove(currentFragment);
-                Fragment f = new TokensFragment();
-                Bundle args = new Bundle();
-                args.putInt("ltype", 2000);
-                args.putString("selectFragment", "tokens");
-                f.setArguments(args);
-                fragmentTransaction.replace(R.id.nav_host_fragment, f);
-                fragmentTransaction.addToBackStack("home").commit();
-            }
+        hAssets.setOnClickListener(v -> {
+            Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
+            FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+            //fragmentTransaction.remove(currentFragment);
+            Fragment f = new TokensFragment();
+            Bundle args = new Bundle();
+            args.putInt("ltype", 2000);
+            args.putString("wBcid", deets.get("BCID"));
+            args.putString("selectFragment", "tokens");
+            f.setArguments(args);
+            fragmentTransaction.replace(R.id.nav_host_fragment, f);
+            fragmentTransaction.addToBackStack("home").commit();
         });
         return root;
     }
@@ -256,14 +242,16 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                 //     }
 
                 showDialog("Version: " + BuildConfig.VERSION_NAME + "\n\nBuild: " + BuildConfig.VERSION_CODE + "\n\n" +
-                        "Built: \n" + new Date(Long.parseLong(BuildConfig.BUILD_TIME)).toString() + "\n\nFCoin Balance: " + balance, true);
+                        "Built: \n" + new Date(Long.parseLong(BuildConfig.BUILD_TIME)).toString() +
+                        "\n\nCurrent blockchain:\n" + deets.get("BCID") + ": " + deets.get("BCNAME") +
+                        "\nRPC URL:\n" + deets.get("RPC"), true);
                 return true;
             case R.id.ma1:
                 Intent aa = new Intent(this.getActivity(), MainActivity.class);
                 startActivity(aa);
                 return true;
             case R.id.pks:
-                showDialog("PubKey:\n\n" + c.getEcKeyPair().getPublicKey().toString(16), true);
+                showDialog("PubKey:\n\n" + deets.get("PUBKEY"), true);
                 return true;
             case R.id.select_blockchain:
                 bcDialog("Select Blockchain", true);
@@ -298,12 +286,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                     e.printStackTrace();
                 }
             }
-            mAct.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    ((ImageView) mAct.findViewById(R.id.imageView2)).setImageBitmap(bmp);
-                }
-            });
+            mAct.runOnUiThread(() -> ((ImageView) mAct.findViewById(R.id.imageView2)).setImageBitmap(bmp));
         }
     }
 

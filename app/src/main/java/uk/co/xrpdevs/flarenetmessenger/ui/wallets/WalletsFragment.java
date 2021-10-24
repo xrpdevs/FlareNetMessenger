@@ -54,19 +54,15 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
      */
 
     public SimpleAdapter WalletsAdaptor;
-    //public SimpleAdapter simpleAdapter;
-    //Smstest3 contract;
-    //BigInteger GAS_LIMIT = BigInteger.valueOf(670025L);
-    //BigInteger GAS_PRICE = BigInteger.valueOf(200000L);
+
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
     public ArrayList<HashMap<String, String>> feedList = new ArrayList<>();
-    //HashMap<String, String> deets;
-    //private NotificationsViewModel notificationsViewModel;
+
     WalletsFragment mThis = this;
     ListView lv;
     PinCodeDialogFragment pinDialog;
-    //private String pinCode;
+
     Activity mAct;
     Uri walletsImportURI;
 
@@ -82,12 +78,10 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
         setHasOptionsMenu(true);
         View root = inflater.inflate(R.layout.fragment_wallets, container, false);
         lv = root.findViewById(R.id.wallets_list);
-        lv.setAdapter(WalletsAdaptor);
+       /// lv.setAdapter(WalletsAdaptor);
         registerForContextMenu(lv);
         prefs = this.requireActivity().getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
-        //  super.onCreate(savedInstanceState);
-
         mAct = this.getActivity();
         if (prefs.getInt("walletCount", 0) > 0) {
             myLog("FRAG", "Wallet count is non zero");
@@ -105,20 +99,22 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
         return root;
     }
 
+    public SimpleAdapter fillListView(Cursor c) {
+        return null;
+    }
+
     public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) {
         myLog("Lines", lines.toString());
         SimpleAdapter simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_wallets, new String[]{"NAME", "ADDRESS", "BCID", "BALANCE"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                //TextView cName = view.findViewById(R.id.inboxAddress);
+                //HashMap<String, String> theItem = lines.get(position);
                 TextView cType = view.findViewById(R.id.inboxType);
-                cType.setText("Coston");
-                //String cNtext = cName.getText().toString();
-                @SuppressWarnings("all") // we know its a hashmap....
+                cType.setText(lines.get(position).get("NAME")); // use lines.get(position) ICON to set icon in list
                 HashMap<String, String> item = (HashMap<String, String>) getItem(position);
                 int unread = lines.size();
-                myLog("TEST", "Number of contaxts: " + unread);
+                //myLog("TEST", "Number of contaxts: " + unread);
 
                 return view;
             }
@@ -128,17 +124,13 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
         lv.setOnItemClickListener((parent, v, position, id) -> {
             HashMap<String, String> theItem = lines.get(position);
             //String pooo = theItem.get("num");
-            myLog("smscseeker", "name:" + theItem.toString());
+            //myLog("smscseeker", "name:" + theItem.toString());
             pEdit.putInt("currentWallet", (position + 1));
             pEdit.commit();
 
-            //Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
             assert getFragmentManager() != null;
             FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-//                fragmentTransaction.setCustomAnimations(R.animator.
-//                        R.anim.slide_in,  // enter
-//                        R.anim.slide_out // exi
-            //fragmentTransaction.remove(currentFragment);
+
             HomeFragment f = null;
             try {
                 f = new HomeFragment();
@@ -147,6 +139,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
             }
             Bundle args = new Bundle();
             args.putInt("ltype", 2000);
+            args.putBoolean("updatewallet", true);
             args.putString("selectFragment", "home");
             if (f != null) {
                 f.setArguments(args);
@@ -167,17 +160,20 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
 
     public void getWalletList() {
         feedList.clear();
-        try {
-            Cursor c = FlareNetMessenger.dbH.getWallets();
-            feedList = dbHelper.cursorToHashMapArray(c);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        mThis.requireActivity().runOnUiThread(() -> {
-            WalletsAdaptor = fillListView(feedList);
-            lv.setAdapter(WalletsAdaptor);
-        });
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Cursor c = FlareNetMessenger.dbH.getWallets();
+                feedList = dbHelper.cursorToHashMapArray(c);
+                lv.setAdapter(fillListView(feedList));
+            }
+        }).start();
+        //mThis.requireActivity().runOnUiThread(() -> {
+        //   //  WalletsAdaptor = fillListView(feedList);
+
+        // });
     }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

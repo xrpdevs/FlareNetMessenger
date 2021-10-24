@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.web3j.crypto.Credentials;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
+import uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.R;
@@ -99,16 +101,17 @@ public class TokensFragment extends Fragment {
 
         prefs = this.getActivity().getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
-        try {
-            deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        try {
-            tokens = jsonToMap(deets.getOrDefault("walletTokens", ""));
-        } catch (JSONException e) {
-            tokens = null;
-        }
+        //try {
+        //    deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
+        //} catch (JSONException e) {
+        //    e.printStackTrace();
+        //}
+        deets = FlareNetMessenger.deets;
+        //try {
+        //    tokens = jsonToMap(deets.getOrDefault("walletTokens", ""));
+        //} catch (JSONException e) {
+        //    tokens = null;
+        //}
         mAct = this.getActivity();
         if (prefs.getInt("walletCount", 0) > 0) {
             myLog("FRAG", "Wallet count is non zero");
@@ -136,16 +139,19 @@ public class TokensFragment extends Fragment {
     public void onStart() {
         super.onStart();
         getActionBar().setDisplayShowHomeEnabled(true);
-        getActionBar().setTitle("Assets (" + deets.getOrDefault("walletName", "Wallet " + prefs.getInt("currentWallet", 0)) + ")");
+        getActionBar().setTitle("Assets (" + deets.getOrDefault("NAME", "Wallet " + prefs.getInt("currentWallet", 0)) + ")");
         getActionBar().setIcon(R.mipmap.chain_flare);
         Bundle args = getArguments();
         myLog("FRAG", "onStart");
     }
 
     public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) {
-        //myLog("Lines", lines.toString());
-        String bcname = prefs.getString("csbc_name", "");
-        simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_tokens, new String[]{"Name", "Addressoo", "Type", "lastval"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}) {
+        myLog("Lines", lines.toString());
+        String bcname = deets.get("BCNAME");
+        simpleAdapter = new SimpleAdapter(
+                mThis.getActivity(), lines, R.layout.listitem_tokens,
+                new String[]{"NAME", "ADDRESS", "NAME", "LEDGER_BALANCE"},
+                new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
@@ -159,17 +165,19 @@ public class TokensFragment extends Fragment {
 
                 Thread updateBalance;
                 if (!item.containsKey("primary")) {
+                    Log.d("abcdef", deets.get("RPC"));
                     updateBalance = new getERC20Balance(
                             MyService.getERC20link(
                                     item.get("Address"),
-                                    MyService.c,
-                                    MyService.rpc),
-                            deets.get("walletAddress"),
+                                    Credentials.create(FlareNetMessenger.deets.get("PRIVKEY")),
+                                    deets.get("RPC"),
+                                    deets.get("CHAINID")),
+                            deets.get("ADDRESS"),
                             cName);
                 } else {
                     updateBalance = new getERC20Balance(
                             null,
-                            deets.get("walletAddress"),
+                            deets.get("ADDRESS"),
                             cName);
                 }
                 updateBalance.start();
@@ -210,23 +218,24 @@ public class TokensFragment extends Fragment {
     public ArrayList<HashMap<String, String>> getAvailTokens(String blockChainName) throws IOException {
         ArrayList<HashMap<String, String>> availTokens = new ArrayList<>();
         HashMap<String, String> primaryAsset = new HashMap<>();
-        myLog("WBALANCE", deets.toString());
+
 
         // get asset type from wallets info
-        if (deets.containsKey("walletXaddr") || (deets.containsKey("walletType") && deets.get("walletType").equals("XRPL"))) {
-            myLog("DEBUG", "We are XRPL!(" + blockChainName + ") " + prefs.getString("csbc_type", ""));
-            primaryAsset.put("Name", "XRP");
-            primaryAsset.put("Type", prefs.getString("csbc_type", ""));
-            primaryAsset.put("Address", Utils.getMyXRPBalance(deets.get("walletAddress")).first.toPlainString());
+        if (deets.get("TYPE").equals("XRPL")) {
+
+            primaryAsset.put("NAME", "XRP");
+            primaryAsset.put("TYPE", "XRPL");
+            primaryAsset.put("ADDRESS", Utils.getMyXRPBalance(deets.get("ADDRESS")).first.toPlainString());
         } else {
-            primaryAsset.put("Name", "FLR");
-            primaryAsset.put("Address", Utils.getMyBalance(deets.get("walletAddress")).first.toPlainString());
+            myLog("WBALANCE", deets.toString());
+            primaryAsset.put("NAME", deets.get("TOKNAME"));
+            primaryAsset.put("Address", Utils.getMyBalance(deets.get("ADDRESS")).first.toPlainString());
         }
         primaryAsset.put("primary", "1");
         availTokens.add(primaryAsset);
         String json = null;
         //pain in the arse logic statement.. roll on simple SQL lookups!
-        if (!(deets.containsKey("walletXaddr") || (deets.containsKey("walletType") && deets.get("walletType").equals("XRPL")))) {
+        if (!deets.get("TYPE").equals("XRPL")) {
 
             try { // much simpler with SQL.
                 InputStream is = getActivity().getAssets().open("tokens_" + blockChainName + ".json");
@@ -241,7 +250,7 @@ public class TokensFragment extends Fragment {
                 for (int i = 0; i < key.length(); ++i) {
                     JSONObject obj = jo.getJSONObject(key.getString(i));
                     HashMap<String, String> tmp = jsonToMap(obj.toString());
-                    tmp.put("Name", key.getString(i));
+                    tmp.put("NAME", key.getString(i));
                     availTokens.add(tmp);
                 }
             } catch (IOException ex) {
@@ -308,9 +317,9 @@ public class TokensFragment extends Fragment {
                     bd = new BigDecimal(balance, 18);
                 } else {
                     try {
-                        if (deets.containsKey("walletXaddr") || (deets.containsKey("walletType") && deets.get("walletType").equals("XRPL"))) {
+                        if (deets.get("TYPE").equals("XRPL")) {
 
-                            bd = Utils.getMyXRPBalance(deets.get("walletAddress")).first;
+                            bd = Utils.getMyXRPBalance(deets.get("ADDRESS")).first;
                         } else {
                             bd = Utils.getMyBalance(address).first;
                             // get decimal places from definitions file
@@ -378,7 +387,7 @@ public class TokensFragment extends Fragment {
         myLog("MITEM", item.toString() + " ");
         switch (item.getItemId()) {
             case R.id.aic_updatebalance:
-                String addr = theItem.get("Address");
+                String addr = theItem.get("ADDRESS");
                 BigInteger bal = new BigInteger("0");
                 Thread updateBalance;
                 try {
@@ -386,15 +395,15 @@ public class TokensFragment extends Fragment {
                         // bal = new BigInteger("100");
                         updateBalance = new getERC20Balance(
                                 null,
-                                deets.get("walletAddress"),
+                                deets.get("ADDRESS"),
                                 cBody);
                     } else {
                         updateBalance = new getERC20Balance(
                                 MyService.getERC20link(
-                                        theItem.get("Address"),
+                                        theItem.get("ADDRESS"),
                                         MyService.c,
                                         MyService.rpc),
-                                deets.get("walletAddress"),
+                                deets.get("ADDRESS"),
                                 cBody);
 
                     }
@@ -424,7 +433,8 @@ public class TokensFragment extends Fragment {
                 //fragmentTransaction.remove(currentFragment);
                 Fragment f = new TransactionsActivity();
                 Bundle args = new Bundle();
-                args.putString("wAddr", deets.get("walletAddress"));
+                args.putString("wAddr", deets.get("ADDRESS"));
+                args.putString("wBcid", deets.get("BCID"));
                 // args.putString("selectFragment", "home");
                 f.setArguments(args);
 

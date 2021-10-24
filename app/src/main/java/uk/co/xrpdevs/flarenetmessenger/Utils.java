@@ -180,12 +180,12 @@ public class Utils {
     }
 
     public static Credentials getCreds(HashMap<String, String> deets) {
-        return Credentials.create(deets.get("walletPrvKey"));
+        return Credentials.create(deets.get("PRIVKEY"));
     }
 
     public static Pair<BigDecimal, String> getMyBalance(String walletAddress) throws IOException {
         String ErrorMessage = "OK";
-        Web3j FlareConnection = MyService.initWeb3j();
+        Web3j FlareConnection = MyService.initConnection(FlareNetMessenger.deets.get("RPC"), Integer.parseInt(FlareNetMessenger.deets.get("CHAINID")));
         BigDecimal wei;
 
         BigDecimal FLR = BigDecimal.valueOf(0);

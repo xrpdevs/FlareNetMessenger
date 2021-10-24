@@ -10,6 +10,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -32,10 +33,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.common.primitives.UnsignedInteger;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.xrpl.xrpl4j.client.JsonRpcClientErrorException;
-import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
-import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;
 import org.xrpl.xrpl4j.model.client.accounts.AccountTransactionsRequestParams;
 import org.xrpl.xrpl4j.model.client.accounts.AccountTransactionsResult;
 import org.xrpl.xrpl4j.model.client.accounts.AccountTransactionsTransactionResult;
@@ -59,12 +59,15 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
     HashMap<String, String> deets;
     FragmentManager manager;
 
+    Handler h;
+
     Activity mAct;
     RecyclerView rv;
     BottomNavigationView navView;
     TransactionsActivity mThis = this;
     public static String myAddress = "";
     static int thepos = 0;
+    public static String _bcid;
     static ArrayList<HashMap<String, String>> poo = new ArrayList<HashMap<String, String>>();
     SwipeRefreshLayout mSwipeRefreshLayout;
 
@@ -81,6 +84,7 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
 
         myLog("TRANSACTIONS", "onCreateCalled");
         mSwipeRefreshLayout = root.findViewById(R.id.swipe_container);
+
 
         mSwipeRefreshLayout.setOnRefreshListener(this);
 //        mSwipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary,
@@ -138,18 +142,27 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
             if (args.containsKey("wAddr")) {
                 myAddress = args.getString("wAddr");
             }
+            if (args.containsKey("wBcid")) {
+                _bcid = args.getString("wBcid");
+            }
         }
-        try {
-            update();
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        }
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    mSwipeRefreshLayout.setRefreshing(true);
+                    update();
+                } catch (JsonProcessingException | IllegalAccessException | NoSuchFieldException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+
 
     }
 
-    public void update() throws JsonProcessingException, IllegalAccessException {
+    public void update() throws JsonProcessingException, IllegalAccessException, NoSuchFieldException {
         if (prefs.contains("currentWallet") && deets != null) {
             try {
                 deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
@@ -169,24 +182,29 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
                 Log.d("Address: ", myAddress);
             }
         }
-        poo = getXRPtransactions(myAddress);
+        poo = getXRPtransactions(myAddress, _bcid);
         LinearLayoutManager mLayoutManager = new LinearLayoutManager(this.getActivity());
 
-        rv.setLayoutManager(mLayoutManager);
-        Log.d("OUTPUT", poo.toString());
 
+        Log.d("OUTPUT", poo.toString());
 
         try {
             mylist = new MyRecyclerView(poo, myAddress, manager);
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        //   rv.setHasFixedSize(true);
-        rv.setAdapter(mylist);
-        //registerForContextMenu(rv);
-        mylist.notifyDataSetChanged();
 
+        mAct.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                rv.setLayoutManager(mLayoutManager);
+                rv.setAdapter(mylist);
+                //registerForContextMenu(rv);
+                mylist.notifyDataSetChanged();
+                mSwipeRefreshLayout.setRefreshing(false);
 
+            }
+        });
     }
 
     /*   public ArrayList<HashMap<String, String>> getETHtransactions(String Address) {
@@ -254,21 +272,43 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
                 } else {
                     wa = poo.get(thepos).get("o_dest");
                 }
-                try {
-                    poo = getXRPtransactions(wa);
-                } catch (JsonProcessingException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-                try {
-                    mylist = new MyRecyclerView(poo, myAddress, manager);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                myAddress = wa;
-                rv.setAdapter(mylist);
-                mylist.notifyDataSetChanged();
+                mSwipeRefreshLayout.setRefreshing(true);
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            poo = getXRPtransactions(wa, _bcid);
+                            mylist = new MyRecyclerView(poo, myAddress, manager);
+
+                            mAct.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    myAddress = wa;
+                                    rv.setAdapter(mylist);
+                                    mylist.notifyDataSetChanged();
+                                    mSwipeRefreshLayout.setRefreshing(false);
+                                }
+                            });
+                        } catch (JsonProcessingException | IllegalAccessException | NoSuchFieldException | JSONException e) {
+                            e.printStackTrace();
+                        }
+                        //  Cursor c = FlareNetMessenger.dbH.getWallets();
+                        // feedList = dbHelper.cursorToHashMapArray(c);
+                        //  lv.setAdapter(fillListView(feedList));
+                    }
+                }).start();
+
+                // } catch (JsonProcessingException | NoSuchFieldException | IllegalAccessException e) {
+                //      e.printStackTrace();
+                //  }
+                //try {
+                //   mylist = new MyRecyclerView(poo, myAddress, manager);
+                //} catch (JSONException e) {
+                //    e.printStackTrace();
+                // }
+                // myAddress = wa;
+                // rv.setAdapter(mylist);
+                // mylist.notifyDataSetChanged();
                 return super.onContextItemSelected(item);
             default:
                 return super.onContextItemSelected(item);
@@ -277,15 +317,11 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
 
     }
 
-    public ArrayList<HashMap<String, String>> getXRPtransactions(String address) throws JsonProcessingException, IllegalAccessException {
+    public ArrayList<HashMap<String, String>> getXRPtransactions(String address, String bcid) throws JsonProcessingException, IllegalAccessException, NoSuchFieldException {
         ArrayList<HashMap<String, String>> list = new ArrayList<>();
-        ArrayList<String> jlist = new ArrayList<>();
-        String ErrorMessage = "OK";
-        BigDecimal XRP;
-        AccountInfoRequestParams requestParams =
-                AccountInfoRequestParams.of(Address.of(address));
-        AccountInfoResult accountInfoResult;
+        //ArrayList<String> jlist = new ArrayList<>();
         AccountTransactionsResult eek;
+        _bcid = bcid;
         mapper = new ObjectMapper();
 
         try {
@@ -293,7 +329,6 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
                     .account(Address.of(address))
                     .limit(UnsignedInteger.valueOf(200))
                     .build();
-
 
             eek = xrplClient.accountTransactions(bob);
 
@@ -304,21 +339,41 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
             // list.add(items);
             while (itr.hasNext()) {
                 HashMap<String, String> items = new HashMap<>();
-                AccountTransactionsTransactionResult tmp = itr.next();
+                AccountTransactionsTransactionResult<? extends Transaction> tmp = itr.next();
+                JSONArray memos = new JSONArray();
+                String memo_st;
                 try {
                     //  Log.d("META", mapper.writeValueAsString(tmp.transaction().memos().get(0).memo().memoData().get()));
-                    tmp.transaction().memos().size();
+                    //tmp.transaction().memos().size();
                     for (int z = 0; z < tmp.transaction().memos().size(); z++) {
-                        Log.d("MEMOZ " + (z + 1), tmp.transaction().memos().get(z).memo().memoData().get());
+                        Log.d("MEMOZ " + (z + 1), "");
+                        memos.put(MyRecyclerView.hexToAscii(tmp.transaction().memos().get(z).memo().memoData().get()));
                     }
+                    memo_st = memos.toString();
                 } catch (Exception e) {
-
+                    memo_st = null;
                 }
                 HashMap mapl = toHashMap(tmp.transaction());
+                Transaction a = tmp.transaction();
+                Field _dest = a.getClass().getDeclaredField("destination");
+                Field _amou = a.getClass().getDeclaredField("amount");
+                _dest.setAccessible(true);
+                _amou.setAccessible(true);
+
+                FlareNetMessenger.dbH.addTransaction(
+                        a.account().toString(),
+                        _dest.get(a).toString(),
+                        _amou.get(a).toString(),
+                        a.fee().toString(),
+                        _bcid,
+                        null,
+                        memo_st,
+                        String.valueOf(a.sequence()),
+                        a.hash().toString());
                 list.add(mapl);
-                String tjson = mapper.writeValueAsString(tmp);
-                jlist.add(tjson);
-                Log.d("JSON output: ", tjson);
+                //String tjson = mapper.writeValueAsString(tmp);
+                //jlist.add(tjson);
+
 
                 // HashMap<String, String> map =
                 //        (HashMap<String, String>) Arrays.asList(tmp.split(",")).stream().map(s -> s.split(":")).collect(Collectors.toMap(e -> e[0], e -> e[1]));
@@ -417,10 +472,10 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
                 //      mSwipeRefreshLayout.setRefreshing(true);
                 //   }
                 try {
-                    poo = getXRPtransactions(myAddress);
+                    poo = getXRPtransactions(myAddress, _bcid);
                 } catch (JsonProcessingException e) {
                     e.printStackTrace();
-                } catch (IllegalAccessException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 try {

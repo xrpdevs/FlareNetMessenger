@@ -247,7 +247,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         tmp.put("walletAddress", addr);     // primary wallet address
         tmp.put("walletAltAddress", xaddr); // generify so we can support hex and alternate addresses
         tmp.put("walletType", "XRPL");      // remove later as will be referenced from blockchain sql table
-        tmp.put("bcid", String.valueOf(bcData.get("bcid"))); // blockchain identifier
+        tmp.put("bcid", String.valueOf(bcData.get("INTID"))); // blockchain identifier
 
         privateKey = privateKey.replace("Optional[", "").replace("]", "");
 
@@ -255,7 +255,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
 
         if (!FlareNetMessenger.dbH.addWallet(
                 tmp.get("walletName"),
-                Integer.parseInt(Objects.requireNonNull(tmp.get("bcid"))),
+                (int) bcData.get("INTID"),
                 publicKey, privateKey, addr, xaddr, 0, "0")) {
             Log.e("DB Issue", "Failed to add wallet");
         }
@@ -351,11 +351,14 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         sbcdf.dismiss();
         bcData = data;
         String RPC = (String) data.get("RPC");
-        int CID = Integer.decode((String) Objects.requireNonNull(data.get("ChainID")));
-        MyService.fCoinLink = MyService.initConnection(RPC, CID); // maybe just keep this to FLR
-        MyService.rpc = RPC;
+        int CID = Integer.decode((String) data.get("CHAINID"));
+        if (!data.get("TYPE").equals("XRPL")) {
+            MyService.fCoinLink = MyService.initConnection(RPC, CID); // maybe just keep this to FLR
+            MyService.rpc = RPC;
+        } else {
+            MyService.isXRPL = true;
+        }
         MyService.tmpCID = CID;
-        MyService.isXRPL = true;
         // restart the service here?
 
 

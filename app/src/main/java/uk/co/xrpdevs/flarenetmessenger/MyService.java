@@ -122,11 +122,14 @@ public class MyService extends Service {
     /**
      * Factory Method
      */
+    public static ERC20 getERC20link(String contractAddress, Credentials _c, String RPCendPoint, String ChainID) {
+        tmpCID = Integer.parseInt(ChainID);
+        return getERC20link(contractAddress, _c, RPCendPoint);
+    }
 
-
-    public static ERC20 getERC20link(String contractAddress, Credentials c, String RPCendPoint){
+    public static ERC20 getERC20link(String contractAddress, Credentials _c, String RPCendPoint) {
         //Web3j RPC = Web3j.build(new HttpService(RPCendPoint));
-        ERC20 aToken = ERC20.load(contractAddress, fCoinLink, MyService.c, GAS_PRICE, GAS_LIMIT);
+        ERC20 aToken = ERC20.load(contractAddress, initConnection(RPCendPoint, tmpCID), c, GAS_PRICE, GAS_LIMIT);
         return aToken;
     }
 
@@ -134,7 +137,7 @@ public class MyService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
+        c = Credentials.create(FlareNetMessenger.deets.get("PRIVKEY"));
         mC = getApplicationContext();
 
 

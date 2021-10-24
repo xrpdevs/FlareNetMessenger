@@ -1,86 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:descendantFocusability="blocksDescendants">
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="10dp"
+    android:layout_marginEnd="10dp"
+    android:layout_marginBottom="2dp"
+    android:orientation="vertical">
 
         <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
             android:id="@+id/imageView"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
-            android:src="@drawable/ic_wallet"
+            android:layout_width="41dp"
+            android:layout_height="51dp"
+            android:layout_marginStart="4dp"
             android:maxWidth="50sp"
             android:maxHeight="50sp"
-            android:minHeight="50sp"
-            android:minWidth="50sp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceLarge"
-            android:text=" "
-            android:id="@+id/inboxAddress"
-            android:layout_alignParentTop="true"
-            android:layout_toRightOf="@+id/imageView"
-            android:textSize="18sp"
-            android:maxHeight="25sp"
-            android:minHeight="25sp"
-            android:singleLine="true"
-            android:textStyle="bold"
-            android:maxWidth="300sp"
-            android:layout_toEndOf="@id/imageView" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text=" "
-            android:id="@+id/inboxContent"
-            android:layout_below="@+id/inboxAddress"
-            android:singleLine="true"
-            android:maxHeight="25sp"
-            android:textSize="15sp"
-            android:layout_toRightOf="@+id/imageView"
-            android:maxWidth="300sp"
-            android:minHeight="25sp"
-            android:layout_toLeftOf="@+id/inboxLastact"
-            android:layout_toStartOf="@+id/inboxLastact"
-            android:layout_toEndOf="@id/imageView" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Draft"
-            android:id="@+id/inboxType"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true"
-            android:layout_above="@+id/inboxContent"
-            android:layout_toEndOf="@+id/inboxAddress"
-            android:layout_alignParentTop="true"
-            android:textAlignment="viewEnd"
-            android:layout_toRightOf="@+id/inboxAddress" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="17 Aug"
-            android:id="@+id/inboxLastact"
-            android:layout_below="@+id/inboxType"
-            android:textAlignment="viewEnd"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true"
-            android:layout_alignBottom="@+id/inboxContent"
             android:minWidth="50sp"
-            android:width="100sp" />
-    </RelativeLayout>
-</LinearLayout>
+            android:minHeight="50sp"
+            android:src="@drawable/ic_wallet"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/inboxAddress"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:text=" "
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/inboxType"
+            app:layout_constraintStart_toEndOf="@+id/imageView"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:ignore="SpeakableTextPresentCheck" />
+
+        <TextView
+            android:id="@+id/inboxType"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Draft"
+            android:textAlignment="viewEnd"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/inboxAddress"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/inboxContent"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:text=" "
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            app:layout_constraintEnd_toStartOf="@+id/inboxLastact"
+            app:layout_constraintHorizontal_bias="0.419"
+            app:layout_constraintStart_toEndOf="@+id/imageView"
+            app:layout_constraintTop_toBottomOf="@+id/inboxAddress" />
+
+        <TextView
+            android:id="@+id/inboxLastact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:width="100sp"
+            android:minWidth="50sp"
+            android:text=""
+            android:textAlignment="viewEnd"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/inboxType" />
+</androidx.constraintlayout.widget.ConstraintLayout>

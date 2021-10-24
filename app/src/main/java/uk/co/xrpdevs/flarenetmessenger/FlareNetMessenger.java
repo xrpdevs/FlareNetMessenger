@@ -2,28 +2,28 @@ package uk.co.xrpdevs.flarenetmessenger;
 
 import android.app.Application;
 import android.content.Context;
-import android.util.Log;
 
 import org.json.JSONException;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 public class FlareNetMessenger extends Application {
     private static FlareNetMessenger instance;
     public static boolean loggingOn = false;
     public static dbHelper dbH;
+    public static HashMap<String, String> deets;
 
     @Override
     public void onCreate() {
-        instance = this;
-        Log.d("EGGBY", "Is EEEEEEENID");
         super.onCreate();
+        instance = this;
         try {
             initDB();
         } catch (IOException | JSONException e) {
             e.printStackTrace();
         }
-        Log.d("EGGBY", "Is diggerZZZZ");
+
     }
 
     public static Context getContext() {
@@ -32,13 +32,6 @@ public class FlareNetMessenger extends Application {
     }
 
     public void initDB() throws IOException, JSONException {
-
-        dbH = new dbHelper(this.getApplicationContext());
-        if (dbH.ifTableExists("WAL")) {
-            Log.d("EEEK", "Wallets table created!");
-        } else {
-            Log.d("EEEK", "NO SQLin going on ere! :(");
-        }
-
+        dbH = new dbHelper(this);
     }
 }

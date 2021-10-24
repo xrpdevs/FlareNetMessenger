@@ -1,15 +1,12 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
 import android.annotation.SuppressLint;
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.net.Uri;
-import android.provider.ContactsContract;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -18,13 +15,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +24,7 @@ import java.util.HashMap;
 public class dbHelper extends SQLiteOpenHelper {
 
     SQLiteDatabase db = getReadableDatabase();
+
     private static final String DATABASE_NAME = "fnm";    // Database Name
     private static final String CREATE_WAL = "CREATE TABLE IF NOT EXISTS WAL ( ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
             "NAME VARCHAR(64), BCID INTEGER, PUBKEY TEXT, ADDRESS TEXT, ALTADDRESS TEXT, PRIVKEY TEXT," +
@@ -42,21 +35,12 @@ public class dbHelper extends SQLiteOpenHelper {
     private static final String CREATE_TOK = "CREATE TABLE IF NOT EXISTS TOK (ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
             "NAME VARCHAR(64), TOKNAME VARCHAR(20), BCID BIGINT, CONTRACT VARCHAR(255), TYPE BIGINT, " +
             "PRECISION INTEGER);";
+    private static final String CREATE_TXN = "CREATE TABLE IF NOT EXISTS TRX (ID INTEGER PRIMARY KEY AUTOINCREMENT, ACCOUNT VARCHAR(128)," +
+            " DESTINA VARCHAR(128), AMOUNT VARCHAR(32), FEE VARCHAR(32), BCID BIGINT, TID BIGINT," +
+            " MEMO TEXT, SEQ BIGINT KEY, TXID TEXT);";
 
-    public static final String SMS_TABLE_NAME = "sms";
-    public static final String SMS_COLUMN_ID = "_id";
-    public static final String SMS_COLUMN_TS = "ts";
-    public static final String SMS_COLUMN_TYPE = "type";
-    public static final String SMS_COLUMN_BODY = "body";
-    public static final String SMS_COLUMN_NUM = "num";
-    public static final String SMS_COLUMN_VIA = "via";
-    public static final String PM_TABLE_NAME = "pm";
-    public static final String PM_COLUMN_ID = "_id";
-    public static final String PM_COLUMN_TS = "ts";
-    public static final String PM_COLUMN_TYPE = "type";
-    public static final String PM_COLUMN_BODY = "body";
-    public static final String PM_COLUMN_USER = "user";
-    private static final int DATABASE_VERSION = 7;
+
+    private static final int DATABASE_VERSION = 10;
 
     public dbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -79,6 +63,7 @@ public class dbHelper extends SQLiteOpenHelper {
         }
     }
 
+
     public static boolean isNumeric(String str) {
         for (char c : str.toCharArray()) {
             if (!Character.isDigit(c)) return false;
@@ -86,11 +71,28 @@ public class dbHelper extends SQLiteOpenHelper {
         return true;
     }
 
-    boolean setupblk(JSONArray blk) throws JSONException {
-        Cursor cursor;
+    public void addTransaction(String account, String dest, String amount, String fee, String bcid, String tid, String memo, String seq, String txid) {
+        //SQLiteDatabase db = getReadableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("ACCOUNT", account);
+        cv.put("DESTINA", dest);
+        cv.put("AMOUNT", amount);
+        cv.put("FEE", fee);
+        cv.put("BCID", bcid);
+        cv.put("TID", tid);
+        cv.put("MEMO", memo);
+        cv.put("SEQ", seq);
+        cv.put("TXID", txid);
+        db.insertOrThrow("TRX", null, cv);
+    }
+
+    void setupBLKTable(JSONArray blk) throws JSONException {
+
+        // Log.e("dbhandle", db.toString());
+
         // chang to delete records below N (10,000?) so as to preserve user-made blockchain info
-        cursor = db.rawQuery("Delete from BLK WHERE 1;", null, null);
-        cursor = db.rawQuery("DELETE FROM SQLITE_SEQUENCE WHERE name='BLK';", null, null);
+        // cursor = db.rawQuery("Delete from BLK WHERE 1;", null, null);
+        // cursor = db.rawQuery("DELETE FROM SQLITE_SEQUENCE WHERE name='BLK';", null, null);
         for (int i = 0; i < blk.length(); i++) {
             JSONObject entry = blk.getJSONObject(i);
 
@@ -106,14 +108,12 @@ public class dbHelper extends SQLiteOpenHelper {
             contentValues.put("TESTNET", entry.optString("Testnet", ""));
             contentValues.put("TYPE", entry.optString("Type", ""));
 
-            db.insert("BLK", null, contentValues);
-
+            db.insertOrThrow("BLK", null, contentValues);
         }
-        return true;
 
     }
 
-    boolean addWallet(String name, int bcid, String pubkey, String privkey, String address, @Nullable String altaddress, @Nullable int ledger_lastseen, @Nullable String balance) {
+    boolean addWallet(String name, int bcid, String pubkey, String privkey, String address, @Nullable String altaddress, int ledger_lastseen, @Nullable String balance) {
         ContentValues cv = new ContentValues();
         cv.put("NAME", name);
         cv.put("PUBKEY", pubkey);
@@ -132,8 +132,18 @@ public class dbHelper extends SQLiteOpenHelper {
         }
     }
 
+    public Cursor getWalletDetails(String id) {
+        String sql = "SELECT WAL.*, BLK.NAME as BCNAME,TOKNAME,SYMBOL,RPC,TYPE,CHAINID,ICON,TESTNET " +
+                "FROM WAL INNER JOIN BLK ON WAL.BCID = BLK.INTID WHERE WAL.ID = " + id + ";";
+        try {
+            return db.rawQuery(sql, null);
+        } catch (SQLiteException e) {
+            return null;
+        }
+    }
+
     public Cursor getWallets() {
-        String sql = "SELECT * FROM WAL WHERE 1";
+        String sql = "SELECT * FROM WAL WHERE 1;";
         try {
             return db.rawQuery(sql, null);
         } catch (SQLiteException e) {
@@ -150,8 +160,10 @@ public class dbHelper extends SQLiteOpenHelper {
         }
     }
 
+    @SuppressLint("Recycle")
     HashMap<String, String> getAddrNames(@Nullable String _bcid) {
         String sql;
+        Cursor res;
         HashMap<String, String> _this = new HashMap<>();
         if (_bcid == null) _bcid = "0";
         int bcid = Integer.parseInt(_bcid);
@@ -161,10 +173,11 @@ public class dbHelper extends SQLiteOpenHelper {
             sql = "SELECT NAME, ADDRESS FROM WAL WHERE BCID = ?";
         }
         try {
-            Cursor res = db.rawQuery(sql, new String[]{_bcid});
+            res = db.rawQuery(sql, new String[]{_bcid});
             while (res.moveToNext()) {
                 _this.put(res.getString(1), res.getString(0));
             }
+
         } catch (SQLiteException e) {
             return null;
         }
@@ -172,9 +185,11 @@ public class dbHelper extends SQLiteOpenHelper {
     }
 
     @Override
-    public void onCreate(SQLiteDatabase db) {
+    public void onCreate(SQLiteDatabase _db) {
+        db = _db;
         db.execSQL(CREATE_WAL);
         db.execSQL(CREATE_BLK);
+        db.execSQL(CREATE_TXN);
         db.execSQL(CREATE_TOK);
         InputStream is = null;
         try {
@@ -185,7 +200,8 @@ public class dbHelper extends SQLiteOpenHelper {
             is.close();
             String json = new String(buffer, StandardCharsets.UTF_8);
             JSONArray jo = new JSONArray(json);
-            setupblk(jo);
+            Log.e("JSON", jo.toString());
+            setupBLKTable(jo);
         } catch (IOException | JSONException e) {
             e.printStackTrace();
         }
@@ -212,12 +228,36 @@ public class dbHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS BLK");
         db.execSQL("DROP TABLE IF EXISTS TOK");
 //        db.execSQL("DROP TABLE IF EXISTS WAL");
-        db.execSQL("DROP TABLE IF EXISTS TXN");
+        db.execSQL("DROP TABLE IF EXISTS TRX");
         db.execSQL("DROP TABLE IF EXISTS MSG");
         onCreate(db);
     }
 
+    public HashMap<String, String> getLastSeqs() {
+        HashMap<String, String> map = new HashMap<>();
+        Cursor c = db.rawQuery("SELECT DISTINCT(BCID),SEQ FROM TRX WHERE 1 ORDER BY SEQ DESC;", null);
+        while (c.moveToNext()) {
+            map.put(c.getString(0), c.getString(1));
+        }
+        c.close();
+        return map;
+    }
 
+    /*
+
+    public static final String SMS_TABLE_NAME = "sms";
+    public static final String SMS_COLUMN_ID = "_id";
+    public static final String SMS_COLUMN_TS = "ts";
+    public static final String SMS_COLUMN_TYPE = "type";
+    public static final String SMS_COLUMN_BODY = "body";
+    public static final String SMS_COLUMN_NUM = "num";
+    public static final String SMS_COLUMN_VIA = "via";
+    public static final String PM_TABLE_NAME = "pm";
+    public static final String PM_COLUMN_ID = "_id";
+    public static final String PM_COLUMN_TS = "ts";
+    public static final String PM_COLUMN_TYPE = "type";
+    public static final String PM_COLUMN_BODY = "body";
+    public static final String PM_COLUMN_USER = "user";
     public HashMap<String, Integer> unread_total() {
         //SQLiteDatabase dbh = getReadableDatabase();
         String sqla = "select sum(count) from unread where type = 'sms'";
@@ -481,6 +521,7 @@ public class dbHelper extends SQLiteOpenHelper {
         return res;
     }
 
+    @SuppressLint("Range")
     public String getContactName(Context context, String phoneNumber) {
         phoneNumber = phoneNumber.replace("+44", "0");
         if (isNumeric(phoneNumber) && phoneNumber.length() > 10) {
@@ -580,5 +621,5 @@ public class dbHelper extends SQLiteOpenHelper {
         return (Integer.valueOf(st));
 
     }
-
+*/
 }
