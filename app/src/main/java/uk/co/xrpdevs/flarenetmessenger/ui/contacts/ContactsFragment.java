@@ -81,6 +81,7 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
     AddressEntryFragment addressEntryDialog;
     Bundle tempContactInfo;
 
+
     @Override //Handle arguments and setup
     public void onStart() {
         super.onStart();
@@ -248,22 +249,28 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
 
                 if (SendMessage) {  // handle click-through from Messages Fragment
 
-                    // todo: handle sending messages for non-contacts for ETH style BC's or XRP
-                    TextView cNam = v.findViewById(R.id.inboxAddress);
-                    TextView cAddr = v.findViewById(R.id.inboxContent);
-                    Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
-                    FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
-                    fragmentTransaction.remove(currentFragment);
-                    MessagesFragment f = new MessagesFragment();
-                    Bundle args = new Bundle();
-                    args.putInt("SendMsg", 3000);
-                    args.putString("addrTo", cAddr.getText().toString());
-                    args.putString("nameTo", cNam.getText().toString());
-                    args.putString("selectFragment", "home");
-                    f.setArguments(args);
+                    if (theItem.get("id").equals("-5000")) {
+                        android.app.FragmentManager manager = mThis.getActivity().getFragmentManager();
+                        addressEntryDialog("Enter/Scan Address", "Address:", true);
+                    } else {
+                        // todo: handle sending messages for non-contacts for ETH style BC's or XRP
+                        Bundle args = new Bundle();
+                        args.putInt("SendMsg", 3000);
+                        Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
+                        FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                        fragmentTransaction.remove(currentFragment);
+                        MessagesFragment f = new MessagesFragment();
+                        TextView cNam = v.findViewById(R.id.inboxAddress);
+                        TextView cAddr = v.findViewById(R.id.inboxContent);
 
-                    fragmentTransaction.replace(R.id.nav_host_fragment, f);
-                    fragmentTransaction.addToBackStack("contacts").commit();
+                        args.putString("addrTo", cAddr.getText().toString());
+                        args.putString("nameTo", cNam.getText().toString());
+                        args.putString("selectFragment", "home");
+                        f.setArguments(args);
+                        fragmentTransaction.replace(R.id.nav_host_fragment, f);
+                        fragmentTransaction.addToBackStack("contacts").commit();
+                    }
+
                 } else { // open contact in view contact / send funds activity
 
                     Intent i = new Intent(this.getActivity(),
@@ -507,7 +514,24 @@ public class ContactsFragment extends Fragment implements AddWalletDialogFragmen
         if (pinCode.equals("_SCAN_QR")) {
             doScanner(tempContactInfo);
         } else {
-            doAddContact(tempContactInfo, pinCode);
+            if (!SendMessage) {
+                doAddContact(tempContactInfo, pinCode);
+            } else {
+                // go back to message fragment and set args
+                Bundle args = new Bundle();
+                args.putInt("SendMsg", 3000);
+                Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
+                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+                fragmentTransaction.remove(currentFragment);
+                MessagesFragment f = new MessagesFragment();
+
+                args.putString("addrTo", pinCode);
+                args.putString("nameTo", "Unsaved Address");
+                args.putString("selectFragment", "home");
+                f.setArguments(args);
+                fragmentTransaction.replace(R.id.nav_host_fragment, f);
+                fragmentTransaction.addToBackStack("contacts").commit();
+            }
             //todo: handle checking and adding from pasted address
         }
     }

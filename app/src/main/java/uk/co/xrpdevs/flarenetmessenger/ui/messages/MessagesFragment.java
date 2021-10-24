@@ -10,7 +10,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.provider.ContactsContract;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -30,7 +29,6 @@ import androidx.fragment.app.FragmentTransaction;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONException;
 import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
 import org.web3j.crypto.Credentials;
@@ -51,6 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import uk.co.xrpdevs.flarenetmessenger.ContactsManager;
+import uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
@@ -75,7 +74,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
     BigInteger GAS_PRICE = BigInteger.valueOf(200000L);
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
-    Web3j FlareConnection;
+    Web3j blockChainLink;
     String contractAddress;
     public ArrayList<HashMap<String, String>> feedList = new ArrayList<HashMap<String, String>>();
     HashMap<String, String> deets;
@@ -118,6 +117,9 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                  use those instead.
 
            TODO: Out-of-band public key sharing?
+
+           TODO: Adapt to work with XRPL. Use minimum TX amount per message (1 drop)
+           TODO: Require PIN to enter messages activity.
          */
 
         getMessagesThread = new getInbox();
@@ -130,17 +132,20 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
         registerForContextMenu(lv);
         prefs = mThis.getActivity().getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
-        FlareConnection = MyService.initWeb3j();
-        contractAddress = fsmsContractAddress;
-        try {
-            deets = Utils.getPkey(mThis.getActivity(), prefs.getInt("currentWallet", 0));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        cgp = new DefaultGasProvider();
-        c = Credentials.create(deets.get("walletPrvKey"));
 
-        fsms = uk.co.xrpdevs.flarenetmessenger.contracts.Fsms.load(fsmsContractAddress, FlareConnection, c, GAS_PRICE, GAS_LIMIT);
+        deets = FlareNetMessenger.deets;
+
+        blockChainLink = MyService.initConnection(
+                deets.get("RPC"),
+                Integer.parseInt(deets.get("CHAINID"))
+        );
+        contractAddress = fsmsContractAddress;
+
+
+        cgp = new DefaultGasProvider();
+        c = Credentials.create(deets.get("PRIVKEY"));
+
+        fsms = uk.co.xrpdevs.flarenetmessenger.contracts.Fsms.load(fsmsContractAddress, blockChainLink, c, GAS_PRICE, GAS_LIMIT);
 
 
         contract = fsms;
@@ -198,7 +203,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
                 showEditDialog("Mesage to "+who, "New message", true);
             }
         }
-        c = Credentials.create(deets.get("walletPrvKey"));
+        c = Credentials.create(deets.get("PRIVKEY"));
         MyService.initialiseContracts();
         contract = MyService.fsms;
 
@@ -556,7 +561,7 @@ public class MessagesFragment extends Fragment implements EnterMsgDialogFragment
             myLog("TEST", "Running SendMSG thread");
             String rawString = message;
 
-            String walletPubKey = deets.get("walletPubKey");
+            String walletPubKey = deets.get("PUBKEY");
 
             String remotePubKey = null;
             myLog("walletPubKey", walletPubKey);

@@ -19,7 +19,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -105,17 +104,14 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
 
     public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) {
         myLog("Lines", lines.toString());
-        SimpleAdapter simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_wallets, new String[]{"NAME", "ADDRESS", "BCID", "BALANCE"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}) {
+        SimpleAdapter simpleAdapter = new SimpleAdapter(
+                mThis.getActivity(), lines, R.layout.listitem_wallets,
+                new String[]{"NAME", "ADDRESS", "BCNAME", "LEDGER_BALANCE"},
+                new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                //HashMap<String, String> theItem = lines.get(position);
-                TextView cType = view.findViewById(R.id.inboxType);
-                cType.setText(lines.get(position).get("NAME")); // use lines.get(position) ICON to set icon in list
                 HashMap<String, String> item = (HashMap<String, String>) getItem(position);
-                int unread = lines.size();
-                //myLog("TEST", "Number of contaxts: " + unread);
-
                 return view;
             }
         };
@@ -125,7 +121,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
             HashMap<String, String> theItem = lines.get(position);
             //String pooo = theItem.get("num");
             //myLog("smscseeker", "name:" + theItem.toString());
-            pEdit.putInt("currentWallet", (position + 1));
+            pEdit.putInt("currentWallet", Integer.parseInt(lines.get(position).get("ID")));
             pEdit.commit();
 
             assert getFragmentManager() != null;

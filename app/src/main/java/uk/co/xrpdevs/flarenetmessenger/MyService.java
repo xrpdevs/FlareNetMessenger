@@ -82,10 +82,10 @@ public class MyService extends Service {
 
     //  public static String contractAddress= "0x7884C21E95cBBF12A15F7EaF878224633d6ADF54";
 //    public static String fsmsContractAddress = "0x21dd8FAa568b05Fd260e998D2d0adc12b5f36b1E";  //COSTON
-    public static String fsmsContractAddress = "0xBb5E6dC37Fe620E71A9394bC1dE446D4ED11C7eb"; //local testnet
+    //public static String fsmsContractAddress = "0xBb5E6dC37Fe620E71A9394bC1dE446D4ED11C7eb"; //local testnet
+    public static String fsmsContractAddress = "0xdA451F4feBBbdDdAb8A80a606B45146d0ac1C4fa";    // AVAXTEST
     public static String contractAddress = fsmsContractAddress;
-    //    public static String fsmsContractAddress = "0xdA451F4feBBbdDdAb8A80a606B45146d0ac1C4fa";    // AVAXTEST
-//    public static String fCoinAddr = "0xd15942e499186AA173A082ED0Bc90Aa3Ab93bd73"; // COSTON
+    //    public static String fCoinAddr = "0xd15942e499186AA173A082ED0Bc90Aa3Ab93bd73"; // COSTON
     public static String fCoinAddr = "0x933FDA928386bce4021FC472b4115C427df06612"; // local testnet
 
     //    public static String fCoinAddr = "0x94e0e1f82c99dBC11271DB7E39c1Af5E379aF8e0";              // AVAXTEST
@@ -137,7 +137,7 @@ public class MyService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        c = Credentials.create(FlareNetMessenger.deets.get("PRIVKEY"));
+        //c = Credentials.create(FlareNetMessenger.deets.get("PRIVKEY"));
         mC = getApplicationContext();
 
 
@@ -265,18 +265,13 @@ public class MyService extends Service {
         prefs = getSharedPreferences("fnm", 0);
         myLog("PREFS", Utils.dumpMap(prefs.getAll()));
         if (prefs.contains("walletCount") && prefs.getInt("walletCount", 0) > 0) {
-            try {
-                deets = Utils.getPkey(this.getApplicationContext(), prefs.getInt("currentWallet", 0));
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            if (deets.containsKey("walletType") && !deets.get("walletType").equals("XRPL")) {
-                c = create(deets.get("walletPrvKey"));
-                //   fsms = uk.co.xrpdevs.flarenetmessenger.contracts.Fsms.load(fsmsContractAddress, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
-                //    fcoin = uk.co.xrpdevs.flarenetmessenger.contracts.ERC20.load(fCoinAddr, fsmsLink, c, GAS_PRICE, GAS_LIMIT);
-                initialiseContracts();
+            int cw = prefs.getInt("currentWallet", 0);
+            deets = dbHelper.cursorToHashMapArray(FlareNetMessenger.dbH.getWalletDetails(String.valueOf(cw))).get(0);
 
-                //fcoin.transfer("")
+            if (!deets.get("TYPE").equals("XRPL")) {
+                c = create(deets.get("PRIVKEY"));
+                //initialiseContracts();
+                subscribeNotifications();
             }
             if (!isAlarmScheduled()) {
                 setAlarm();
@@ -285,7 +280,7 @@ public class MyService extends Service {
 
 
             // AsyncTask will take place here to get data from web.
-            subscribeNotifications();
+
         }
         started = false;
         return START_STICKY;
@@ -332,15 +327,17 @@ public class MyService extends Service {
             //      @ReflectionSupport(ReflectionSupport.Level.FULL);
             //     XrplClient fucker = new XrplClient(rippledUrl);
 
-            if (deets.containsKey("walletPrvKey")) {
-                try {
-                    BigInteger bal = fcoin.balanceOf(c.getAddress()).send();
-                    String cn = fcoin.name().send();
-                    myLog("uk.co.xrpdevs.flarenetmessenger.contracts.ERC20-name", cn);
-                    myLog("BALANCE", bal.toString());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            // need to go through wallet addresses and set up all subscriptions through websockets.
+
+            if (deets.containsKey("PRIVKEY")) {
+                //try {
+                //    BigInteger bal = fcoin.balanceOf(c.getAddress()).send();
+                //    String cn = fcoin.name().send();
+                //    myLog("uk.co.xrpdevs.flarenetmessenger.contracts.ERC20-name", cn);
+                //    myLog("BALANCE", bal.toString());
+                //} catch (Exception e) {
+                //    e.printStackTrace();
+                //  }
                 EthFilter eventFilter = new EthFilter(null, null, fsmsContractAddress);
                 eventFilter.addSingleTopic(EventEncoder.encode(Fsms.MESSAGENOTIFICATION_EVENT));
                 //TODO: Filter isn't working yet. Needs investigation!
@@ -461,7 +458,7 @@ public class MyService extends Service {
 
         Web3j myEtherWallet = Web3j.build(
                 new HttpService(rpc));
-        // myEtherWallet.ethChainId().setId(chainID);
+        myEtherWallet.ethChainId().setId(chainID);
         //   myEtherWallet.netVersion().setId(chainID);
         return myEtherWallet;
     }

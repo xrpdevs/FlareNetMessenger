@@ -113,8 +113,12 @@ public class dbHelper extends SQLiteOpenHelper {
 
     }
 
-    boolean addWallet(String name, int bcid, String pubkey, String privkey, String address, @Nullable String altaddress, int ledger_lastseen, @Nullable String balance) {
+    int addWallet(String name, int bcid, String pubkey, String privkey, String address, String altaddress, int ledger_lastseen, @Nullable String balance) {
+        int wc = walletCount();
         ContentValues cv = new ContentValues();
+        if (altaddress == null) {
+            altaddress = "";
+        }
         cv.put("NAME", name);
         cv.put("PUBKEY", pubkey);
         cv.put("PRIVKEY", privkey);
@@ -123,13 +127,9 @@ public class dbHelper extends SQLiteOpenHelper {
         cv.put("ALTADDRESS", altaddress);
         cv.put("LEDGER_LASTSEEN", ledger_lastseen);
         cv.put("LEDGER_BALANCE", balance);
-        try {
-            db.insertOrThrow("WAL", null, cv);
-            return true;
-        } catch (Exception e) {
-            Log.d("SQL", "Error inserting wallet to db. Exception: " + e);
-            return false;
-        }
+
+        db.insertOrThrow("WAL", null, cv);
+        return wallet_last_id();
     }
 
     public Cursor getWalletDetails(String id) {
@@ -143,11 +143,40 @@ public class dbHelper extends SQLiteOpenHelper {
     }
 
     public Cursor getWallets() {
-        String sql = "SELECT * FROM WAL WHERE 1;";
+        String sql = "SELECT WAL.*, BLK.NAME as BCNAME,TOKNAME,SYMBOL,RPC,TYPE,CHAINID,ICON,TESTNET " +
+                "FROM WAL INNER JOIN BLK ON WAL.BCID = BLK.INTID WHERE 1;";
         try {
             return db.rawQuery(sql, null);
         } catch (SQLiteException e) {
             return null;
+        }
+    }
+
+    public int walletCount() {
+        String sql = "SELECT COUNT(NAME) FROM WAL";
+        try {
+            Cursor a = db.rawQuery(sql, null);
+            if (a.moveToNext()) {
+                return a.getInt(0);
+            } else {
+                return 0;
+            }
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    public int wallet_last_id() {
+        String sql = "SELECT ID FROM WAL where 1 order by ID DESC LIMIT 1";
+        try {
+            Cursor a = db.rawQuery(sql, null);
+            if (a.moveToNext()) {
+                return a.getInt(0);
+            } else {
+                return 0;
+            }
+        } catch (Exception e) {
+            return 0;
         }
     }
 

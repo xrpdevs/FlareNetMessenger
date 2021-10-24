@@ -32,7 +32,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.HashMap;
-import java.util.Objects;
 
 import okhttp3.HttpUrl;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
@@ -253,16 +252,15 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
 
         // Utils.xorStrings()
 
-        if (!FlareNetMessenger.dbH.addWallet(
+        int lr = FlareNetMessenger.dbH.addWallet(
                 tmp.get("walletName"),
-                (int) bcData.get("INTID"),
-                publicKey, privateKey, addr, xaddr, 0, "0")) {
-            Log.e("DB Issue", "Failed to add wallet");
-        }
+                Integer.parseInt(tmp.get("bcid")),
+                publicKey, privateKey, addr, xaddr, 0, "0");
+
 
         pEdit.putString("wallet" + wC, new JSONObject(tmp).toString());
-        pEdit.putInt("walletCount", wC);
-        pEdit.putInt("currentWallet", wC);
+        pEdit.putInt("walletCount", FlareNetMessenger.dbH.walletCount());
+        pEdit.putInt("currentWallet", lr);
         pEdit.commit();
         pEdit.apply();
         Intent i = new Intent(PKeyScanner.this, MainActivity.class);
@@ -289,9 +287,10 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         String publicKey = cs.getEcKeyPair().getPublicKey().toString(16);
         String addr = cs.getAddress();
 
-        assert scanContent != null;
+        Log.e("abcdef", scanContent);
+
         if (scanContent.startsWith("0x") && scanContent.length() == 66) {
-            int wC = prefs.getInt("walletCount", 0);
+            int wC = FlareNetMessenger.dbH.walletCount();
             wC++;
 
             System.out.println("Private key: " + privateKey);
@@ -308,7 +307,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
             tmp.put("walletPubKey", "0x" + publicKey);
             tmp.put("walletAddress", addr);
             tmp.put("walletType", "ETH");
-            tmp.put("bcid", String.valueOf(bcData.get("bcid")));
+            tmp.put("bcid", String.valueOf(bcData.get("INTID")));
 
             Log.d("bcdata", bcData.toString());
 
@@ -316,19 +315,17 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
 
             // Utils.xorStrings()
 
-            if (!FlareNetMessenger.dbH.addWallet(
+            int lr = FlareNetMessenger.dbH.addWallet(
                     tmp.get("walletName"),
-                    Integer.parseInt(Objects.requireNonNull(tmp.get("bcid"))),
+                    Integer.parseInt(tmp.get("bcid")),
                     publicKey,
                     privateKey,
-                    addr, null, 0, "0")) {
-                Log.d("DB Error", "Unable to add wallet to sql db");
-            }
+                    addr, null, 0, "0");
 
 
             pEdit.putString("wallet" + wC, new JSONObject(tmp).toString());
-            pEdit.putInt("walletCount", wC);
-            pEdit.putInt("currentWallet", wC);
+            pEdit.putInt("walletCount", FlareNetMessenger.dbH.walletCount());
+            pEdit.putInt("currentWallet", lr);
             pEdit.commit();
             pEdit.apply();
             Intent i = new Intent(PKeyScanner.this, MainActivity.class);

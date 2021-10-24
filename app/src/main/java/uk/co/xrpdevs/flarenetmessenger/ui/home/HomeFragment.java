@@ -102,8 +102,11 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
     public void onStart() {
         super.onStart();
         Service bob = new MyService();
+        int cw = prefs.getInt("currentWallet", 0);
+        //int wt = FlareNetMessenger.dbH.walletCount();
 
-        Cursor c = dbH.getWalletDetails(String.valueOf(prefs.getInt("currentWallet", 0)));
+        //cw=3;
+        Cursor c = dbH.getWalletDetails(String.valueOf(cw));
         deets = dbHelper.cursorToHashMapArray(c).get(0);
         FlareNetMessenger.deets = deets;
 
