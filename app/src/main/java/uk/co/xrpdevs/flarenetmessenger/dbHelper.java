@@ -20,35 +20,26 @@ import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class dbHelper extends SQLiteOpenHelper {
-    //public netTools nt = new netTools();
+
     SQLiteDatabase db = getReadableDatabase();
-    //    public final SQLiteDatabase dbii = getReadableDatabase();
     private static final String DATABASE_NAME = "fnm";    // Database Name
-    private static final String TABLE_WAL = "WAL";   // Table Name
-    private static final String TABLE_BLK = "BLK";   // Table Name
-    private static final String TABLE_TOK = "TOK";   // Table Name
-    private static final String TABLE_MSG = "MSG";   // TOKENS
-    private static final String TABLE_TRX = "TRX";   // TRANSACTIONS
-    private static final int DATABASE_Version = 1;    // Database Version
-    private static final String UID = "_id";            // Column I (Primary Key)
-    private static final String NAME = "Name";        // Column II
-    private static final String MyPASSWORD = "Password";    // Column III
-    private static final String CREATE_WAL = "CREATE TABLE WAL ( ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
+    private static final String CREATE_WAL = "CREATE TABLE IF NOT EXISTS WAL ( ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
             "NAME VARCHAR(64), BCID INTEGER, PUBKEY TEXT, ADDRESS TEXT, ALTADDRESS TEXT, PRIVKEY TEXT," +
             " LEDGER_LASTSEEN BIGINT, LEDGER_BALANCE VARCHAR(64));";
-    private static final String CREATE_BLK = "CREATE TABLE BLK ( id INTEGER PRIMARY KEY AUTOINCREMENT," +
+    private static final String CREATE_BLK = "CREATE TABLE IF NOT EXISTS BLK ( id INTEGER PRIMARY KEY AUTOINCREMENT," +
             " INTID BIGINT KEY, NAME VARCHAR(64), TOKNAME VARCHAR(20), SYMBOL VARCHAR(20), RPC TEXT, TYPE VARCHAR(10)," +
             " CHAINID VARCHAR(20), ICON VARCHAR(20), TESTNET BOOLEAN);";
-    private static final String CREATE_TOK = "CREATE TABLE TOK (ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
+    private static final String CREATE_TOK = "CREATE TABLE IF NOT EXISTS TOK (ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
             "NAME VARCHAR(64), TOKNAME VARCHAR(20), BCID BIGINT, CONTRACT VARCHAR(255), TYPE BIGINT, " +
             "PRECISION INTEGER);";
 
@@ -65,11 +56,27 @@ public class dbHelper extends SQLiteOpenHelper {
     public static final String PM_COLUMN_TYPE = "type";
     public static final String PM_COLUMN_BODY = "body";
     public static final String PM_COLUMN_USER = "user";
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 7;
 
     public dbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-//        Log.d("dbdbdb", context.getDatabasePath(dbHelper.DATABASE_NAME).toString());
+
+    }
+
+    public static ArrayList<HashMap<String, String>> cursorToHashMapArray(Cursor c) {
+        ArrayList<HashMap<String, String>> out = new ArrayList<>();
+        while (c.moveToNext()) {
+            HashMap<String, String> map = new HashMap<>();
+            for (int i = 0; i < c.getColumnCount(); i++) {
+                map.put(c.getColumnName(i), c.getString(i));
+            }
+            out.add(map);
+        }
+        if (out.isEmpty()) {
+            return null;
+        } else {
+            return out;
+        }
     }
 
     public static boolean isNumeric(String str) {
@@ -81,6 +88,7 @@ public class dbHelper extends SQLiteOpenHelper {
 
     boolean setupblk(JSONArray blk) throws JSONException {
         Cursor cursor;
+        // chang to delete records below N (10,000?) so as to preserve user-made blockchain info
         cursor = db.rawQuery("Delete from BLK WHERE 1;", null, null);
         cursor = db.rawQuery("DELETE FROM SQLITE_SEQUENCE WHERE name='BLK';", null, null);
         for (int i = 0; i < blk.length(); i++) {
@@ -124,11 +132,64 @@ public class dbHelper extends SQLiteOpenHelper {
         }
     }
 
+    public Cursor getWallets() {
+        String sql = "SELECT * FROM WAL WHERE 1";
+        try {
+            return db.rawQuery(sql, null);
+        } catch (SQLiteException e) {
+            return null;
+        }
+    }
+
+    public Cursor getBlockChains() {
+        String sql = "SELECT * FROM BLK WHERE 1";
+        try {
+            return db.rawQuery(sql, null);
+        } catch (SQLiteException e) {
+            return null;
+        }
+    }
+
+    HashMap<String, String> getAddrNames(@Nullable String _bcid) {
+        String sql;
+        HashMap<String, String> _this = new HashMap<>();
+        if (_bcid == null) _bcid = "0";
+        int bcid = Integer.parseInt(_bcid);
+        if (bcid == 0) {
+            sql = "SELECT NAME, ADDRESS FROM WAL WHERE 1;";
+        } else {
+            sql = "SELECT NAME, ADDRESS FROM WAL WHERE BCID = ?";
+        }
+        try {
+            Cursor res = db.rawQuery(sql, new String[]{_bcid});
+            while (res.moveToNext()) {
+                _this.put(res.getString(1), res.getString(0));
+            }
+        } catch (SQLiteException e) {
+            return null;
+        }
+        return _this;
+    }
+
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(CREATE_WAL);
         db.execSQL(CREATE_BLK);
         db.execSQL(CREATE_TOK);
+        InputStream is = null;
+        try {
+            is = FlareNetMessenger.getContext().getAssets().open("blockchains.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            String json = new String(buffer, StandardCharsets.UTF_8);
+            JSONArray jo = new JSONArray(json);
+            setupblk(jo);
+        } catch (IOException | JSONException e) {
+            e.printStackTrace();
+        }
+
     }
 
     boolean ifTableExists(String tableName) {
@@ -150,7 +211,7 @@ public class dbHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS BLK");
         db.execSQL("DROP TABLE IF EXISTS TOK");
-        db.execSQL("DROP TABLE IF EXISTS WAL");
+//        db.execSQL("DROP TABLE IF EXISTS WAL");
         db.execSQL("DROP TABLE IF EXISTS TXN");
         db.execSQL("DROP TABLE IF EXISTS MSG");
         onCreate(db);
@@ -239,6 +300,7 @@ public class dbHelper extends SQLiteOpenHelper {
         return getLast(PM_TABLE_NAME);
     }
 
+    @SuppressLint("Range")
     public int getLast(String table_name) {
 
         SQLiteDatabase dbh = getReadableDatabase();

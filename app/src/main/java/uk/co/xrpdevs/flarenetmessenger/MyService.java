@@ -1,11 +1,19 @@
 package uk.co.xrpdevs.flarenetmessenger;
 /* TODO: Currently mostly Redundant class, though we probably do need to implement a service to deal with certain
-*   Intent()s and perhaps for maintaning certain states across context changes, as required.
-*
-*  TODO: Implement a listener for events coming from the the messaging contract so users get instant notification
-*   that they have just recieved a message.
-*
-* */
+ *   Intent()s and perhaps for maintaning certain states across context changes, as required.
+ *
+ *  TODO: Implement a listener for events coming from the the messaging contract so users get instant notification
+ *   that they have just recieved a message.
+ *
+ *  TODO: Make a general class for dealing with multiple subscriptions per active chain. Websocket subs whilst service
+ *   is running launched from app. If service killed by android, get Tx notifications by polling each time alarm is
+ *   triggered, because subscribe method doesnt allow us to subscribe to past events (at least for XRPL) this is also
+ *   more efficient use of system resources.
+ *
+ *  TODO: Once the above is implemented, we only need to maintain RPC clients as and when the user want to transact, meaning
+ *   that "select blockchain" becomes redundant, and all blockchains / wallets are effectively active simultaneously.
+ *
+ * */
 
 import static org.web3j.crypto.Credentials.create;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
@@ -139,12 +147,9 @@ public class MyService extends Service {
         String jsub = "{\"id\": \"76\"," +
                 "\"command\": \"subscribe\"," +
                 "\"accounts\": [";
-        try {
-            addresses = Utils.walletAddressesToWalletNamesOrContactsToHashMap(mC, "XRPL");
-        } catch (JSONException e) {
-            myLog("WAT", "Error: " + e);
-            e.printStackTrace();
-        }
+
+        addresses = FlareNetMessenger.dbH.getAddrNames("5");
+
         int end = addresses.size();
         int a = 0;
 
@@ -159,63 +164,10 @@ public class MyService extends Service {
 
         jsub += "]}";
 
-        myLog("FUCKYOU", addresses.toString());
-        myLog("FUCKYOU", jsub);
-
-        try {
-            addresses = Utils.walletAddressesToWalletNamesOrContactsToHashMap(mC, "ALL");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
         WSock socket = WSock.Builder.with("wss://s.altnet.rippletest.net/").build().connect();
         socket.sendOnOpen("76", jsub);
         socket.onEventResponse("76", oevrl);
 
-        // .createSocket("ws://localhost/endpoint");
-        // bob.
-        //   _xrplClient = xrplClient;
-
-  /*    //  if (Build.VERSION.SDK_INT >= 28) {
-
-          //  StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
-
-         //   StrictMode.setVmPolicy(builder.build());
-//
-    //    }
-/*
-
-// Create a Wallet using a WalletFactory
-        WalletFactory walletFactory = DefaultWalletFactory.getInstance();
-        Wallet testWallet = walletFactory.randomWallet(true).wallet();
-
-// Get the Classic and X-Addresses from testWallet
-        Address classicAddress = testWallet.classicAddress();
-        XAddress xAddress = testWallet.xAddress();
-
-        System.out.println("Classic Address: " + classicAddress);
-        System.out.println("X-Address: " + xAddress);
-
-// Fund the account using the testnet Faucet
-        FaucetClient faucetClient = FaucetClient
-                .construct(HttpUrl.get("https://faucet.altnet.rippletest.net"));
-        faucetClient.fundAccount(FundAccountRequest.of(classicAddress));
-
-
-// Look up your Account Info
-        AccountInfoRequestParams requestParams =
-                AccountInfoRequestParams.of(classicAddress);
-        AccountInfoResult accountInfoResult =
-                null;
-        try {
-            accountInfoResult = xrplClient.accountInfo(requestParams);
-        } catch (JsonRpcClientErrorException e) {
-            e.printStackTrace();
-        }
-
-// Print the result
-        myLog("XRPAccountInfo", accountInfoResult.toString());
-*/
 
         prefs = getSharedPreferences("fnm", 0);
         myLog("PREFS", Utils.dumpMap(prefs.getAll()));
@@ -542,13 +494,6 @@ public class MyService extends Service {
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                 .setContentIntent(pendingIntent);
 
-      /*  NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                 .setSmallIcon(R.mipmap.chain_xrp)
-                .setContentTitle(title)
-                .setContentText(message)
-                .setAutoCancel(false)
-                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-                .setContentIntent(pendingIntent);*/
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "Channel Name";// The user-visible name of the channel.
@@ -561,3 +506,48 @@ public class MyService extends Service {
         myLog("showNotification", "showNotification: " + reqCode);
     }
 }
+
+// .createSocket("ws://localhost/endpoint");
+// bob.
+//   _xrplClient = xrplClient;
+
+  /*    //  if (Build.VERSION.SDK_INT >= 28) {
+
+          //  StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+
+         //   StrictMode.setVmPolicy(builder.build());
+//
+    //    }
+/*
+
+// Create a Wallet using a WalletFactory
+        WalletFactory walletFactory = DefaultWalletFactory.getInstance();
+        Wallet testWallet = walletFactory.randomWallet(true).wallet();
+
+// Get the Classic and X-Addresses from testWallet
+        Address classicAddress = testWallet.classicAddress();
+        XAddress xAddress = testWallet.xAddress();
+
+        System.out.println("Classic Address: " + classicAddress);
+        System.out.println("X-Address: " + xAddress);
+
+// Fund the account using the testnet Faucet
+        FaucetClient faucetClient = FaucetClient
+                .construct(HttpUrl.get("https://faucet.altnet.rippletest.net"));
+        faucetClient.fundAccount(FundAccountRequest.of(classicAddress));
+
+
+// Look up your Account Info
+        AccountInfoRequestParams requestParams =
+                AccountInfoRequestParams.of(classicAddress);
+        AccountInfoResult accountInfoResult =
+                null;
+        try {
+            accountInfoResult = xrplClient.accountInfo(requestParams);
+        } catch (JsonRpcClientErrorException e) {
+            e.printStackTrace();
+        }
+
+// Print the result
+        myLog("XRPAccountInfo", accountInfoResult.toString());
+*/

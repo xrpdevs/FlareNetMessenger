@@ -9,8 +9,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.util.Pair;
 
-import androidx.annotation.Nullable;
-
 import org.bouncycastle.crypto.generators.SCrypt;
 import org.bouncycastle.jce.ECNamedCurveTable;
 import org.bouncycastle.jce.ECPointUtil;
@@ -38,11 +36,9 @@ import org.web3j.exceptions.MessageDecodingException;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
-import org.web3j.protocol.http.HttpService;
 import org.xrpl.xrpl4j.client.JsonRpcClientErrorException;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;
-import org.xrpl.xrpl4j.model.client.accounts.AccountTransactionsResult;
 import org.xrpl.xrpl4j.model.transactions.Address;
 
 import java.io.IOException;
@@ -78,8 +74,10 @@ import java.util.concurrent.TimeUnit;
 
 import javax.crypto.Cipher;
 
+@SuppressWarnings("UnstableApiUsage")
 public class Utils {
     static Provider secP = new org.bouncycastle.jce.provider.BouncyCastleProvider();
+
     public static byte[] encryptTextWithPubKey(String text, String pubKeyHexString) throws GeneralSecurityException {
         Security.addProvider(new BouncyCastleProvider());
         Security.addProvider(new org.spongycastle.jce.provider.BouncyCastleProvider());
@@ -123,6 +121,7 @@ public class Utils {
         params.init(new ECGenParameterSpec(curveName));
         return params.getParameterSpec(java.security.spec.ECParameterSpec.class);
     }
+
     public static String deCipherText(Credentials c, byte[] ciphertext) {
         Security.addProvider(new BouncyCastleProvider());
         Security.addProvider(new org.spongycastle.jce.provider.BouncyCastleProvider());
@@ -141,26 +140,14 @@ public class Utils {
             return "DECRYPTION FAILED: " + e.getMessage();
         }
     }
-    public static byte[] toByte2(String s) {
-        myLog("TOBYTE", s + " len: " + s.length());
 
-        int len = s.length();
-        if ((len & 1) == 1) s = "0" + s;
-        myLog("TOBYTE", s + " len: " + s.length());
-
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i + 1), 16));
-        }
-        return data;
-    }
     public static byte[] toByte(String s) {
         if (s.length() == 127) {  // make sure we add back leading zeroes. These need to be saved properly in contact details.
             s = "0" + s;
         }
         return Hex.decode(s);
     }
+
     public static PrivateKey getPrivateKeyFromECBigIntAndCurve(BigInteger s, String curveName) {
         Security.addProvider(new BouncyCastleProvider());
         Security.addProvider(new org.spongycastle.jce.provider.BouncyCastleProvider());
@@ -177,12 +164,336 @@ public class Utils {
         }
     }
 
-    public static HashMap<String, String> walletAddressesToWalletNamesOrContactsToHashMap(Context mC) throws JSONException {
+    public static HashMap<String, String> getPkey(Context mC, int wN) throws JSONException {
+        SharedPreferences prefs = mC.getSharedPreferences("fnm", 0);
+
+        String wD = prefs.getString("wallet" + wN, "");
+        HashMap<String, String> bob;
+
+        if (wD.contains("wallet")) {
+            bob = jsonToMap(wD);
+        } else {
+            return null;
+        }
+
+        return bob;
+    }
+
+    public static Credentials getCreds(HashMap<String, String> deets) {
+        return Credentials.create(deets.get("walletPrvKey"));
+    }
+
+    public static Pair<BigDecimal, String> getMyBalance(String walletAddress) throws IOException {
+        String ErrorMessage = "OK";
+        Web3j FlareConnection = MyService.initWeb3j();
+        BigDecimal wei;
+
+        BigDecimal FLR = BigDecimal.valueOf(0);
+
+        EthGetBalance ethGetBalance;
+        try {
+            ethGetBalance = FlareConnection
+                    .ethGetBalance(walletAddress, DefaultBlockParameterName.LATEST)
+                    .sendAsync()
+                    .get(200, TimeUnit.SECONDS);
+            wei = new BigDecimal(ethGetBalance.getBalance());
+            FLR = Convert.fromWei(wei, Convert.Unit.ETHER);
+        } catch (MessageDecodingException e) {
+            if (e.toString().contains("Value must be in format")) {
+                ErrorMessage = "Not a valid Flare/Coston Adddress";
+            }
+            e.printStackTrace();
+        } catch (Exception e) {
+            ErrorMessage = "Error: " + e.toString();
+            e.printStackTrace();
+        }
+
+
+        if (!ErrorMessage.equals("OK")) {
+            myLog("TEST", ErrorMessage);
+            FLR = BigDecimal.valueOf(-1);
+        }
+
+        return new Pair<>(FLR, ErrorMessage);
+    }
+
+    public static Pair<BigDecimal, String> getMyXRPBalance(String walletAddress) throws IOException {
+        String ErrorMessage = "OK";
+        BigDecimal XRP;
+        AccountInfoRequestParams requestParams =
+                AccountInfoRequestParams.of(Address.of(walletAddress));
+        AccountInfoResult accountInfoResult;
+        //AccountTransactionsResult eek;
+
+
+        try {
+            // AccountTransactionsRequestParams bob = AccountTransactionsRequestParams.builder()
+            //         .account(Address.of(walletAddress))
+            //         .limit(UnsignedInteger.valueOf(20))
+            //         .build();
+
+
+            //  eek = xrplClient.accountTransactions(bob);
+
+            //   Iterator<AccountTransactionsTransactionResult<? extends Transaction>> itr=eek.transactions().iterator();
+
+            //   while(itr.hasNext())
+            //   {
+            //    System.out.println(itr.next());
+            //   }
+
+            accountInfoResult = xrplClient.accountInfo(requestParams);
+            BigInteger drops = new BigInteger(accountInfoResult.accountData().balance().toString());
+            XRP = new BigDecimal(drops, 6);
+        } catch (JsonRpcClientErrorException | NullPointerException e) {
+            XRP = new BigDecimal("-1");
+            e.printStackTrace();
+        }
+
+        return new Pair<>(XRP, ErrorMessage);
+    }
+
+    public static HashMap<String, String> jsonToMap(String t) throws JSONException {
+        HashMap<String, String> map = new HashMap<>();
+        JSONObject jObject = new JSONObject(t);
+        Iterator<?> keys = jObject.keys();
+        while (keys.hasNext()) {
+            String key = (String) keys.next();
+            String value = jObject.getString(key);
+            map.put(key, value);
+        }
+        return map;
+        //System.out.println("json : "+jObject);
+        //   System.out.println("map : "+map);
+    }
+
+    public static Pair<BigInteger, String> xorStrings(BigInteger pKey, String messageText) {
+
+        //String XORpKey;
+        String pKeyTmpHEX = pKey.toString(16);
+        int pkLen = pKeyTmpHEX.length();
+
+        String hexMessage = new BigInteger(messageText.getBytes()).toString(16);
+        //int msgLen = hexMessage.length();
+        StringBuilder XORStringTmp = new StringBuilder();
+        while (XORStringTmp.length() < pkLen) XORStringTmp.append(hexMessage);
+        myLog("XOR", "Exited for loop");
+        XORStringTmp = new StringBuilder(XORStringTmp.substring(0, pkLen));
+        myLog("XOR", "pkeyTmp: " + pKeyTmpHEX);
+        myLog("XOR", " msgTmp: " + hexMessage);
+        myLog("XOR", " XORMsg: " + XORStringTmp);
+        //XORStringTmp = XORStringTmp.substring(0,pkLen);
+
+        BigInteger a = new BigInteger(XORStringTmp.toString(), 16);
+        BigInteger c;
+
+        c = pKey.xor(a);
+
+        myLog("XOR", " PUBKEY: " + c.toString(16));
+        Pair<BigInteger, String> rv;
+        rv = new Pair<>(c, c.toString(16));
+
+        return (rv);
+    }
+
+    public static void myLog(String tag, String logString) {
+        boolean compactLog = true;
+        String sep = "\n";
+
+        if (compactLog) {
+            sep = " :: ";
+        }
+        // if (FlareNetMessenger.loggingOn) {
+        String callerClassName = new Exception().getStackTrace()[1].getClassName();
+        Log.d(tag, sep + callerClassName + sep + logString);
+        // }
+    }
+
+    public static boolean isMyServiceRunning(Class<?> serviceClass, Context context) {
+        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        return manager.getRunningServices(Integer.MAX_VALUE).stream().anyMatch(service -> serviceClass.getName().equals(service.service.getClassName()));
+    }
+
+    public static ArrayList<HashMap<String, String>> getAvailChains() {
+        ArrayList<HashMap<String, String>> availTokens = new ArrayList<>();
+
+        String json;
+        try {
+            InputStream is = FlareNetMessenger.getContext().getAssets().open("blockchains.json");
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            json = new String(buffer, StandardCharsets.UTF_8);
+            //myLog("JSON", "== "+json);
+            JSONArray jo = new JSONArray(json);
+            //JSONArray key = jo.names();
+            for (int i = 0; i < json.length(); ++i) {
+                JSONObject obj = jo.getJSONObject(i);
+                HashMap<String, String> tmp = jsonToMap(obj.toString());
+                tmp.put("bcid", String.valueOf(i));
+                availTokens.add(tmp);
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return null;
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        // TODO: Append custom chains to this list before returning "availTokens"
+        //myLog("json", availTokens.toString());
+
+        return availTokens;
+    }
+
+    public static String dump(Bundle bundle) {
+        if (bundle == null) {
+            return "null";
+        }//from  w  w w.  jav  a2s.  c  o m
+
+        final StringBuilder builder = new StringBuilder("Bundle{");
+
+        boolean isFirst = true;
+        Object val;
+
+        for (String key : bundle.keySet()) {
+            if (isFirst) {
+                isFirst = false;
+            } else {
+                builder.append(", ");
+            }
+            builder.append(key).append(": ");
+            val = bundle.get(key);
+            if (val instanceof Bundle) {
+                builder.append(dump((Bundle) val));
+            } else {
+                builder.append(val);
+            }
+        }
+        builder.append("}");
+        return builder.toString();
+    }
+
+    public static String dumpMap(Map<String, ?> prefs) {
+        String out = "";
+        for (String key : prefs.keySet()) {
+            Object pref = prefs.get(key);
+            String printVal = "";
+            if (pref instanceof Boolean) {
+                printVal = key + " : " + pref;
+            }
+            if (pref instanceof Float) {
+                printVal = key + " : " + pref;
+            }
+            if (pref instanceof Integer) {
+                printVal = key + " : " + pref;
+            }
+            if (pref instanceof Long) {
+                printVal = key + " : " + pref;
+            }
+            if (pref instanceof String) {
+                printVal = key + " : " + pref;
+            }
+            if (pref instanceof Set<?>) {
+                printVal = key + " : " + pref;
+            }
+            // Every new preference goes to a new line
+            out = out + printVal + "\n\n";
+        }
+        return out;
+    }
+
+    public static Pair<BigInteger, BigInteger> getKeyPair() {
+        ECKeyPairGenerator keyGen = new ECKeyPairGenerator();
+        X9ECParameters params = SECNamedCurves.getByName("secp256k1");
+        ECKeyGenerationParameters keygenParams =
+                new ECKeyGenerationParameters(
+                        new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH()),
+                        new SecureRandom());
+
+        //ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256k1");
+        keyGen.init(keygenParams);
+        AsymmetricCipherKeyPair keypair = keyGen.generateKeyPair();
+        ECPrivateKeyParameters privParams = (ECPrivateKeyParameters) keypair.getPrivate();
+        ECPublicKeyParameters pubParams = (ECPublicKeyParameters) keypair.getPublic();
+        BigInteger priv = privParams.getD();
+        BigInteger pub = new BigInteger(pubParams.getQ().getEncoded());
+
+
+        return new Pair<>(priv, pub);
+    }
+
+    public static String newKeys() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
+
+        Pair<BigInteger, BigInteger> pair = getKeyPair();
+
+        HashMap<String, String> newKeys = new HashMap<>();
+
+        String sPrivatekeyInHex = pair.first.toString(16);
+        String sPublickeyInHex = pair.second.toString(16);
+
+        Credentials cs = Credentials.create("0x" + sPrivatekeyInHex);
+
+        String privateKey = cs.getEcKeyPair().getPrivateKey().toString(16);
+        String publicKey = cs.getEcKeyPair().getPublicKey().toString(16);
+        String addr = cs.getAddress();
+
+        newKeys.put("prv", sPrivatekeyInHex);
+        newKeys.put("pub", sPublickeyInHex);
+        newKeys.put("add", addr);
+        newKeys.put("d_prv", privateKey);
+        newKeys.put("d_pub", publicKey);
+
+        myLog("KEYZ", Utils.dumpMap(newKeys));
+
+
+        return "0x" + sPrivatekeyInHex;
+    }
+
+    public static PublicKey getPublicKey(byte[] pk) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(pk);
+        KeyFactory kf = KeyFactory.getInstance("ECDSA", secP);
+        return kf.generatePublic(publicKeySpec);
+    }
+
+    public static PrivateKey getPrivateKey(byte[] privk) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privk);
+        KeyFactory kf = KeyFactory.getInstance("EC", secP);
+        //      ParameterSpe
+        return kf.generatePrivate(privateKeySpec);
+    }
+
+    public static PublicKey getPublicKeyFromBytes(byte[] pubKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
+        KeyFactory kf = KeyFactory.getInstance("ECDSA", new BouncyCastleProvider());
+        ECNamedCurveSpec params = new ECNamedCurveSpec("secp256k1", spec.getCurve(), spec.getG(), spec.getN());
+        ECPoint point = ECPointUtil.decodePoint(params.getCurve(), pubKey);
+        ECPublicKeySpec pubKeySpec = new ECPublicKeySpec(point, params);
+        return kf.generatePublic(pubKeySpec);
+    }
+
+    public static byte[] toByte2(String s) {
+        myLog("TOBYTE", s + " len: " + s.length());
+
+        int len = s.length();
+        if ((len & 1) == 1) s = "0" + s;
+        myLog("TOBYTE", s + " len: " + s.length());
+
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
+                    + Character.digit(s.charAt(i + 1), 16));
+        }
+        return data;
+    }
+      /*  public static HashMap<String, String> walletAddressesToWalletNamesOrContactsToHashMap(Context mC) throws JSONException {
         return walletAddressesToWalletNamesOrContactsToHashMap(mC, null);
     }
-    public static HashMap<String, String> walletAddressesToWalletNamesOrContactsToHashMap(Context mC, @Nullable String bcType/*possibly specify type ie XRP/ETH*/) throws JSONException {
+    public static HashMap<String, String> walletAddressesToWalletNamesOrContactsToHashMap(Context mC, @Nullable int _bcid) throws JSONException {
         SharedPreferences prefs = mC.getSharedPreferences("fnm", 0);
         String pKey;
+
         HashMap<String, String> wAddrs = new HashMap<String, String>();
         int wC = prefs.getInt("walletCount", 0);
         wC++;
@@ -213,339 +524,19 @@ public class Utils {
                         String cWname = bob.getOrDefault("walletName", "Wallet " + i);
                         if (bob.containsKey("walletAddress")) {
                             wAddrs.put(bob.get("walletAddress"), cWname);
-                         //   boolean b = FlareNetMessenger.dbH.addWallet(bob.get("walletName"), Integer.valueOf(bob.getOrDefault("bcid", "0")), bob.get(""), privateKey, addr, xaddr, 0, "0");
+                            String wpk = bob.get("walletPrvKey").replace("Optional[", "").replace("]", "");
+                            boolean b = FlareNetMessenger.dbH.addWallet(
+                                    bob.get("walletName"),
+                                    Integer.valueOf(bob.getOrDefault("bcid", "0")),
+                                    bob.get("walletPubKey"), //bob.get("walletPubKey"),
+                                    wpk,
+                                    bob.get("walletAddress"),
+                                    bob.getOrDefault("walletXaddr", bob.getOrDefault("walletAltAddress", "")), 0, "0");
                         }
                         break; // note: don't forget those break statements or you might want to break something lol
                 }
             }
             }
         return wAddrs;
-    }
-    public static HashMap<String, String> getPkey(Context mC, int wN) throws JSONException {
-        SharedPreferences prefs = mC.getSharedPreferences("fnm", 0);
-        String pKey;
-
-        int wC = prefs.getInt("walletCount", 0);
-        String wD = prefs.getString("wallet" + wN, "");
-        HashMap<String, String> bob;
-//        myLog("WD-", wD);
-        if (wD.contains("wallet")) {
-            bob = jsonToMap(wD);
-        } else {
-            return null;
-        }
-        //  HashMap<String, String> bob = new HashMap<String, String>();
-
-        //   bob.put("walletPrvKey", prefs.getString("walletPrvKey", null));
-        //   bob.put("walletPubKey", prefs.getString("walletPubKey", null));
-        //   bob.put("walletAddress", prefs.getString("walletAddress", null));
-        return bob;
-    }
-    public static Credentials getCreds(HashMap<String, String> deets) {
-        return Credentials.create(deets.get("walletPrvKey"));
-    }
-    public static Web3j initWeb3j() {
-
-        Web3j myEtherWallet = Web3j.build(
-
-                //   new HttpService("https://api.avax-test.network/ext/bc/C/rpc"));
-                new HttpService(MyService.rpc));
-        //myEtherWallet.ethChainId().setId(MyService.tmpCID);
-
-        return myEtherWallet;
-    }
-    public static Pair<BigDecimal, String> getMyBalance(String walletAddress) throws IOException {
-        String ErrorMessage = "OK";
-        Web3j FlareConnection = MyService.initWeb3j();
-        BigDecimal wei;
-
-        BigDecimal FLR = BigDecimal.valueOf(0);
-
-        EthGetBalance ethGetBalance = null;
-        try {
-            ethGetBalance = FlareConnection
-                    .ethGetBalance(walletAddress, DefaultBlockParameterName.LATEST)
-                    .sendAsync()
-                    .get(200, TimeUnit.SECONDS);
-            wei = new BigDecimal(ethGetBalance.getBalance());
-            FLR = Convert.fromWei(wei, Convert.Unit.ETHER);
-        } catch (MessageDecodingException e) {
-            if (e.toString().contains("Value must be in format")) {
-                ErrorMessage = "Not a valid Flare/Coston Adddress";
-            }
-            e.printStackTrace();
-        } catch (Exception e) {
-            ErrorMessage = "Error: " + e.toString();
-            e.printStackTrace();
-        }
-
-
-        if (!ErrorMessage.equals("OK")) {
-            myLog("TEST", ErrorMessage);
-            FLR = BigDecimal.valueOf(-1);
-        } else {
-
-        }
-
-        return new Pair<BigDecimal, String>(FLR, ErrorMessage);
-    }
-    public static Pair<BigDecimal, String> getMyXRPBalance(String walletAddress) throws IOException {
-        String ErrorMessage = "OK";
-        BigDecimal XRP;
-        AccountInfoRequestParams requestParams =
-                AccountInfoRequestParams.of(Address.of(walletAddress));
-        AccountInfoResult accountInfoResult;
-        AccountTransactionsResult eek;
-
-
-        try {
-            // AccountTransactionsRequestParams bob = AccountTransactionsRequestParams.builder()
-            //         .account(Address.of(walletAddress))
-            //         .limit(UnsignedInteger.valueOf(20))
-            //         .build();
-
-
-            //  eek = xrplClient.accountTransactions(bob);
-
-            //   Iterator<AccountTransactionsTransactionResult<? extends Transaction>> itr=eek.transactions().iterator();
-
-            //   while(itr.hasNext())
-            //   {
-            //    System.out.println(itr.next());
-            //   }
-
-            accountInfoResult = xrplClient.accountInfo(requestParams);
-            BigInteger drops = new BigInteger(accountInfoResult.accountData().balance().toString());
-            XRP = new BigDecimal(drops, 6);
-        } catch (JsonRpcClientErrorException | NullPointerException e) {
-            XRP = new BigDecimal("-1");
-            e.printStackTrace();
-        }
-
-        return new Pair<>(XRP, ErrorMessage);
-    }
-    public static HashMap<String, String> jsonToMap(String t) throws JSONException {
-        HashMap<String, String> map = new HashMap<String, String>();
-        JSONObject jObject = new JSONObject(t);
-        Iterator<?> keys = jObject.keys();
-        while (keys.hasNext()) {
-            String key = (String) keys.next();
-            String value = jObject.getString(key);
-            map.put(key, value);
-        }
-        return map;
-        //System.out.println("json : "+jObject);
-        //   System.out.println("map : "+map);
-    }
-    public static Pair<BigInteger, String> xorStrings(BigInteger pKey, String messageText) {
-
-        String XORpKey;
-        String pKeyTmpHEX = pKey.toString(16);
-        int pkLen = pKeyTmpHEX.length();
-
-        String hexMessage = new BigInteger(messageText.getBytes()).toString(16);
-        int msgLen = hexMessage.length();
-        String XORStringTmp = "";
-        while (XORStringTmp.length() < pkLen) {
-            XORStringTmp = XORStringTmp + hexMessage;
-        }
-        myLog("XOR", "Exited for loop");
-        XORStringTmp = XORStringTmp.substring(0, pkLen);
-        myLog("XOR", "pkeyTmp: " + pKeyTmpHEX);
-        myLog("XOR", " msgTmp: " + hexMessage);
-        myLog("XOR", " XORMsg: " + XORStringTmp);
-        //XORStringTmp = XORStringTmp.substring(0,pkLen);
-
-        BigInteger a = new BigInteger(XORStringTmp, 16);
-        BigInteger b = pKey;
-        BigInteger c;
-
-        c = b.xor(a);
-
-        myLog("XOR", " PUBKEY: " + c.toString(16));
-        Pair<BigInteger, String> rv;
-        rv = new Pair<>(c, c.toString(16));
-
-        return (rv);
-    }
-    public static void myLog(String tag, String logString) {
-        boolean loggingOn = true;
-        boolean compactLog = true;
-        String sep = "\n";
-
-        if (compactLog) {
-            sep = " :: ";
-        }
-        // if (FlareNetMessenger.loggingOn) {
-            String callerClassName = new Exception().getStackTrace()[1].getClassName();
-            Log.d(tag, sep + callerClassName + sep + logString);
-        // }
-    }
-    public static boolean isMyServiceRunning(Class<?> serviceClass, Context context) {
-        ActivityManager manager = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
-        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
-            if (serviceClass.getName().equals(service.service.getClassName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-    public static ArrayList<HashMap<String, String>> getAvailChains() {
-        ArrayList<HashMap<String, String>> availTokens = new ArrayList<>();
-
-        String json = null;
-        try {
-            InputStream is = FlareNetMessenger.getContext().getAssets().open("blockchains.json");
-            int size = is.available();
-            byte[] buffer = new byte[size];
-            is.read(buffer);
-            is.close();
-            json = new String(buffer, StandardCharsets.UTF_8);
-            //myLog("JSON", "== "+json);
-            JSONArray jo = new JSONArray(json);
-            //JSONArray key = jo.names();
-            for (int i = 0; i < json.length(); ++i) {
-                JSONObject obj = jo.getJSONObject(i);
-                HashMap<String, String> tmp = jsonToMap(obj.toString());
-                tmp.put("bcid", String.valueOf(i));
-                availTokens.add(tmp);
-            }
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            return null;
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        // TODO: Append custom chains to this list before returning "availTokens"
-        //myLog("json", availTokens.toString());
-
-        return availTokens;
-    }
-    public static String dump(Bundle bundle) {
-        if (bundle == null) {
-            return "null";
-        }//from  w  w w.  jav  a2s.  c  o m
-
-        final StringBuilder builder = new StringBuilder("Bundle{");
-
-        boolean isFirst = true;
-        Object val;
-
-        for (String key : bundle.keySet()) {
-            if (isFirst) {
-                isFirst = false;
-            } else {
-                builder.append(", ");
-            }
-            builder.append(key).append(": ");
-            val = bundle.get(key);
-            if (val instanceof Bundle) {
-                builder.append(dump((Bundle) val));
-            } else {
-                builder.append(val);
-            }
-        }
-        builder.append("}");
-        return builder.toString();
-    }
-    public static String dumpMap(Map<String, ?> prefs) {
-        String out = "";
-        for (String key : prefs.keySet()) {
-            Object pref = prefs.get(key);
-            String printVal = "";
-            if (pref instanceof Boolean) {
-                printVal = key + " : " + pref;
-            }
-            if (pref instanceof Float) {
-                printVal = key + " : " + pref;
-            }
-            if (pref instanceof Integer) {
-                printVal = key + " : " + pref;
-            }
-            if (pref instanceof Long) {
-                printVal = key + " : " + pref;
-            }
-            if (pref instanceof String) {
-                printVal = key + " : " + pref;
-            }
-            if (pref instanceof Set<?>) {
-                printVal = key + " : " + pref;
-            }
-            // Every new preference goes to a new line
-            out = out + printVal + "\n\n";
-        }
-        return out;
-    }
-    public static Pair<BigInteger, BigInteger> getKeyPair() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
-        ECKeyPairGenerator keyGen = new ECKeyPairGenerator();
-        X9ECParameters params = SECNamedCurves.getByName("secp256k1");
-        ECKeyGenerationParameters keygenParams =
-                new ECKeyGenerationParameters(
-                        new ECDomainParameters(params.getCurve(), params.getG(), params.getN(), params.getH()),
-                        new SecureRandom());
-
-        ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256k1");
-        keyGen.init(keygenParams);
-        AsymmetricCipherKeyPair keypair = keyGen.generateKeyPair();
-        ECPrivateKeyParameters privParams = (ECPrivateKeyParameters) keypair.getPrivate();
-        ECPublicKeyParameters pubParams = (ECPublicKeyParameters) keypair.getPublic();
-        BigInteger priv = privParams.getD();
-        BigInteger pub = new BigInteger(pubParams.getQ().getEncoded());
-        Pair<BigInteger, BigInteger> ret = new Pair<>(priv, pub);
-
-
-        return ret;
-    }
-    public static String newKeys() throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
-
-        Pair<BigInteger, BigInteger> pair = getKeyPair();
-
-        HashMap<String, String> newKeys = new HashMap<>();
-
-        String sPrivatekeyInHex = pair.first.toString(16);
-        String sPublickeyInHex = pair.second.toString(16);
-
-        Credentials cs = Credentials.create("0x" + sPrivatekeyInHex);
-
-        String privateKey = cs.getEcKeyPair().getPrivateKey().toString(16);
-        String publicKey = cs.getEcKeyPair().getPublicKey().toString(16);
-        String addr = cs.getAddress();
-
-        newKeys.put("prv", sPrivatekeyInHex);
-        newKeys.put("pub", sPublickeyInHex);
-        newKeys.put("add", addr);
-        newKeys.put("d_prv", privateKey);
-        newKeys.put("d_pub", publicKey);
-
-        myLog("KEYZ", Utils.dumpMap(newKeys));
-
-        String newPrivKey = "0x" + sPrivatekeyInHex;
-
-
-        return newPrivKey;
-    }
-    //0xd4AF405f5ec7F75d270836702bb364081B804A67
-    public static PublicKey getPublicKey(byte[] pk) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(pk);
-        KeyFactory kf = KeyFactory.getInstance("ECDSA", secP);
-        PublicKey pub = kf.generatePublic(publicKeySpec);
-        return pub;
-    }
-    public static PrivateKey getPrivateKey(byte[] privk) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privk);
-        KeyFactory kf = KeyFactory.getInstance("EC", secP);
-        //      ParameterSpe
-        PrivateKey privateKey = kf.generatePrivate(privateKeySpec);
-        return privateKey;
-    }
-    public static PublicKey getPublicKeyFromBytes(byte[] pubKey) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        ECNamedCurveParameterSpec spec = ECNamedCurveTable.getParameterSpec("secp256k1");
-        KeyFactory kf = KeyFactory.getInstance("ECDSA", new BouncyCastleProvider());
-        ECNamedCurveSpec params = new ECNamedCurveSpec("secp256k1", spec.getCurve(), spec.getG(), spec.getN());
-        ECPoint point = ECPointUtil.decodePoint(params.getCurve(), pubKey);
-        ECPublicKeySpec pubKeySpec = new ECPublicKeySpec(point, params);
-        ECPublicKey pk = (ECPublicKey) kf.generatePublic(pubKeySpec);
-        return pk;
-    }
+    }*/
 }

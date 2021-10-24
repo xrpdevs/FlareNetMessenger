@@ -2,10 +2,12 @@ package uk.co.xrpdevs.flarenetmessenger.ui.wallets;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,7 +17,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
@@ -31,17 +32,16 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 
-import uk.co.xrpdevs.flarenetmessenger.MainActivity;
+import uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.PKeyScanner;
 import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.Zipper;
+import uk.co.xrpdevs.flarenetmessenger.dbHelper;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.home.HomeFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.token.TokensFragment;
@@ -84,24 +84,22 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
         lv = root.findViewById(R.id.wallets_list);
         lv.setAdapter(WalletsAdaptor);
         registerForContextMenu(lv);
-        prefs = this.getActivity().getSharedPreferences("fnm", 0);
+        prefs = this.requireActivity().getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
         //  super.onCreate(savedInstanceState);
 
         mAct = this.getActivity();
-        if(prefs.getInt("walletCount", 0) > 0 ) {
+        if (prefs.getInt("walletCount", 0) > 0) {
             myLog("FRAG", "Wallet count is non zero");
 
             getWalletList();
         }
 
         FloatingActionButton fab = root.findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override // TODO: change intent methods to Fragment context switches
-            public void onClick(View view) {
-                Intent intent = new Intent(mThis.getActivity(), PKeyScanner.class);
-                startActivity(intent);
-            }
+        // TODO: change intent methods to Fragment context switches
+        fab.setOnClickListener(view -> {
+            Intent intent = new Intent(mThis.getActivity(), PKeyScanner.class);
+            startActivity(intent);
         });
 
         return root;
@@ -109,49 +107,48 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
 
     public SimpleAdapter fillListView(final ArrayList<HashMap<String, String>> lines) {
         myLog("Lines", lines.toString());
-        SimpleAdapter simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_wallets, new String[]{"walletName", "walletAddress", "type", "lastval"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}) {
+        SimpleAdapter simpleAdapter = new SimpleAdapter(mThis.getActivity(), lines, R.layout.listitem_wallets, new String[]{"NAME", "ADDRESS", "BCID", "BALANCE"}, new int[]{R.id.inboxAddress, R.id.inboxContent, R.id.inboxType, R.id.inboxLastact}) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
-                TextView cName = view.findViewById(R.id.inboxAddress);
+                //TextView cName = view.findViewById(R.id.inboxAddress);
                 TextView cType = view.findViewById(R.id.inboxType);
                 cType.setText("Coston");
-                String cNtext = cName.getText().toString();
+                //String cNtext = cName.getText().toString();
                 @SuppressWarnings("all") // we know its a hashmap....
-                        HashMap<String, String> item = (HashMap<String, String>) getItem(position);
+                HashMap<String, String> item = (HashMap<String, String>) getItem(position);
                 int unread = lines.size();
-                myLog("TEST", "Number of contaxts: "+unread);
+                myLog("TEST", "Number of contaxts: " + unread);
 
                 return view;
             }
         };
 
 
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View v, int position, long id) {
-                Intent i = new Intent(mThis.getActivity(),
-                        MainActivity.class);
-                HashMap<String, String> theItem = lines.get(position);
-                String pooo = theItem.get("num");
-                myLog("smscseeker", "name:" + theItem.toString());
-                pEdit.putInt("currentWallet", (position + 1));
-                pEdit.commit();
+        lv.setOnItemClickListener((parent, v, position, id) -> {
+            HashMap<String, String> theItem = lines.get(position);
+            //String pooo = theItem.get("num");
+            myLog("smscseeker", "name:" + theItem.toString());
+            pEdit.putInt("currentWallet", (position + 1));
+            pEdit.commit();
 
-                //Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
-                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+            //Fragment currentFragment = getFragmentManager().findFragmentById(R.id.nav_host_fragment);
+            assert getFragmentManager() != null;
+            FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
 //                fragmentTransaction.setCustomAnimations(R.animator.
 //                        R.anim.slide_in,  // enter
 //                        R.anim.slide_out // exi
-                //fragmentTransaction.remove(currentFragment);
-                HomeFragment f = null;
-                try {
-                    f = new HomeFragment();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                Bundle args = new Bundle();
-                args.putInt("ltype", 2000);
-                args.putString("selectFragment", "home");
+            //fragmentTransaction.remove(currentFragment);
+            HomeFragment f = null;
+            try {
+                f = new HomeFragment();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Bundle args = new Bundle();
+            args.putInt("ltype", 2000);
+            args.putString("selectFragment", "home");
+            if (f != null) {
                 f.setArguments(args);
                 Intent myService = new Intent(mAct, MyService.class);
                 mAct.stopService(myService);
@@ -159,10 +156,8 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
 
                 fragmentTransaction.replace(R.id.nav_host_fragment, f);
                 fragmentTransaction.addToBackStack("wallets").commit();
-
-                // startActivity(i);
-
             }
+
         });
 
         return simpleAdapter;
@@ -172,63 +167,16 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
 
     public void getWalletList() {
         feedList.clear();
-
-        ArrayList<HashMap<String, String>> maplist = new ArrayList<HashMap<String, String>>();
         try {
-
-            myLog("TEST", "Number of wallets: "+prefs.getInt("walletCount", 0));
-
-            for(int i=0; i<prefs.getInt("walletCount", 0); i++){
-                HashMap<String, String> map = Utils.getPkey(this.getContext(), (i+1));
-                if(!map.containsKey("walletName")){ map.put("walletName", "Wallet "+ (i + 1));}
-
-                maplist.add(map);
-            }
-
+            Cursor c = FlareNetMessenger.dbH.getWallets();
+            feedList = dbHelper.cursorToHashMapArray(c);
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
-        String dtemp;
-        for (int j = 0; j < maplist.size(); j++) {
-            HashMap<String, String> poo = maplist.get(j);
-            // dtemp = getDate(Long.parseLong(poo.get("ts")));
-            myLog("PooPoos", poo.toString());
-            poo.remove("ts");
-            //   poo.put("date", dtemp);
-            // TODO: Local database of names associated with Coston addresses.
-            //      poo.put("cnam", dbHelper.getContactName(this, poo.get("num")));
-
-
-            feedList.add(poo);
-
-        }
-
-        mThis.getActivity().runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                // TODO Auto-generated method stub
-                // mContactList.setAdapter(cursorAdapter);
-
-                WalletsAdaptor = fillListView(feedList);
-                lv.setAdapter(WalletsAdaptor);
-                myLog("TEST", "Running UI thread");
-
-
-            }
+        mThis.requireActivity().runOnUiThread(() -> {
+            WalletsAdaptor = fillListView(feedList);
+            lv.setAdapter(WalletsAdaptor);
         });
-        myLog("feedList", feedList.toString());
-//        Collections.reverse(feedList);
-        WalletsAdaptor = fillListView(feedList);
-    }
-
-    public String getDate(Long ts) {
-        myLog("mooo", "val: " + ts);
-        Date df = new Date(ts * 1000);
-        String rc = new SimpleDateFormat("dd MMM yy").format(df);
-        return (rc);
     }
 
     @Override
@@ -287,22 +235,23 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
             walletsImportURI = data.getData(); //The uri with the location of the file
             //  Toast.makeText(mThis.getActivity(), selectedfile.toString(), Toast.LENGTH_LONG ).show();
             // todo: ask for PIN code (for the archive)
-            FragmentManager manager = mThis.getActivity().getFragmentManager();
+            FragmentManager manager = mThis.requireActivity().getFragmentManager();
             pinDialog = new PinCodeDialogFragment().newInstance(this, "Enter Archive PIN:", "import");
             pinDialog.show(manager, "1");
         }
     }
 
     public void exportWallets() {
-        FragmentManager manager = mThis.getActivity().getFragmentManager();
+        FragmentManager manager = mThis.requireActivity().getFragmentManager();
         pinDialog = new PinCodeDialogFragment().newInstance(this, "Enter PIN:", "export");
         pinDialog.show(manager, "1");
     }
 
+    @SuppressLint("SdCardPath")
     @Override
     public void onResult(String pinCode, String tag) throws IOException, JSONException {
         if (tag.equals("import")) {
-            Zipper zipDecode = new Zipper(pinCode, mThis.getContext());
+            Zipper zipDecode = new Zipper(pinCode, mThis.requireContext());
             JSONArray wallets;
             if ((wallets = zipDecode.extractWithZipInputStream(walletsImportURI, pinCode)) != null) {
                 // todo: do something with our JSONobject
@@ -315,7 +264,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
             myLog("Motherfucker", prefs.getString("pinCode", "ffnf"));
             if (Utils.pinHash(pinCode).equals(prefs.getString("pin", "asas"))) {
                 pinDialog.dismiss();
-                Zipper zipArchive = new Zipper(pinCode, mThis.getContext());
+                Zipper zipArchive = new Zipper(pinCode, mThis.requireContext());
                 zipArchive.pack("/sdcard/Downloads/wallets.zip");
 
                 // TODO: Save as a passworded ZIP file in default location on phone.

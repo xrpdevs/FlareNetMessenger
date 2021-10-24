@@ -104,7 +104,8 @@ class MyRecyclerView extends RecyclerView.Adapter<MyRecyclerView.ViewHolder> {
         fm = _fm;
         myAddress = TransactionsActivity.myAddress;
         d = new PleaseWaitDialog();
-        wAddrs = Utils.walletAddressesToWalletNamesOrContactsToHashMap(ctx);
+//        wAddrs = Utils.walletAddressesToWalletNamesOrContactsToHashMap(ctx);
+        wAddrs = FlareNetMessenger.dbH.getAddrNames(null);
     }
 
     // Create new views (invoked by the layout manager)

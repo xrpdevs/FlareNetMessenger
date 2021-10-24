@@ -335,7 +335,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
     public void onResult(HashMap<String, ?> data) throws GeneralSecurityException, IOException {
         sbcdf.dismiss();
         String RPC = (String) data.get("RPC");
-        int CID = Integer.decode((String) data.get("ChainID"));
+        int CID = Integer.decode((String) data.get("CHAINID"));
         MyService.fCoinLink = MyService.initConnection(RPC, CID); // maybe just keep this to FLR
         MyService.rpc = RPC;
         MyService.tmpCID = CID;
