@@ -1,11 +1,13 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
+import static uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger.dbH;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
@@ -38,20 +40,25 @@ public class FirstRun extends AppCompatActivity implements PinCodeDialogFragment
 
 
         cButton = findViewById(R.id.frContinue);
-myLog("FirstRUN", "OnCreate()");
-setPIN("0");
-//       checkState();
+myLog("FirstRUN", prefs.toString());
+
+      checkState();
 
 
     }
 
     public void checkState(){
+        Cursor c = dbH.getWalletDetails(String.valueOf(1));
+
+            prefs = getSharedPreferences("fnm", 0);
         if (!prefs.contains("pin")) {
+            pin_progress=0;
             content.setText(R.string.firstRun_noPin);
             cButton.setOnClickListener(v -> {
                 myLog("setPIN", setPIN("0"));
             });
-        } else if (!prefs.contains("walletCount")) {
+        } else if(dbH.walletCount()==0) {
+            //if (!prefs.contains("walletCount")) {
             content.setText(R.string.firstRun_noWallet);
             cButton.setOnClickListener(v -> {
                 FirstWallet();
@@ -71,8 +78,8 @@ setPIN("0");
         FragmentManager manager = getFragmentManager();
         myLog("PIN_Progress", "="+pin_progress);
         myLog("PINS", "Pin1: " + pin1 + ", Pin2: " + pin2);
-        switch (pin_progress) {
-            case 0:
+ //       switch (pin_progress) {
+   //         case 0:
                 pinDialog = new PinCodeDialogFragment().newInstance(this, "Set New PIN Code", null);
                 pinDialog.show(manager, "1"); // we can probably use tag: to indicate progress...
                 pinDialog.confirm = true;
@@ -87,21 +94,22 @@ setPIN("0");
 
             //    pin_progress++;
             //    return pin;
-            case 1:
-                pin2 = pin;
-                myLog("PINS", "Pin1: " + pin1 + ", Pin2: " + pin2);
+      //      case 1:
+        //        pin2 = pin;
+          //      myLog("PINS", "Pin1: " + pin1 + ", Pin2: " + pin2);
                 //if (pin1.equals(pin2)) {
                 //    pin_progress = 3;
-                pEdit.remove("pinHash");
-                pEdit.remove("pinCode");
-                pEdit.remove("_pin");
-                pEdit.commit();
+          //      pEdit.remove("pinHash");
+          //      pEdit.remove("pinCode");
+          //      pEdit.remove("_pin");
+          //      pEdit.commit();
 
-                pEdit.putString("pin", Utils.pinHash(pin));
-                pEdit.commit();
-                checkState();
-                Log.d("PINZ", prefs.getAll().toString());
-                return pin;
+          //      pEdit.putString("pin", Utils.pinHash(pin));
+          //      pEdit.commit();
+          //      pEdit.apply();
+          //      Log.d("PINZ", prefs.getAll().toString());
+          //      checkState();
+          //      return pin;
 //                } else {
             //                  showDialog("Pin codes did not match\nPlease try again", true);
             //                pin1 = "abcd";
@@ -110,16 +118,26 @@ setPIN("0");
             //setPIN("0");
 //                    return "";
             //              }
-            default:
-                return pin1;
-        }
+//            default:
+  //              return pin1;
+    //    }
     }
 
 
     @Override
     public void onResult(String pinCode, String tag) {
         pinDialog.dismiss();
-        setPIN(pinCode);
+        pEdit.remove("pinHash");
+        pEdit.remove("pinCode");
+        pEdit.remove("_pin");
+        pEdit.commit();
+
+        pEdit.putString("pin", Utils.pinHash(pinCode));
+        pEdit.commit();
+        pEdit.apply();
+        Log.d("PINZ", prefs.getAll().toString());
+        checkState();
+        //setPIN(pinCode);
     }
 
     private boolean showDialog(String prompt, Boolean cancelable) {

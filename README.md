@@ -1,4 +1,14 @@
 # Android-FLARE-Coston-Messenger
+27/10/2021
+With signs of life in the Flare camp I have for the last couple of weeks resumed work on this project.
+If there is anyone out there who would like to give me feedback then I'm all ears. Yes it lacks polish
+but the point is that it works and it's an exercise in learning both for me, and hopefully for anyone
+who clones it and peruses the source code :)
+I've ironed out a lot of bugs recently and completely changed how a lot of things work.               
+
+Android 8 or above is supported. I may be able to get it to work on 6+ but don't hold your breath :)
+
+Contributions most welcome!
 
 15/05/2021
 Testnet is up and running at https://testnet.xrpdevs.co.uk. Flare Networks testnet is still only private beta.

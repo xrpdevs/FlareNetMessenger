@@ -146,12 +146,12 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
                 _bcid = args.getString("wBcid");
             }
         }
+        mSwipeRefreshLayout.setRefreshing(true);
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    mSwipeRefreshLayout.setRefreshing(true);
                     update();
                 } catch (JsonProcessingException | IllegalAccessException | NoSuchFieldException e) {
                     e.printStackTrace();

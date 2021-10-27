@@ -107,45 +107,47 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
 
         //cw=3;
         Cursor c = dbH.getWalletDetails(String.valueOf(cw));
-        deets = dbHelper.cursorToHashMapArray(c).get(0);
-        FlareNetMessenger.deets = deets;
-
-        navView = mThis.getActivity().findViewById(R.id.nav_view);
-        navView.getMenu().findItem(R.id.navigation_home).setChecked(true);
-        Bundle args = getArguments();
-        myLog("FRAG", "onStart");
         mAct = mThis.getActivity();
-        adapter = NfcAdapter.getDefaultAdapter(mAct);
+        if(c!=null && c.getCount()!=0) {
+            deets = dbHelper.cursorToHashMapArray(c).get(0);
+            FlareNetMessenger.deets = deets;
 
-        if (args != null) {
+            navView = mThis.getActivity().findViewById(R.id.nav_view);
+            navView.getMenu().findItem(R.id.navigation_home).setChecked(true);
+            Bundle args = getArguments();
+            myLog("FRAG", "onStart");
+            adapter = NfcAdapter.getDefaultAdapter(mAct);
 
-            myLog("FRAG", args.toString());
-        }
-        if (args != null) {
-            if (args.containsKey("updatewallet")) {
-                Cursor cur = dbH.getWalletDetails(String.valueOf(prefs.getInt("currentWallet", 0)));
-                deets = dbHelper.cursorToHashMapArray(cur).get(0);
-                FlareNetMessenger.deets = deets;
+            if (args != null) {
+
+                myLog("FRAG", args.toString());
             }
-            if (args.containsKey("selectFragment")) {
-                if (args.getString("selectFragment", "").equals("home")) {
-                    myLog("FRAG", "Has selectFragment = home");
-
-                    navView.setSelectedItemId(R.id.navigation_home);
+            if (args != null) {
+                if (args.containsKey("updatewallet")) {
+                    Cursor cur = dbH.getWalletDetails(String.valueOf(prefs.getInt("currentWallet", 0)));
+                    deets = dbHelper.cursorToHashMapArray(cur).get(0);
+                    FlareNetMessenger.deets = deets;
                 }
-                if (args.getString("selectFragment", "").equals("tokens")) {
-                    myLog("FRAG", "Has selectFragment = tokens");
+                if (args.containsKey("selectFragment")) {
+                    if (args.getString("selectFragment", "").equals("home")) {
+                        myLog("FRAG", "Has selectFragment = home");
 
-                    navView.setSelectedItemId(R.id.navigation_wallets);
+                        navView.setSelectedItemId(R.id.navigation_home);
+                    }
+                    if (args.getString("selectFragment", "").equals("tokens")) {
+                        myLog("FRAG", "Has selectFragment = tokens");
+
+                        navView.setSelectedItemId(R.id.navigation_wallets);
+                    }
                 }
             }
-        }
 
-        XRPAddress = deets.get("ADDRESS");
-        // c = Credentials.create(deets.get("walletPrvKey"));
-        walletName.setText(deets.getOrDefault("NAME", "Wallet " + prefs.getInt("currentWallet", 0)));
-        qrThread = new QR_Thread();
-        qrThread.start();
+            XRPAddress = deets.get("ADDRESS");
+            // c = Credentials.create(deets.get("walletPrvKey"));
+            walletName.setText(deets.getOrDefault("NAME", "Wallet " + prefs.getInt("currentWallet", 0)));
+            qrThread = new QR_Thread();
+            qrThread.start();
+        }
     }
 
 
