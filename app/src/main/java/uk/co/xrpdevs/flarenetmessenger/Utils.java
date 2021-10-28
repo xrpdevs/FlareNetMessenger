@@ -1,13 +1,13 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
-import static uk.co.xrpdevs.flarenetmessenger.MyService.xrplClient;
-
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Pair;
+
+import androidx.annotation.Nullable;
 
 import org.bouncycastle.crypto.generators.SCrypt;
 import org.bouncycastle.jce.ECNamedCurveTable;
@@ -37,6 +37,7 @@ import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGetBalance;
 import org.xrpl.xrpl4j.client.JsonRpcClientErrorException;
+import org.xrpl.xrpl4j.client.XrplClient;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;
 import org.xrpl.xrpl4j.model.transactions.Address;
@@ -73,6 +74,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.crypto.Cipher;
+
+import okhttp3.HttpUrl;
 
 @SuppressWarnings("UnstableApiUsage")
 public class Utils {
@@ -185,7 +188,14 @@ public class Utils {
 
     public static Pair<BigDecimal, String> getMyBalance(String walletAddress) throws IOException {
         String ErrorMessage = "OK";
-        Web3j FlareConnection = MyService.initConnection(FlareNetMessenger.deets.get("RPC"), Integer.parseInt(FlareNetMessenger.deets.get("CHAINID")));
+        String chainId = FlareNetMessenger.deets.get("CHAINID");
+        int cid;
+        if (chainId.contains("0x")) {
+            cid = Integer.decode(chainId);
+        } else {
+            cid = Integer.parseInt(chainId);
+        }
+        Web3j FlareConnection = MyService.initConnection(FlareNetMessenger.deets.get("RPC"), cid);
         BigDecimal wei;
 
         BigDecimal FLR = BigDecimal.valueOf(0);
@@ -218,39 +228,37 @@ public class Utils {
     }
 
     public static Pair<BigDecimal, String> getMyXRPBalance(String walletAddress) throws IOException {
-        String ErrorMessage = "OK";
+        return getMyXRPBalance(walletAddress, null);
+    }
+
+    public static Pair<BigDecimal, String> getMyXRPBalance(String walletAddress, @Nullable String RPC) throws IOException {
+        String _ErrorMessage = "OK";
         BigDecimal XRP;
         AccountInfoRequestParams requestParams =
                 AccountInfoRequestParams.of(Address.of(walletAddress));
         AccountInfoResult accountInfoResult;
+        HttpUrl rippledUrl;
+        if (RPC == null) { // default to testnet
+            rippledUrl = HttpUrl
+                    .get("https://s.altnet.rippletest.net:51234/");
+        } else {
+            rippledUrl = HttpUrl
+                    .get(RPC);
+        }
         //AccountTransactionsResult eek;
-
+        XrplClient client = new XrplClient(rippledUrl);
 
         try {
-            // AccountTransactionsRequestParams bob = AccountTransactionsRequestParams.builder()
-            //         .account(Address.of(walletAddress))
-            //         .limit(UnsignedInteger.valueOf(20))
-            //         .build();
-
-
-            //  eek = xrplClient.accountTransactions(bob);
-
-            //   Iterator<AccountTransactionsTransactionResult<? extends Transaction>> itr=eek.transactions().iterator();
-
-            //   while(itr.hasNext())
-            //   {
-            //    System.out.println(itr.next());
-            //   }
-
-            accountInfoResult = xrplClient.accountInfo(requestParams);
+            accountInfoResult = client.accountInfo(requestParams);
             BigInteger drops = new BigInteger(accountInfoResult.accountData().balance().toString());
             XRP = new BigDecimal(drops, 6);
         } catch (JsonRpcClientErrorException | NullPointerException e) {
+            _ErrorMessage = e.getMessage();
             XRP = new BigDecimal("-1");
             e.printStackTrace();
         }
 
-        return new Pair<>(XRP, ErrorMessage);
+        return new Pair<>(XRP, _ErrorMessage);
     }
 
     public static HashMap<String, String> jsonToMap(String t) throws JSONException {

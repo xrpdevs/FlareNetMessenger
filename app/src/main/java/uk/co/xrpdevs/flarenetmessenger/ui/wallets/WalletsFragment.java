@@ -7,18 +7,23 @@ import android.app.Activity;
 import android.app.FragmentManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -38,6 +43,7 @@ import uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.PKeyScanner;
 import uk.co.xrpdevs.flarenetmessenger.R;
+import uk.co.xrpdevs.flarenetmessenger.TransactionsActivity;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.Zipper;
 import uk.co.xrpdevs.flarenetmessenger.dbHelper;
@@ -57,7 +63,8 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
     SharedPreferences prefs;
     SharedPreferences.Editor pEdit;
     public ArrayList<HashMap<String, String>> feedList = new ArrayList<>();
-
+    Resources res;
+    String packageName = "uk.co.xrpdevs.flarenetmessenger";
     WalletsFragment mThis = this;
     ListView lv;
     PinCodeDialogFragment pinDialog;
@@ -68,7 +75,12 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
     @Override
     public void onCreateOptionsMenu(@NotNull Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.fragment_menu_wallets, menu);
-        super.onCreateOptionsMenu(menu,inflater);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    public int getDrawableId(String resname) {
+        return res.getIdentifier(
+                resname, "mipmap", packageName);
     }
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -77,10 +89,11 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
         setHasOptionsMenu(true);
         View root = inflater.inflate(R.layout.fragment_wallets, container, false);
         lv = root.findViewById(R.id.wallets_list);
-       /// lv.setAdapter(WalletsAdaptor);
+        /// lv.setAdapter(WalletsAdaptor);
         registerForContextMenu(lv);
         prefs = this.requireActivity().getSharedPreferences("fnm", 0);
         pEdit = prefs.edit();
+        res = getActivity().getApplication().getApplicationContext().getResources();
         mAct = this.getActivity();
         if (prefs.getInt("walletCount", 0) > 0) {
             myLog("FRAG", "Wallet count is non zero");
@@ -94,7 +107,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
             Intent intent = new Intent(mThis.getActivity(), PKeyScanner.class);
             startActivity(intent);
         });
-
+        registerForContextMenu(lv);
         return root;
     }
 
@@ -112,6 +125,11 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = super.getView(position, convertView, parent);
                 HashMap<String, String> item = (HashMap<String, String>) getItem(position);
+                ImageView iv = view.findViewById(R.id.wallet_icon);
+                Log.d("abcdef", item.toString());
+                iv.setImageResource(getDrawableId(item.get("ICON")));
+                // iv.setImageResource(R.drawable.ic_qr_white);
+
                 return view;
             }
         };
@@ -152,6 +170,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
         return simpleAdapter;
 
     }
+
 
 
     public void getWalletList() {
@@ -237,6 +256,88 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
         FragmentManager manager = mThis.requireActivity().getFragmentManager();
         pinDialog = new PinCodeDialogFragment().newInstance(this, "Enter PIN:", "export");
         pinDialog.show(manager, "1");
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        if (v.getId() == R.id.wallets_list) {
+            MenuInflater inflater = mAct.getMenuInflater();
+            inflater.inflate(R.menu.context_wallets, menu);
+        }
+    }
+
+    @Override // T
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo info, info2;
+        info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        TextView textView;
+        String bod;
+        // View li;
+
+
+        info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
+        View li = info.targetView;
+        //(ViewGroup) li.getParent().over
+        HashMap<String, String> theItem = feedList.get(info.position);
+        // Handle item selection
+        TextView cBody = li.findViewById(R.id.inboxContent);
+        myLog("MITEM", item.toString() + " ");
+        switch (item.getItemId()) {
+            case R.id.aic_updatebalance:
+                return true;
+
+            case R.id.aic_sendfunds:
+
+                return true;
+            case R.id.wal_c_transactions:
+                FragmentTransaction fragmentTransaction = getFragmentManager().beginTransaction();
+//                fragmentTransaction.setCustomAnimations(R.animator.
+//                        R.anim.slide_in,  // enter
+//                        R.anim.slide_out // exi
+                //fragmentTransaction.remove(currentFragment);
+                Fragment f = new TransactionsActivity();
+                Bundle args = new Bundle();
+                args.putString("wAddr", theItem.get("ADDRESS"));
+                args.putString("wBcid", theItem.get("BCID"));
+                // args.putString("selectFragment", "home");
+                f.setArguments(args);
+
+                fragmentTransaction.replace(R.id.nav_host_fragment, f);
+                fragmentTransaction.addToBackStack("wallets").commit();
+                return true;
+            case R.id.wal_c_rename:
+                /*View oli = li;
+                View edView = onCreateViewz(this.getLayoutInflater(), (ViewGroup) li.getParent());
+                replaceView(li, edView);
+                EditText edit = edView.findViewById(R.id.inboxAddressEdit);
+                edit.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                    public void onFocusChange(View v, boolean hasFocus) {
+                        if(!hasFocus) {
+                            //saveThisItem(txtClientID.getText().toString(), "name", txtName.getText().toString());
+
+                        }
+                    }
+                });*/
+
+            default:
+                return super.onContextItemSelected(item);
+        }
+    }
+
+    public View onCreateViewz(LayoutInflater inflater, ViewGroup bob) {
+        View view = inflater.inflate(R.layout.listitem_wallets_rename, bob);
+        return view;
+    }
+
+    private void replaceView(View oldV, View newV) {
+        ViewGroup par = (ViewGroup) oldV.getParent();
+        if (par == null) {
+            return;
+        }
+        int i1 = par.indexOfChild(oldV);
+        par.removeViewAt(i1);
+        par.addView(newV, i1);
     }
 
     @SuppressLint("SdCardPath")

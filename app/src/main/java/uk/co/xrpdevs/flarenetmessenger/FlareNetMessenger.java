@@ -10,7 +10,7 @@ import java.util.HashMap;
 
 public class FlareNetMessenger extends Application {
     private static FlareNetMessenger instance;
-    public static boolean loggingOn = false;
+    //public static boolean loggingOn = false;
     public static dbHelper dbH;
     public static HashMap<String, String> deets;
 

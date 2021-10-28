@@ -10,6 +10,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -18,6 +19,7 @@ import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -60,6 +62,7 @@ import uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.R;
+import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.dbHelper;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.SelectBlockChainDialogFragment;
@@ -79,7 +82,9 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
     SharedPreferences.Editor pEdit;
     HashMap<String, String> deets;
     BottomNavigationView navView;
-    TextView walletName;
+    TextView walletName, balanceView;
+    Resources res;
+    ImageView walletIcon;
     Activity mAct;
     dbHelper dbH = FlareNetMessenger.dbH;
     Button hShare, hCopy, hAssets;
@@ -87,6 +92,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
     Credentials c;
     Web3j fc = MyService.initWeb3j();
     Thread qrThread;// = new QR_Thread();
+    String packageName = "uk.co.xrpdevs.flarenetmessenger";
 
     public HomeFragment() throws IOException {
     }
@@ -111,7 +117,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
         if(c!=null && c.getCount()!=0) {
             deets = dbHelper.cursorToHashMapArray(c).get(0);
             FlareNetMessenger.deets = deets;
-
+            res = getActivity().getApplication().getApplicationContext().getResources();
             navView = mThis.getActivity().findViewById(R.id.nav_view);
             navView.getMenu().findItem(R.id.navigation_home).setChecked(true);
             Bundle args = getArguments();
@@ -144,12 +150,41 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
 
             XRPAddress = deets.get("ADDRESS");
             // c = Credentials.create(deets.get("walletPrvKey"));
+            Log.d("abcdef", deets.get("ICON"));
             walletName.setText(deets.getOrDefault("NAME", "Wallet " + prefs.getInt("currentWallet", 0)));
+
+            walletIcon.setImageResource(getDrawableId(deets.get("ICON")));
+            new Thread(new Runnable() {
+                String balance = "Balance: unknown";
+
+                @Override
+                public void run() {
+                    try {
+                        if (deets.get("TYPE").equals("XRPL")) {
+                            balance = Utils.getMyXRPBalance(deets.get("ADDRESS"), deets.get("RPC")).first.toPlainString();
+                            if (balance.equals("-1")) {
+                                balance = "Not active (send 20 XRP)";
+                            }
+                        } else {
+                            balance = Utils.getMyBalance(deets.get("ADDRESS")).first.toPlainString();
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    mAct.runOnUiThread(() -> {
+                        balanceView.setText("Balance: " + balance);
+                    });
+                }
+            }).start();
             qrThread = new QR_Thread();
             qrThread.start();
         }
     }
 
+    public int getDrawableId(String resname) {
+        return res.getIdentifier(
+                resname, "mipmap", packageName);
+    }
 
     @Override
     public void onResume() {
@@ -172,12 +207,15 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
         myLog("FRAG", "HomeFragment");
         HomeViewModel homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
         root = inflater.inflate(R.layout.fragment_home, container, false);
-        final TextView textView = root.findViewById(R.id.text_home);
+        //final TextView textView = root.findViewById(R.id.text_home);
         hCopy = root.findViewById(R.id.homeQR_copy);
         hShare = root.findViewById(R.id.homeQR_share);
         hAssets = root.findViewById(R.id.hAssets);
         walletName = root.findViewById(R.id.textView7);
-        homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+        balanceView = root.findViewById(R.id.textView6);
+        walletIcon = root.findViewById(R.id.imageView4);
+        //walletIcon.setImageResource(.getDrawableId(item.get("ICON")));
+        //homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         //   BottomNavigationView navView = root.getParent().findViewById(R.id.nav_view);
         navView = mThis.getActivity().findViewById(R.id.nav_view);
 
@@ -225,6 +263,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
             fragmentTransaction.replace(R.id.nav_host_fragment, f);
             fragmentTransaction.addToBackStack("home").commit();
         });
+
         return root;
     }
 
@@ -290,8 +329,14 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                 } catch (WriterException e) {
                     e.printStackTrace();
                 }
+
+
             }
-            mAct.runOnUiThread(() -> ((ImageView) mAct.findViewById(R.id.imageView2)).setImageBitmap(bmp));
+
+            mAct.runOnUiThread(() -> {
+                ((ImageView) mAct.findViewById(R.id.imageView2)).setImageBitmap(bmp);
+
+            });
         }
     }
 

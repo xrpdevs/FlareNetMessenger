@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
+import android.util.Pair;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -222,10 +223,9 @@ public class TokensFragment extends Fragment {
 
         // get asset type from wallets info
         if (deets.get("TYPE").equals("XRPL")) {
-
             primaryAsset.put("NAME", "XRP");
             primaryAsset.put("TYPE", "XRPL");
-            primaryAsset.put("ADDRESS", Utils.getMyXRPBalance(deets.get("ADDRESS")).first.toPlainString());
+            primaryAsset.put("ADDRESS", Utils.getMyXRPBalance(deets.get("ADDRESS"), deets.get("RPC")).first.toPlainString());
         } else {
             myLog("WBALANCE", deets.toString());
             primaryAsset.put("NAME", deets.get("TOKNAME"));
@@ -311,25 +311,38 @@ public class TokensFragment extends Fragment {
                     myLog("CONTRACT", e.getMessage());
                 }
             }
-            mAct.runOnUiThread(() -> {
-                BigDecimal bd = null;
-                if (contract != null) {
-                    bd = new BigDecimal(balance, 18);
-                } else {
-                    try {
-                        if (deets.get("TYPE").equals("XRPL")) {
+            mAct.runOnUiThread(this::run2);
+        }
 
-                            bd = Utils.getMyXRPBalance(deets.get("ADDRESS")).first;
-                        } else {
-                            bd = Utils.getMyBalance(address).first;
-                            // get decimal places from definitions file
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
+        private void run2() {
+            BigDecimal bd = null;
+            if (contract != null) {
+                bd = new BigDecimal(balance, 18);
                 updateMe.setText(bd.stripTrailingZeros().toPlainString());
-            });
+            } else {
+                Pair<BigDecimal, String> out;
+                try {
+                    if (deets.get("TYPE").equals("XRPL")) {
+                        out = Utils.getMyXRPBalance(deets.get("ADDRESS"), deets.get("RPC"));
+                        bd = out.first;
+                        //bd = Utils.getMyXRPBalance(deets.get("ADDRESS")).first;
+                    } else {
+                        out = Utils.getMyBalance(address);
+                        bd = out.first;
+                        // get decimal places from definitions file
+                    }
+                    if (bd.equals(new BigDecimal("-1"))) {
+                        updateMe.setText("Error:" + out.second);
+                    } else {
+                        updateMe.setText(bd.stripTrailingZeros().toPlainString());
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+
+            //updateMe.setText(bd.stripTrailingZeros().toPlainString());
         }
     }
 

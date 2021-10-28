@@ -22,43 +22,45 @@
         app:layout_constraintTop_toTopOf="parent"
         android:contentDescription="TODO" />
 
-    <TextView
-        android:id="@+id/inboxAddress"
+    <EditText
+        android:id="@+id/inboxAddressEdit"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+        android:layout_alignParentTop="false"
+        android:layout_marginTop="4dp"
         android:layout_toEndOf="@id/wallet_icon"
+        android:inputType="textCapWords"
         android:maxWidth="300sp"
         android:maxHeight="25sp"
-        android:minHeight="25sp"
+        android:minHeight="1dp"
         android:singleLine="true"
-        android:text=" "
         android:textAppearance="?android:attr/textAppearanceLarge"
-        android:textColor="#A1887F"
-        android:textSize="18sp"
+        android:textColor="#7f7f7f"
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/inboxLastact"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/wallet_icon"
         app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="SpeakableTextPresentCheck" />
+        tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
 
     <TextView
         android:id="@+id/inboxContent"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
 
+        android:layout_marginTop="8dp"
         android:maxWidth="300sp"
         android:maxHeight="25sp"
-        android:minHeight="25sp"
+        android:minHeight="30dp"
         android:singleLine="true"
         android:text=" "
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:textSize="15sp"
         app:layout_constraintEnd_toStartOf="@+id/inboxType"
-        app:layout_constraintHorizontal_bias="0.485"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toEndOf="@+id/wallet_icon"
-        app:layout_constraintTop_toBottomOf="@+id/inboxAddress"
 
+        app:layout_constraintTop_toBottomOf="@+id/inboxAddressEdit"
         tools:ignore="SpeakableTextPresentCheck" />
 
     <TextView

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/wal_c_transactions"
+        android:title="View Transactions" />
+    <item
+        android:id="@+id/wal_c_rename"
+        android:title="Rename" />
+
+    <item
+        android:id="@+id/wal_c_delete"
+        android:title="Delete" />
+    <item
+        android:id="@+id/wal_c_export_file"
+        android:title="Export to File" />
+    <item
+        android:id="@+id/wal_c_export_qr"
+        android:title="Export via QR Code" />
+</menu>

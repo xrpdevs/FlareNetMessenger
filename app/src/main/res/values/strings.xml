@@ -97,5 +97,6 @@
     <string name="memo">Memo</string>
     <string name="pin_code_confirm">Re-enter PIN to confirm</string>
     <string name="textview">TextView</string>
+    <string name="error">\"Error: \"</string>
 
 </resources>

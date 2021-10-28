@@ -220,7 +220,7 @@ public class PKeyScanner extends AppCompatActivity implements View.OnClickListen
         String addr = testWallet.classicAddress().value();
         String xaddr = testWallet.xAddress().value();
 
-        if (bcData.containsKey("TESTNET")) {
+        if (bcData.containsKey("TESTNET") && bcData.get("TESTNET").equals("true")) {
             myLog("BCDATA", bcData.toString());
             //if (bcData.get("Testnet").toString().equals("true")) {
             FaucetClient faucetClient = FaucetClient

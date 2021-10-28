@@ -39,7 +39,6 @@ import android.os.Messenger;
 import android.os.StrictMode;
 import android.util.Log;
 
-import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
 
 import org.json.JSONArray;
@@ -123,7 +122,14 @@ public class MyService extends Service {
      * Factory Method
      */
     public static ERC20 getERC20link(String contractAddress, Credentials _c, String RPCendPoint, String ChainID) {
-        tmpCID = Integer.parseInt(ChainID);
+        String chainId = FlareNetMessenger.deets.get("CHAINID");
+        int cid;
+        if (chainId.contains("0x")) {
+            cid = Integer.decode(chainId);
+        } else {
+            cid = Integer.parseInt(chainId);
+        }
+        tmpCID = cid;
         return getERC20link(contractAddress, _c, RPCendPoint);
     }
 
@@ -139,8 +145,6 @@ public class MyService extends Service {
         super.onCreate();
         //c = Credentials.create(FlareNetMessenger.deets.get("PRIVKEY"));
         mC = getApplicationContext();
-
-
         StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.LAX);
 
         HttpUrl rippledUrl = HttpUrl
@@ -150,41 +154,33 @@ public class MyService extends Service {
         String jsub = "{\"id\": \"76\"," +
                 "\"command\": \"subscribe\"," +
                 "\"accounts\": [";
-
         addresses = FlareNetMessenger.dbH.getAddrNames("5");
-
         int end = addresses.size();
         int a = 0;
 
-
         for (Map.Entry<String, String> pair : addresses.entrySet()) {
-            //System.out.format("key: %s, value: %d%n", pair.getKey(), pair.getValue());
-
             jsub = jsub + "\"" + pair.getKey() + "\"";
             if (a != (end - 1)) jsub += ", ";
             a++;
         }
-
         jsub += "]}";
 
         WSock socket = WSock.Builder.with("wss://s.altnet.rippletest.net/").build().connect();
         socket.sendOnOpen("76", jsub);
         socket.onEventResponse("76", oevrl);
 
-
         prefs = getSharedPreferences("fnm", 0);
         myLog("PREFS", Utils.dumpMap(prefs.getAll()));
-
 
         if (prefs.contains("csbc_rpc") && prefs.contains("csbc_cid")) {
             tmpCID = Integer.decode(prefs.getString("csbc_cid", "1"));
             rpc = prefs.getString("csbc_rpc", rpc);
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            startMyOwnForeground();
-        else
-            startForeground(1, new Notification());
+        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        startMyOwnForeground();
+        //else
+        //startForeground(1, new Notification());
     }
 
     public static void start(Context context) {
@@ -264,7 +260,7 @@ public class MyService extends Service {
         //}
         prefs = getSharedPreferences("fnm", 0);
         myLog("PREFS", Utils.dumpMap(prefs.getAll()));
-        if (prefs.contains("walletCount") && prefs.getInt("walletCount", 0) > 0) {
+        if (FlareNetMessenger.dbH.walletCount() > 0) {
             int cw = prefs.getInt("currentWallet", 0);
             deets = dbHelper.cursorToHashMapArray(FlareNetMessenger.dbH.getWalletDetails(String.valueOf(cw))).get(0);
 
@@ -379,7 +375,7 @@ public class MyService extends Service {
         String acc_name = addresses.getOrDefault(account, account);
         String des_name = addresses.getOrDefault(destination, destination);
         myLog("EVENT", "address: " + account);
-        String title = "FNM";
+        String title;
         if (addresses.containsKey(destination)) {
             title = "FNM: You've got XRP!";
         } else {
@@ -417,7 +413,7 @@ public class MyService extends Service {
             }
         }
     }
-    @RequiresApi(api = Build.VERSION_CODES.O)
+
     private void startMyOwnForeground() {
         String NOTIFICATION_CHANNEL_ID = "uk.co.xrpdevs.flarenetmessenger";
         String channelName = "My Background Service";
@@ -430,7 +426,7 @@ public class MyService extends Service {
 
         Intent intent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent,
-                PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID);
         Notification notification = notificationBuilder.setOngoing(true)
