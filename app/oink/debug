@@ -1,0 +1,94 @@
+2021-05-16 01:09:52.231 29872-29872/? I/arenetmessenge: Not late-enabling -Xcheck:jni (already on)
+2021-05-16 01:09:53.536 29872-29872/? E/arenetmessenge: Unknown bits set in runtime_flags: 0x8000
+2021-05-16 01:09:53.546 29872-29872/? W/arenetmessenge: Unexpected CPU variant for X86 using defaults: x86
+2021-05-16 01:09:55.606 29872-29872/uk.co.xrpdevs.flarenetmessenger I/arenetmessenge: The ClassLoaderContext is a special shared library.
+2021-05-16 01:09:56.812 29872-29905/uk.co.xrpdevs.flarenetmessenger D/libEGL: Emulator has host GPU support, qemu.gles is set to 1.
+2021-05-16 01:09:56.808 29872-29872/uk.co.xrpdevs.flarenetmessenger W/RenderThread: type=1400 audit(0.0:148): avc: denied { write } for name="property_service" dev="tmpfs" ino=7871 scontext=u:r:untrusted_app:s0:c133,c256,c512,c768 tcontext=u:object_r:property_socket:s0 tclass=sock_file permissive=0 app=uk.co.xrpdevs.flarenetmessenger
+2021-05-16 01:09:56.814 29872-29905/uk.co.xrpdevs.flarenetmessenger W/libc: Unable to set property "qemu.gles" to "1": connection failed; errno=13 (Permission denied)
+2021-05-16 01:09:56.889 29872-29905/uk.co.xrpdevs.flarenetmessenger D/libEGL: loaded /vendor/lib/egl/libEGL_emulation.so
+2021-05-16 01:09:56.893 29872-29905/uk.co.xrpdevs.flarenetmessenger D/libEGL: loaded /vendor/lib/egl/libGLESv1_CM_emulation.so
+2021-05-16 01:09:56.896 29872-29905/uk.co.xrpdevs.flarenetmessenger D/libEGL: loaded /vendor/lib/egl/libGLESv2_emulation.so
+2021-05-16 01:09:57.114 29872-29872/uk.co.xrpdevs.flarenetmessenger D/FRAG: >
+    uk.co.xrpdevs.flarenetmessenger.MainActivity
+    onCreateCalled
+2021-05-16 01:09:57.234 29872-29872/uk.co.xrpdevs.flarenetmessenger W/arenetmessenge: Accessing hidden method Landroid/view/View;->computeFitSystemWindows(Landroid/graphics/Rect;Landroid/graphics/Rect;)Z (greylist, reflection, allowed)
+2021-05-16 01:09:57.234 29872-29872/uk.co.xrpdevs.flarenetmessenger W/arenetmessenge: Accessing hidden method Landroid/view/ViewGroup;->makeOptionalFitsSystemWindows()V (greylist, reflection, allowed)
+2021-05-16 01:09:57.452 29872-29872/uk.co.xrpdevs.flarenetmessenger W/System.err: SLF4J: Failed to load class "org.slf4j.impl.StaticLoggerBinder".
+2021-05-16 01:09:57.452 29872-29872/uk.co.xrpdevs.flarenetmessenger W/System.err: SLF4J: Defaulting to no-operation (NOP) logger implementation
+2021-05-16 01:09:57.453 29872-29872/uk.co.xrpdevs.flarenetmessenger W/System.err: SLF4J: See http://www.slf4j.org/codes.html#StaticLoggerBinder for further details.
+2021-05-16 01:09:57.632 29872-29872/uk.co.xrpdevs.flarenetmessenger D/NetworkSecurityConfig: No Network Security Config specified, using platform default
+2021-05-16 01:09:57.825 29872-29872/uk.co.xrpdevs.flarenetmessenger D/FRAG: HomeFragment
+2021-05-16 01:09:57.895 29872-29872/uk.co.xrpdevs.flarenetmessenger D/FRAG: >
+    uk.co.xrpdevs.flarenetmessenger.ui.home.HomeFragment
+    onStart
+2021-05-16 01:09:58.073 29872-29872/uk.co.xrpdevs.flarenetmessenger E/MyService: onStartCommand
+2021-05-16 01:09:58.074 29872-29872/uk.co.xrpdevs.flarenetmessenger D/PREFS: wallet1 : {"walletPrvKey":"0xd382f6a42d67da4a78a6d4106c73bc27564dd1404fec69db935a2e66c7437954","walletName":"Wallet 1","walletPubKey":"0x755a6e8ad27d4f08b0fd31777cf3f3a8fbbb86c128fe57387480d35b2e6c2814f7818d323336747272bb41df9dde2c96b36a42ceab0ebd85b74cb126ee729ea3","walletAddress":"0xcb8b49a62ef496c30f83c54095952eea210654ce"}
+
+    currentWallet : 1
+
+    wallet2 : {"walletPrvKey":"0xc4ca0dceed2e85ad28933c2900b60cc074e60207f9caf420edf23d5145e169c7","walletName":"Wallet 2","walletPubKey":"0x120a0557a93c90847033e244757bd16ba9bf40e3f1fcceedd14433914dc890ef519d02554042cdb2ec12f7f83179c609bea1e2c65a8acfd300d587df90bd1367","walletAddress":"0xe989c4d474be83c0874d80321c69bca982ced9d7"}
+
+    walletCount : 2
+
+    pinCode : 6666
+2021-05-16 01:09:58.402 29872-29903/uk.co.xrpdevs.flarenetmessenger D/HostConnection: HostConnection::get() New Host Connection established 0xda713f00, tid 29903
+2021-05-16 01:09:58.463 29872-29903/uk.co.xrpdevs.flarenetmessenger D/HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_async_unmap_buffer ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_async_frame_commands ANDROID_EMU_gles_max_version_3_0
+2021-05-16 01:09:58.474 29872-29903/uk.co.xrpdevs.flarenetmessenger D/EGL_emulation: eglCreateContext: 0xf117f4c0: maj 3 min 0 rcv 3
+2021-05-16 01:09:58.476 29872-29903/uk.co.xrpdevs.flarenetmessenger D/EGL_emulation: eglMakeCurrent: 0xf117f4c0: ver 3 0 (tinfo 0xda74a6c0)
+2021-05-16 01:09:58.501 29872-29903/uk.co.xrpdevs.flarenetmessenger W/Gralloc3: mapper 3.x is not supported
+2021-05-16 01:09:58.508 29872-29903/uk.co.xrpdevs.flarenetmessenger D/HostConnection: createUnique: call
+2021-05-16 01:09:58.509 29872-29903/uk.co.xrpdevs.flarenetmessenger D/HostConnection: HostConnection::get() New Host Connection established 0xda7163e0, tid 29903
+2021-05-16 01:09:58.512 29872-29903/uk.co.xrpdevs.flarenetmessenger D/HostConnection: HostComposition ext ANDROID_EMU_CHECKSUM_HELPER_v1 ANDROID_EMU_native_sync_v2 ANDROID_EMU_dma_v1 ANDROID_EMU_direct_mem ANDROID_EMU_host_composition_v1 ANDROID_EMU_host_composition_v2 ANDROID_EMU_vulkan ANDROID_EMU_deferred_vulkan_commands ANDROID_EMU_vulkan_null_optional_strings ANDROID_EMU_vulkan_create_resources_with_requirements ANDROID_EMU_YUV_Cache ANDROID_EMU_async_unmap_buffer ANDROID_EMU_vulkan_ignored_handles ANDROID_EMU_vulkan_free_memory_sync ANDROID_EMU_vulkan_shader_float16_int8 ANDROID_EMU_vulkan_async_queue_submit ANDROID_EMU_sync_buffer_data GL_OES_EGL_image_external_essl3 GL_OES_vertex_array_object GL_KHR_texture_compression_astc_ldr ANDROID_EMU_host_side_tracing ANDROID_EMU_async_frame_commands ANDROID_EMU_gles_max_version_3_0
+2021-05-16 01:09:58.512 29872-29903/uk.co.xrpdevs.flarenetmessenger D/eglCodecCommon: allocate: Ask for block of size 0x1000
+2021-05-16 01:09:58.512 29872-29903/uk.co.xrpdevs.flarenetmessenger D/eglCodecCommon: allocate: ioctl allocate returned offset 0x3ff803000 size 0x2000
+2021-05-16 01:09:58.566 29872-29903/uk.co.xrpdevs.flarenetmessenger D/EGL_emulation: eglMakeCurrent: 0xf117f4c0: ver 3 0 (tinfo 0xda74a6c0)
+2021-05-16 01:09:58.748 29872-29883/uk.co.xrpdevs.flarenetmessenger I/arenetmessenge: Background concurrent copying GC freed 9413(594KB) AllocSpace objects, 0(0B) LOS objects, 49% free, 3334KB/6669KB, paused 712us total 500.225ms
+2021-05-16 01:09:59.304 29872-29910/uk.co.xrpdevs.flarenetmessenger D/uk.co.xrpdevs.flarenetmessenger.contracts.ERC20-name: fCoin
+2021-05-16 01:09:59.304 29872-29910/uk.co.xrpdevs.flarenetmessenger D/BALANCE: 1579118000000000000000000
+2021-05-16 01:09:59.307 29872-29910/uk.co.xrpdevs.flarenetmessenger D/fsms: >
+    uk.co.xrpdevs.flarenetmessenger.MyService$BGThread
+    running on our owd fred,
+2021-05-16 01:09:59.641 29872-29903/uk.co.xrpdevs.flarenetmessenger I/OpenGLRenderer: Davey! duration=1619ms; Flags=1, IntendedVsync=97777780098778, Vsync=97777946765438, OldestInputEvent=9223372036854775807, NewestInputEvent=0, HandleInputStart=97777962946759, AnimationStart=97777963036679, PerformTraversalsStart=97777963097859, DrawStart=97778285598709, SyncQueued=97778325546159, SyncStart=97778326404009, IssueDrawCommandsStart=97778333345119, SwapBuffers=97779222335539, FrameCompleted=97779400360419, DequeueBufferDuration=72000, QueueBufferDuration=471000,
+2021-05-16 01:09:59.737 29872-29872/uk.co.xrpdevs.flarenetmessenger I/Choreographer: Skipped 91 frames!  The application may be doing too much work on its main thread.
+2021-05-16 01:10:00.184 29872-29903/uk.co.xrpdevs.flarenetmessenger I/OpenGLRenderer: Davey! duration=1963ms; Flags=0, IntendedVsync=97777979945091, Vsync=97779496611697, OldestInputEvent=9223372036854775807, NewestInputEvent=0, HandleInputStart=97779496894279, AnimationStart=97779497375249, PerformTraversalsStart=97779497484909, DrawStart=97779505599689, SyncQueued=97779506918459, SyncStart=97779507537369, IssueDrawCommandsStart=97779507629439, SwapBuffers=97779716152509, FrameCompleted=97779943605339, DequeueBufferDuration=72000, QueueBufferDuration=424000,
+2021-05-16 01:10:02.361 29872-29872/uk.co.xrpdevs.flarenetmessenger W/arenetmessenge: Accessing hidden field Landroid/widget/AbsListView;->mIsChildViewEnabled:Z (greylist, reflection, allowed)
+2021-05-16 01:10:03.042 29872-29903/uk.co.xrpdevs.flarenetmessenger D/EGL_emulation: eglMakeCurrent: 0xf117f4c0: ver 3 0 (tinfo 0xda74a6c0)
+2021-05-16 01:10:03.051 29872-29903/uk.co.xrpdevs.flarenetmessenger D/EGL_emulation: eglMakeCurrent: 0xf117f4c0: ver 3 0 (tinfo 0xda74a6c0)
+2021-05-16 01:10:03.197 29872-29903/uk.co.xrpdevs.flarenetmessenger I/OpenGLRenderer: Davey! duration=841ms; Flags=1, IntendedVsync=97782113052565, Vsync=97782579719213, OldestInputEvent=9223372036854775807, NewestInputEvent=0, HandleInputStart=97782590835979, AnimationStart=97782590919819, PerformTraversalsStart=97782591306169, DrawStart=97782809165249, SyncQueued=97782809682679, SyncStart=97782811317029, IssueDrawCommandsStart=97782811432819, SwapBuffers=97782849916189, FrameCompleted=97782956444579, DequeueBufferDuration=146000, QueueBufferDuration=19355000,
+2021-05-16 01:10:03.268 29872-29903/uk.co.xrpdevs.flarenetmessenger D/EGL_emulation: eglMakeCurrent: 0xf117f4c0: ver 3 0 (tinfo 0xda74a6c0)
+2021-05-16 01:10:03.410 29872-29903/uk.co.xrpdevs.flarenetmessenger I/chatty: uid=10133(uk.co.xrpdevs.flarenetmessenger) RenderThread identical 1 line
+2021-05-16 01:10:03.439 29872-29903/uk.co.xrpdevs.flarenetmessenger D/EGL_emulation: eglMakeCurrent: 0xf117f4c0: ver 3 0 (tinfo 0xda74a6c0)
+2021-05-16 01:10:03.688 29872-29903/uk.co.xrpdevs.flarenetmessenger D/EGL_emulation: eglMakeCurrent: 0xf117f4c0: ver 3 0 (tinfo 0xda74a6c0)
+2021-05-16 01:10:03.714 29872-29903/uk.co.xrpdevs.flarenetmessenger D/EGL_emulation: eglMakeCurrent: 0xf117f4c0: ver 3 0 (tinfo 0xda74a6c0)
+2021-05-16 01:10:08.336 29872-29872/uk.co.xrpdevs.flarenetmessenger D/AndroidRuntime: Shutting down VM
+2021-05-16 01:10:08.338 29872-29872/uk.co.xrpdevs.flarenetmessenger E/AndroidRuntime: FATAL EXCEPTION: main
+    Process: uk.co.xrpdevs.flarenetmessenger, PID: 29872
+    java.lang.NullPointerException: Attempt to invoke virtual method 'android.content.res.Resources android.app.Activity.getResources()' on a null object reference
+        at uk.co.xrpdevs.flarenetmessenger.ui.dialogs.SelectBlockChainDialogFragment.<init>(SelectBlockChainDialogFragment.java:54)
+        at uk.co.xrpdevs.flarenetmessenger.ui.home.HomeFragment.bcDialog(HomeFragment.java:287)
+        at uk.co.xrpdevs.flarenetmessenger.ui.home.HomeFragment.onOptionsItemSelected(HomeFragment.java:237)
+        at androidx.fragment.app.Fragment.performOptionsItemSelected(Fragment.java:3111)
+        at androidx.fragment.app.FragmentManager.dispatchOptionsItemSelected(FragmentManager.java:3222)
+        at androidx.fragment.app.Fragment.performOptionsItemSelected(Fragment.java:3115)
+        at androidx.fragment.app.FragmentManager.dispatchOptionsItemSelected(FragmentManager.java:3222)
+        at androidx.fragment.app.FragmentController.dispatchOptionsItemSelected(FragmentController.java:416)
+        at androidx.fragment.app.FragmentActivity.onMenuItemSelected(FragmentActivity.java:358)
+        at androidx.appcompat.app.AppCompatActivity.onMenuItemSelected(AppCompatActivity.java:228)
+        at androidx.appcompat.view.WindowCallbackWrapper.onMenuItemSelected(WindowCallbackWrapper.java:109)
+        at androidx.appcompat.app.AppCompatDelegateImpl.onMenuItemSelected(AppCompatDelegateImpl.java:1176)
+        at androidx.appcompat.view.menu.MenuBuilder.dispatchMenuItemSelected(MenuBuilder.java:834)
+        at androidx.appcompat.view.menu.MenuItemImpl.invoke(MenuItemImpl.java:158)
+        at androidx.appcompat.view.menu.MenuBuilder.performItemAction(MenuBuilder.java:985)
+        at androidx.appcompat.view.menu.MenuPopup.onItemClick(MenuPopup.java:128)
+        at android.widget.AdapterView.performItemClick(AdapterView.java:330)
+        at android.widget.AbsListView.performItemClick(AbsListView.java:1190)
+        at android.widget.AbsListView$PerformClick.run(AbsListView.java:3198)
+        at android.widget.AbsListView$3.run(AbsListView.java:4116)
+        at android.os.Handler.handleCallback(Handler.java:883)
+        at android.os.Handler.dispatchMessage(Handler.java:100)
+        at android.os.Looper.loop(Looper.java:214)
+        at android.app.ActivityThread.main(ActivityThread.java:7356)
+        at java.lang.reflect.Method.invoke(Native Method)
+        at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:492)
+        at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:930)
+2021-05-16 01:10:08.604 29872-29872/uk.co.xrpdevs.flarenetmessenger I/Process: Sending signal. PID: 29872 SIG: 9
