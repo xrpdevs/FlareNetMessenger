@@ -49,6 +49,7 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
 import java.util.Date;
@@ -153,7 +154,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
             Log.d("abcdef", deets.get("ICON"));
             walletName.setText(deets.getOrDefault("NAME", "Wallet " + prefs.getInt("currentWallet", 0)));
 
-            walletIcon.setImageResource(getDrawableId(deets.get("ICON")));
+            walletIcon.setImageResource(R.mipmap.chain_sgb_round);
             new Thread(new Runnable() {
                 String balance = "Balance: unknown";
 
@@ -172,7 +173,13 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                         e.printStackTrace();
                     }
                     mAct.runOnUiThread(() -> {
-                        balanceView.setText("Balance: " + balance);
+                        String usval = FlareNetMessenger.prices.getOrDefault(deets.get("SYMBOL") + "USDT", "0");
+                        Log.d("abcdef", usval);
+                        try {
+                            usval = new BigDecimal(usval).multiply(new BigDecimal(balance)).stripTrailingZeros().toPlainString();
+                        } catch (Exception e) {
+                        }
+                        balanceView.setText("Balance: " + balance + " ($" + usval + ")");
                     });
                 }
             }).start();

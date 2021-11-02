@@ -13,6 +13,7 @@ public class FlareNetMessenger extends Application {
     //public static boolean loggingOn = false;
     public static dbHelper dbH;
     public static HashMap<String, String> deets;
+    public static HashMap<String, String> prices = new HashMap<>();
 
     @Override
     public void onCreate() {

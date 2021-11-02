@@ -1,13 +1,13 @@
 {
   "fCoin": {
     "Symbol": "FCX",
-    "Address": "0x933FDA928386bce4021FC472b4115C427df06612",
+    "Address": "0x3212ACb18a7e6407b7A74a612609aE9033e9967e",
     "Type": "ERC20",
     "Decimals": 18
   },
   "dXUSD": {
-    "Symbol": "dXUSD",
-    "Address": "0x0658FA064aca71Ec54bA884ea1B3a9538a87c010",
+    "Symbol": "WSGB",
+    "Address": "0x02f0826ef6aD107Cfc861152B32B52fD11BaB9ED",
     "Type": "ERC20"
   },
   "YFLR": {

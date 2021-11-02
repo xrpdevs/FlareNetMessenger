@@ -40,6 +40,7 @@ import org.xrpl.xrpl4j.client.JsonRpcClientErrorException;
 import org.xrpl.xrpl4j.client.XrplClient;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoRequestParams;
 import org.xrpl.xrpl4j.model.client.accounts.AccountInfoResult;
+import org.xrpl.xrpl4j.model.client.accounts.AccountTransactionsResult;
 import org.xrpl.xrpl4j.model.transactions.Address;
 
 import java.io.IOException;
@@ -245,9 +246,9 @@ public class Utils {
             rippledUrl = HttpUrl
                     .get(RPC);
         }
-        //AccountTransactionsResult eek;
+        AccountTransactionsResult eek;
         XrplClient client = new XrplClient(rippledUrl);
-
+//XRP =new BigDecimal("0");
         try {
             accountInfoResult = client.accountInfo(requestParams);
             BigInteger drops = new BigInteger(accountInfoResult.accountData().balance().toString());
@@ -256,6 +257,7 @@ public class Utils {
             _ErrorMessage = e.getMessage();
             XRP = new BigDecimal("-1");
             e.printStackTrace();
+
         }
 
         return new Pair<>(XRP, _ErrorMessage);
