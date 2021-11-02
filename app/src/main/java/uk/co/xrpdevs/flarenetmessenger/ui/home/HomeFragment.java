@@ -154,7 +154,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
             Log.d("abcdef", deets.get("ICON"));
             walletName.setText(deets.getOrDefault("NAME", "Wallet " + prefs.getInt("currentWallet", 0)));
 
-            walletIcon.setImageResource(R.mipmap.chain_sgb_round);
+            walletIcon.setImageResource(getDrawableId(deets.get("ICON")));
             new Thread(new Runnable() {
                 String balance = "Balance: unknown";
 
