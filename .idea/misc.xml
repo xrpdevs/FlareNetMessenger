@@ -27,6 +27,7 @@
         <entry key="app/src/main/res/layout/activity_transactions.xml" value="0.51484375" />
         <entry key="app/src/main/res/layout/addrentrydialog.xml" value="0.51484375" />
         <entry key="app/src/main/res/layout/content_wallets.xml" value="0.36771844660194175" />
+        <entry key="app/src/main/res/layout/dialog_pwd.xml" value="0.3580097087378641" />
         <entry key="app/src/main/res/layout/dialog_select_blockchain.xml" value="0.30078125" />
         <entry key="app/src/main/res/layout/fragment_home.xml" value="0.67" />
         <entry key="app/src/main/res/layout/fragment_wallets.xml" value="0.36771844660194175" />

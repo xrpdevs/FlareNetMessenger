@@ -23,7 +23,7 @@ public class PleaseWaitDialog extends android.app.DialogFragment {
     public Boolean cancelable;
 
     public Boolean hasButtons;
-
+    public View _viewHook;
     @Override
     public void onActivityCreated(Bundle arg0) {
         super.onActivityCreated(arg0);
@@ -42,6 +42,7 @@ public class PleaseWaitDialog extends android.app.DialogFragment {
 
         View view = inflater.inflate(R.layout.dialog_pwd, null);
         builder.setView(view);
+        _viewHook = view;
 
         TextView title = new TextView(builder.getContext());
 // You Can Customise your Title here
@@ -58,7 +59,10 @@ public class PleaseWaitDialog extends android.app.DialogFragment {
 
         //  }
 
-        builder.setMessage(prompt);
+        TextView promptView = view.findViewById(R.id.textview_pwd);
+        promptView.setText(prompt);
+
+        //builder.setMessage(prompt);
         setCancelable(cancelable);
         return builder.create();
     }

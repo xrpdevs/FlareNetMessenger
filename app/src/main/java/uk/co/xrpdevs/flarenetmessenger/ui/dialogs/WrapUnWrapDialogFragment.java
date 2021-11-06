@@ -5,8 +5,10 @@ import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 import android.app.Dialog;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -24,6 +26,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 
+import uk.co.xrpdevs.flarenetmessenger.Convert;
 import uk.co.xrpdevs.flarenetmessenger.R;
 
 /**
@@ -33,34 +36,46 @@ public class WrapUnWrapDialogFragment extends android.app.DialogFragment {
 
     public static final String TAG = "PinCodeEntryDialog";
     public boolean confirm = false;
-    WrapUnWrapDialogFragment mThis = this;
-    String prompt = "Enter Amount To Wrap";
-    String tag;
-    BigInteger balance;
+    private final WrapUnWrapDialogFragment mThis = this;
+    private String prompt = "Enter Amount To Wrap";
+    private String tag;
+    public BigInteger balance;
+    boolean wrapping = true;
+    private OnResultListener onResultListener;
+    private EditText amount;
+    private TextView tv_percent;
+    public String _balstring;
+    private String _humanAmount;
+    private String _percent;
+    private BigInteger _inWei;
+
+    private String cunt;
 
 
     public interface OnResultListener {
-        void onResult(String pinCode, String tag) throws IOException, JSONException;
+        void onResult(String humanAmount, BigInteger inWei, String percentage, String tag) throws IOException, JSONException;
     }
 
-    public WrapUnWrapDialogFragment newInstance(final OnResultListener listener, String prompt, String tag, BigInteger balance) {
+    public WrapUnWrapDialogFragment newInstance(
+            final OnResultListener listener, String prompt, String tag, String mybalance, boolean _wrap) {
+//        myLog("BAL", balance.toString());
         mThis.prompt = prompt;
         this.prompt = prompt;
         mThis.tag = tag;
-        //boolean confirm;
         mThis.confirm = confirm;
-        mThis.balance = balance;
-        setCancelable(false);
+        mThis.wrapping = _wrap;
         WrapUnWrapDialogFragment fragment = new WrapUnWrapDialogFragment();
         fragment.prompt = prompt;
         fragment.tag = tag;
+        fragment.cunt = mybalance;
+        fragment.balance = Convert.toWei(mybalance, Convert.Unit.ETHER).toBigIntegerExact();
+        fragment._balstring = mybalance;
+        fragment.wrapping = _wrap;
+        mThis._balstring = mybalance;
         fragment.setOnResultListener(listener);
         return fragment;
     }
 
-    private OnResultListener onResultListener;
-    private EditText amount;
-    private TextView tv_percent;
 
     /**
      * Sets the ConfigSetListener to receive callback when the PIN code is set.
@@ -77,6 +92,14 @@ public class WrapUnWrapDialogFragment extends android.app.DialogFragment {
         tv_percent = content.findViewById(R.id.tv_percent);
         SeekBar seekbar = content.findViewById(R.id.seekbar);
 
+
+        //  if(wrapping){balance.subtract(new BigInteger("80000000")); }
+        //     myLog("BAL", mThis.balance.toString());
+        myLog("BAL", _balstring);
+
+        //  balance = Convert.toWei(mThis._balstring, Convert.Unit.ETHER).toBigIntegerExact();
+        myLog("BALF", balance.toString());
+
         int inputType = InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_VARIATION_PASSWORD;
 //        editPinCode.setInputType(inputType);
         seekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -91,16 +114,31 @@ public class WrapUnWrapDialogFragment extends android.app.DialogFragment {
 
             public void onProgressChanged(SeekBar bar,
                                           int paramInt, boolean paramBoolean) {
+
                 tv_percent.setText("" + paramInt + "%"); // here in textView the percent will be shown
-                BigInteger _units = new BigInteger(String.valueOf(balance.divide(new BigInteger("100"))));
-                BigDecimal _amount = new BigDecimal(_units.multiply(new BigInteger(String.valueOf(paramInt))), 18);
+
+                BigInteger _units = new BigInteger("0");
+
+                myLog("_balance", balance.toString());
+
+                _units = balance.divide(new BigInteger("100"));
+
+                _inWei = _units.multiply(new BigInteger(String.valueOf(paramInt)));
+
+                BigDecimal _amount = new BigDecimal(_inWei, 18);
+
                 String disp = _amount.setScale(6, RoundingMode.FLOOR).stripTrailingZeros().toPlainString();
+
+                _humanAmount = disp;
+
+                _percent = String.valueOf(paramInt);
+
                 amount.setText(disp);
 
             }
         });
 
-       /* editPinCode.addTextChangedListener(new TextWatcher() {
+        amount.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
@@ -112,50 +150,23 @@ public class WrapUnWrapDialogFragment extends android.app.DialogFragment {
             @Override
             public void afterTextChanged(Editable s) {
                 if (isFieldValid(s.toString())) {
-                    editPinCode.setError(null);
+                    amount.setError(null);
                 } else {
-                    editPinCode.setError(getString(R.string.empty_field));
+                    amount.setError(getString(R.string.empty_field));
                 }
             }
-        });*/
-        if (confirm) {
-            //confirmPinCode.setInputType(inputType);
+        });
 
-            setCancelable(false);
-            mThis.setCancelable(false);
-            /*confirmPinCode.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                }
-
-                @Override
-                public void afterTextChanged(Editable s) {
-                    if (isFieldValid(s.toString())) {
-                        editPinCode.setError(null);
-                    } else {
-                        editPinCode.setError(getString(R.string.empty_field));
-                    }
-                    if (!editPinCode.getText().toString().equals(confirmPinCode.getText().toString())) {
-                        confirmPinCode.setError("Codes do not match!");
-                    } else {
-                        confirmPinCode.setError(null);
-                        if (!editPinCode.getText().toString().equals("")) {
-                            setCancelable(true);
-                        }
-                    }
-                }
-            });*/
-        } // only validate the second field if we have asked for initial confirmation
+        // only validate the second field if we have asked for initial confirmation
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setView(content)
-                // Button clicks are handled by the DialogFragment!
-                .setPositiveButton(R.string.connect, null);
-
+        if (wrapping) {
+            builder.setView(content)
+                    .setPositiveButton("Wrap", null);
+        } else {
+            builder.setView(content)
+                    .setPositiveButton("Unwrap", null);
+        }
         TextView title = new TextView(builder.getContext());
 // You Can Customise your Title here
         title.setText(prompt);
@@ -167,7 +178,7 @@ public class WrapUnWrapDialogFragment extends android.app.DialogFragment {
 
         builder.setCustomTitle(title);
         if (confirm) {
-            builder.setCancelable(false);
+            //     builder.setCancelable(false);
         }
         return builder.create();
     }
@@ -193,19 +204,18 @@ public class WrapUnWrapDialogFragment extends android.app.DialogFragment {
                         //     myLog("PIN", "ifv: " + isFieldValid(pinCode));
                         if (onResultListener != null) {
                             myLog("PIN", "oRL: " + (onResultListener != null));
-                            //        try {
-                            //            onResultListener.onResult(pinCode, tag);
-                            //       } catch (IOException e) {
-                            //            e.printStackTrace();
-                            //       } catch (JSONException e) {
-                            //            e.printStackTrace();
-                            //        }
-                            //dialog.dismiss();
+                            try {
+                                onResultListener.onResult(_humanAmount, _inWei, _percent, tag);
+
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            myLog("PIN", "ORL is NULL");
                         }
-                    }// else {
-                    //    editPinCode.setError(getString(R.string.empty_field));
-                    //  }
-                    //   }
+                    }
             );
         }
     }

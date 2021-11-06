@@ -6,6 +6,7 @@ import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.StrictMode;
 import android.util.Log;
 import android.util.Pair;
@@ -55,7 +56,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
-import uk.co.xrpdevs.flarenetmessenger.Convert;
 import uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
@@ -66,6 +66,7 @@ import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.contracts.WNat;
 import uk.co.xrpdevs.flarenetmessenger.ui.contacts.ContactsFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.WrapUnWrapDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
 
@@ -93,6 +94,8 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
     Activity mAct;
     BottomNavigationView navView;
     AdapterView.AdapterContextMenuInfo subInfo;
+    WrapUnWrapDialogFragment wuw;
+    PleaseWaitDialog pwd;
 
 
     @Override
@@ -302,8 +305,41 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
     }
 
     @Override
-    public void onResult(String pinCode, String tag) throws IOException, JSONException {
-        // TODO
+    public void onResult(String humanAmount, BigInteger inWei, String percentage, String tag) throws IOException, JSONException {
+        Log.d("WRAPUNWRAP", humanAmount);
+        wuw.dismiss();
+        // create another dialog whilst waiting for wrap/unwrap completion
+        pwd = new PleaseWaitDialog();
+        pwd.prompt = "Waiting a few seconds for confirmation..";
+        pwd.cancelable = false;
+        pwd.titleText = tag;
+        pwd.show(mAct.getFragmentManager(), "pwd");
+        final TextView[] updateText = new TextView[1];
+        if (tag.equals("Wrap SGB")) {
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() { // delay 200ms to wait for FragmentDialog to be init'd
+                @Override
+                public void run() {
+                    String result = wrapSGB("0x02f0826ef6aD107Cfc861152B32B52fD11BaB9ED", inWei);
+                    updateText[0] = pwd.getDialog().findViewById(R.id.textview_pwd);
+                    updateText[0].setText(result);
+                    pwd.setCancelable(true);
+                }
+            }, 200);
+        }
+
+        if (tag.equals("Unwrap SGB")) {
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() { // delay 200ms to wait for FragmentDialog to be init'd
+                @Override
+                public void run() {
+                    String result = UnWrapSGB("0x02f0826ef6aD107Cfc861152B32B52fD11BaB9ED", inWei);
+                    updateText[0] = pwd.getDialog().findViewById(R.id.textview_pwd);
+                    updateText[0].setText(result);
+                    pwd.setCancelable(true);
+                }
+            }, 200);
+        }
     }
 
     class getERC20Balance extends Thread {
@@ -508,26 +544,26 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
             default:
                 // deal with wrap/unwrap/delegate here
                 if (item.toString().equals(getString(R.string.wrap_sgb))) {
+                    android.app.FragmentManager manager = mThis.getActivity().getFragmentManager();
+                    wuw =
+                            new WrapUnWrapDialogFragment().newInstance(this,
+                                    "Wrap How Much?",
+                                    "Wrap SGB",
+                                    theItem.get("Address"),
+                                    true);
 
-                    WrapUnWrapDialogFragment wud = new WrapUnWrapDialogFragment();
-
-                    wud.newInstance(this,
-                            "Wrap How Much?",
-                            "wrapsgb",
-                            Convert.toWei(theItem.get("Address"), Convert.Unit.ETHER).toBigIntegerExact());
-
-                    wud.show(mAct.getFragmentManager(), "wrapsgb");
+                    wuw.show(mAct.getFragmentManager(), "wrapsgb");
                 }
                 if (item.toString().equals("Unwrap")) {
+                    android.app.FragmentManager manager = mThis.getActivity().getFragmentManager();
+                    wuw =
+                            new WrapUnWrapDialogFragment().newInstance(this,
+                                    "UnWrap How Much?",
+                                    "Unwrap SGB",
+                                    feedList.get(info.position).get("_balance"),
+                                    false);
 
-                    WrapUnWrapDialogFragment wud = new WrapUnWrapDialogFragment();
-
-                    wud.newInstance(this,
-                            "UnWrap How Much?",
-                            "wrapsgb",
-                            Convert.toWei(feedList.get(info.position).get("_balance"), Convert.Unit.ETHER).toBigIntegerExact());
-
-                    wud.show(mAct.getFragmentManager(), "wrapsgb");
+                    wuw.show(mAct.getFragmentManager(), "wrapsgb");
                 }
 
                 Log.d("MENUX", item.toString());
@@ -547,38 +583,27 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
         return gasPrice;
     }
 
-    private void doContractMethods(String cAddr) {
-
+    private String wrapSGB(String cAddr, BigInteger amount) {
         TransactionReceipt transactionReceipt;
-        BigInteger amount = new BigInteger("100000000000000000");
-
         WNat wsgb = MyService.getWNatlink(cAddr, MyService.c, deets.get("RPC"));
-
-
         try {
             Web3j web3j = Web3j.build(
                     new HttpService(deets.get("RPC")));
             web3j.ethChainId().setId(Integer.parseInt(deets.get("CHAINID")));
-
             TransactionManager txManager = new RawTransactionManager(web3j, MyService.c, Integer.decode(deets.get("CHAINID")));
-
             EthSendTransaction transactionResponse = txManager.sendTransaction(
                     getNetworkGasPrice(web3j),
                     new BigInteger("8000000"),
                     cAddr,
                     wsgb.deposit().encodeFunctionCall(),
                     amount);
-
             String txHash = transactionResponse.getTransactionHash();
-
             myLog("TXHASH1", txHash);
-
             if (transactionResponse.hasError()) {
                 myLog("TXHASH1", transactionResponse.getError().getMessage());
                 myLog("TXHASH1", transactionResponse.getError().getData());
+                return (transactionResponse.getError().getMessage());
             }
-
-
             TransactionReceiptProcessor receiptProcessor = new PollingTransactionReceiptProcessor(
                     web3j,
                     TransactionManager.DEFAULT_POLLING_FREQUENCY,
@@ -587,35 +612,53 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
             String TAG = "RECEIPT";
             if (!transactionReceipt.isStatusOK()) {
                 myLog(TAG, "transactionReceipt: Error: " + transactionReceipt.getStatus());
+                return (transactionReceipt.getStatus());
             } else {
-                //myLog(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getTransactionReceipt().getBlockHash());
-                myLog(TAG, "transactionReceipt: Root: " + transactionReceipt.getRoot());
-                myLog(TAG, "transactionReceipt: Contract address: " + transactionReceipt.getContractAddress());
-                myLog(TAG, "transactionReceipt: From: " + transactionReceipt.getFrom());
-                myLog(TAG, "transactionReceipt: To: " + transactionReceipt.getTo());
-                myLog(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getBlockHash());
-                myLog(TAG, "transactionReceipt: Block number: " + transactionReceipt.getBlockNumber());
-                myLog(TAG, "transactionReceipt: Block number raw: " + transactionReceipt.getBlockNumberRaw());
-                myLog(TAG, "transactionReceipt: Gas used: " + transactionReceipt.getGasUsed());
-                myLog(TAG, "transactionReceipt: Gas used raw: " + transactionReceipt.getGasUsedRaw());
-                myLog(TAG, "transactionReceipt: Cumulative gas used: " + transactionReceipt.getCumulativeGasUsed());
-                Log.d(TAG, "transactionReceipt: Cumulative gas used raw: " + transactionReceipt.getCumulativeGasUsedRaw());
-                Log.d(TAG, "transactionReceipt: Transaction hash: " + transactionReceipt.getTransactionHash());
-                Log.d(TAG, "transactionReceipt: Transaction index: " + transactionReceipt.getTransactionIndex());
-                Log.d(TAG, "transactionReceipt: Transaction index raw: " + transactionReceipt.getTransactionIndexRaw());
-//                        Log.d(TAG, "transactionReceipt: JSON-RPC response: " + transactionReceipt.s
+                return ("Success!\nTx Hash: " + transactionReceipt.getTransactionHash() + "\nGas Used: " + transactionReceipt.getGasUsed());
             }
-
         } catch (Exception e) {
             e.printStackTrace();
+            return (e.getMessage());
         }
-        // wsgb.deposit().send();//("0x0a80940ceef7de6ac22964cdf955ab11d51ca928", new BigInteger("50000"))
+    }
 
-        //Intent snotifi = new Intent(ViewContact.this, MyService.class);
-        //snotifi.putExtra("message", "hello");
-        //bindService(snotifi, mServerConn, BIND_AUTO_CREATE);
-
-
+    private String UnWrapSGB(String cAddr, BigInteger amount) {
+        TransactionReceipt transactionReceipt;
+        WNat wsgb = MyService.getWNatlink(cAddr, MyService.c, deets.get("RPC"));
+        try {
+            Web3j web3j = Web3j.build(
+                    new HttpService(deets.get("RPC")));
+            web3j.ethChainId().setId(Integer.parseInt(deets.get("CHAINID")));
+            TransactionManager txManager = new RawTransactionManager(web3j, MyService.c, Integer.decode(deets.get("CHAINID")));
+            EthSendTransaction transactionResponse = txManager.sendTransaction(
+                    getNetworkGasPrice(web3j),
+                    new BigInteger("8000000"),
+                    cAddr,
+                    wsgb.withdraw(amount).encodeFunctionCall(),
+                    BigInteger.ZERO);
+            String txHash = transactionResponse.getTransactionHash();
+            myLog("TXHASH1", txHash);
+            if (transactionResponse.hasError()) {
+                myLog("TXHASH1", transactionResponse.getError().getMessage());
+                myLog("TXHASH1", transactionResponse.getError().getData());
+                return (transactionResponse.getError().getMessage());
+            }
+            TransactionReceiptProcessor receiptProcessor = new PollingTransactionReceiptProcessor(
+                    web3j,
+                    TransactionManager.DEFAULT_POLLING_FREQUENCY,
+                    TransactionManager.DEFAULT_POLLING_ATTEMPTS_PER_TX_HASH);
+            transactionReceipt = receiptProcessor.waitForTransactionReceipt(txHash);
+            String TAG = "RECEIPT";
+            if (!transactionReceipt.isStatusOK()) {
+                myLog(TAG, "transactionReceipt: Error: " + transactionReceipt.getStatus());
+                return (transactionReceipt.getStatus());
+            } else {
+                return ("Success!\nTx Hash: " + transactionReceipt.getTransactionHash() + "\nGas Used: " + transactionReceipt.getGasUsed());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return (e.getMessage());
+        }
     }
 
 }
