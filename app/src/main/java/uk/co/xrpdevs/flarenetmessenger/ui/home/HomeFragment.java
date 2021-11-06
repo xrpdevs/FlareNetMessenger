@@ -51,6 +51,7 @@ import org.web3j.protocol.Web3j;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.security.GeneralSecurityException;
 import java.util.Date;
 import java.util.EnumMap;
@@ -162,12 +163,14 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                 public void run() {
                     try {
                         if (deets.get("TYPE").equals("XRPL")) {
-                            balance = Utils.getMyXRPBalance(deets.get("ADDRESS"), deets.get("RPC")).first.toPlainString();
+                            BigDecimal first = Utils.getMyXRPBalance(deets.get("ADDRESS"), deets.get("RPC")).first;
+                            balance = first.setScale(2, RoundingMode.FLOOR).toPlainString();
+
                             if (balance.equals("-1")) {
                                 balance = "Not active (send 20 XRP)";
                             }
                         } else {
-                            balance = Utils.getMyBalance(deets.get("ADDRESS")).first.toPlainString();
+                            balance = Utils.getMyBalance(deets.get("ADDRESS")).first.setScale(2, RoundingMode.FLOOR).toPlainString();
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -176,7 +179,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                         String usval = FlareNetMessenger.prices.getOrDefault(deets.get("SYMBOL") + "USDT", "0");
                         Log.d("abcdef", usval);
                         try {
-                            usval = new BigDecimal(usval).multiply(new BigDecimal(balance)).stripTrailingZeros().toPlainString();
+                            usval = new BigDecimal(usval).multiply(new BigDecimal(balance)).setScale(2, RoundingMode.FLOOR).toPlainString();
                         } catch (Exception e) {
                         }
                         balanceView.setText("Balance: " + balance + " ($" + usval + ")");

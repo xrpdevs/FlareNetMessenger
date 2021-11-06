@@ -34,6 +34,16 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.web3j.crypto.Credentials;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.methods.response.EthGasPrice;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
+import org.web3j.protocol.http.HttpService;
+import org.web3j.tx.RawTransactionManager;
+import org.web3j.tx.TransactionManager;
+import org.web3j.tx.response.PollingTransactionReceiptProcessor;
+import org.web3j.tx.response.TransactionReceiptProcessor;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,6 +62,7 @@ import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.TransactionsActivity;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
+import uk.co.xrpdevs.flarenetmessenger.contracts.WNat;
 import uk.co.xrpdevs.flarenetmessenger.ui.contacts.ContactsFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
@@ -378,6 +389,18 @@ public class TokensFragment extends Fragment {
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         if (v.getId() == R.id.tokens_list) {
+            AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo) menuInfo;
+            HashMap<String, String> theItem = feedList.get(info.position);
+            String fCoin = "0x3AEcBA5b8e701ab9DF8E0812467C61479b25eE8A";
+
+            String wsgb = "0x02f0826ef6aD107Cfc861152B32B52fD11BaB9ED";
+            if (theItem.get("Address").equalsIgnoreCase(wsgb)) {
+                menu.add("Unwrap / Withdraw");
+                menu.add("Delegate");
+            }
+            if (theItem.get("NAME").equals("SGB") && theItem.get("primary").equals("1")) {
+                menu.add("Wrap into WSGB");
+            }
             MenuInflater inflater = mAct.getMenuInflater();
             inflater.inflate(R.menu.assets_item_context, menu);
         }
@@ -391,11 +414,17 @@ public class TokensFragment extends Fragment {
         String bod;
         // View li;
 
+        // if is WSGB
+
 
         info = (AdapterView.AdapterContextMenuInfo) item.getMenuInfo();
         View li = info.targetView;
         HashMap<String, String> theItem = feedList.get(info.position);
         // Handle item selection
+
+        Log.d("THEITEM", theItem.toString());
+
+
         TextView cBody = li.findViewById(R.id.inboxContent);
         myLog("MITEM", item.toString() + " ");
         switch (item.getItemId()) {
@@ -464,8 +493,95 @@ public class TokensFragment extends Fragment {
                 return true;
 
             default:
+                // deal with wrap/unwrap/delegate here
+
+
+                Log.d("MENUX", item.toString());
                 return super.onContextItemSelected(item);
         }
+    }
+
+    private BigInteger getNetworkGasPrice(Web3j mWeb3j) {
+        BigInteger gasPrice = BigInteger.ONE;
+        try {
+            Request<?, EthGasPrice> rs = mWeb3j.ethGasPrice();
+            EthGasPrice eGasPrice = rs.sendAsync().get();
+            gasPrice = eGasPrice.getGasPrice();
+        } catch (Exception e) {
+            System.out.println("" + e);
+        }
+        return gasPrice;
+    }
+
+    private void doContractMethods(String cAddr) {
+
+        TransactionReceipt transactionReceipt;
+        BigInteger amount = new BigInteger("100000000000000000");
+
+        WNat wsgb = MyService.getWNatlink(cAddr, MyService.c, deets.get("RPC"));
+
+
+        try {
+            Web3j web3j = Web3j.build(
+                    new HttpService(deets.get("RPC")));
+            web3j.ethChainId().setId(Integer.parseInt(deets.get("CHAINID")));
+
+            TransactionManager txManager = new RawTransactionManager(web3j, MyService.c, Integer.decode(deets.get("CHAINID")));
+
+            EthSendTransaction transactionResponse = txManager.sendTransaction(
+                    getNetworkGasPrice(web3j),
+                    new BigInteger("8000000"),
+                    cAddr,
+                    wsgb.deposit().encodeFunctionCall(),
+                    amount);
+
+            String txHash = transactionResponse.getTransactionHash();
+
+            myLog("TXHASH1", txHash);
+
+            if (transactionResponse.hasError()) {
+                myLog("TXHASH1", transactionResponse.getError().getMessage());
+                myLog("TXHASH1", transactionResponse.getError().getData());
+            }
+
+
+            TransactionReceiptProcessor receiptProcessor = new PollingTransactionReceiptProcessor(
+                    web3j,
+                    TransactionManager.DEFAULT_POLLING_FREQUENCY,
+                    TransactionManager.DEFAULT_POLLING_ATTEMPTS_PER_TX_HASH);
+            transactionReceipt = receiptProcessor.waitForTransactionReceipt(txHash);
+            String TAG = "RECEIPT";
+            if (!transactionReceipt.isStatusOK()) {
+                myLog(TAG, "transactionReceipt: Error: " + transactionReceipt.getStatus());
+            } else {
+                //myLog(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getTransactionReceipt().getBlockHash());
+                myLog(TAG, "transactionReceipt: Root: " + transactionReceipt.getRoot());
+                myLog(TAG, "transactionReceipt: Contract address: " + transactionReceipt.getContractAddress());
+                myLog(TAG, "transactionReceipt: From: " + transactionReceipt.getFrom());
+                myLog(TAG, "transactionReceipt: To: " + transactionReceipt.getTo());
+                myLog(TAG, "transactionReceipt: Block hash: " + transactionReceipt.getBlockHash());
+                myLog(TAG, "transactionReceipt: Block number: " + transactionReceipt.getBlockNumber());
+                myLog(TAG, "transactionReceipt: Block number raw: " + transactionReceipt.getBlockNumberRaw());
+                myLog(TAG, "transactionReceipt: Gas used: " + transactionReceipt.getGasUsed());
+                myLog(TAG, "transactionReceipt: Gas used raw: " + transactionReceipt.getGasUsedRaw());
+                myLog(TAG, "transactionReceipt: Cumulative gas used: " + transactionReceipt.getCumulativeGasUsed());
+                Log.d(TAG, "transactionReceipt: Cumulative gas used raw: " + transactionReceipt.getCumulativeGasUsedRaw());
+                Log.d(TAG, "transactionReceipt: Transaction hash: " + transactionReceipt.getTransactionHash());
+                Log.d(TAG, "transactionReceipt: Transaction index: " + transactionReceipt.getTransactionIndex());
+                Log.d(TAG, "transactionReceipt: Transaction index raw: " + transactionReceipt.getTransactionIndexRaw());
+//                        Log.d(TAG, "transactionReceipt: JSON-RPC response: " + transactionReceipt.s
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // wsgb.deposit().send();//("0x0a80940ceef7de6ac22964cdf955ab11d51ca928", new BigInteger("50000"))
+
+        //Intent snotifi = new Intent(ViewContact.this, MyService.class);
+        //snotifi.putExtra("message", "hello");
+        //bindService(snotifi, mServerConn, BIND_AUTO_CREATE);
+
+
     }
 
 }

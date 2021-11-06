@@ -60,6 +60,7 @@ import java.util.Map;
 import okhttp3.HttpUrl;
 import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.contracts.Fsms;
+import uk.co.xrpdevs.flarenetmessenger.contracts.WNat;
 
 
 public class MyService extends Service {
@@ -136,6 +137,12 @@ public class MyService extends Service {
     public static ERC20 getERC20link(String contractAddress, Credentials _c, String RPCendPoint) {
         //Web3j RPC = Web3j.build(new HttpService(RPCendPoint));
         ERC20 aToken = ERC20.load(contractAddress, initConnection(RPCendPoint, tmpCID), c, GAS_PRICE, GAS_LIMIT);
+        return aToken;
+    }
+
+    public static WNat getWNatlink(String contractAddress, Credentials _c, String RPCendPoint) {
+        //Web3j RPC = Web3j.build(new HttpService(RPCendPoint));
+        WNat aToken = WNat.load(contractAddress, initConnection(RPCendPoint, tmpCID), c, GAS_PRICE, GAS_LIMIT);
         return aToken;
     }
 

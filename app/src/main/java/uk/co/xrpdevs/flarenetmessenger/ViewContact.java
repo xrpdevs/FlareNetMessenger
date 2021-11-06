@@ -439,8 +439,6 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
                     BigInteger value = bd.toBigIntegerExact();
 
                     myLog("POO", value.toString());
-
-
                     // Todo: This blocks the UI thread, move to completableFuture as in the EIP-155 code for non-ERC20 sends.
                     TransactionReceipt transactionReceipt = bob.transfer(theirWallet, value).send();
                     String TAG = "RECEIPT";
@@ -560,7 +558,8 @@ public class ViewContact extends AppCompatActivity implements Button.OnClickList
 
                         // 4. .... show results on screen
 
-                    } else {
+                    } else {   // Ethereum EIP-155 transaction
+
                         //    TransactionReceipt receipt2 = Transfer.sendFunds(Utils.initWeb3j(), Utils.getCreds(deets), to,
                         //             amount, org.web3j.utils.Convert.Unit.ETHER).send();
                         Web3j sendObj = MyService.initConnection(
