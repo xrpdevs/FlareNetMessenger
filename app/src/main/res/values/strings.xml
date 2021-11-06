@@ -98,5 +98,7 @@
     <string name="pin_code_confirm">Re-enter PIN to confirm</string>
     <string name="textview">TextView</string>
     <string name="error">\"Error: \"</string>
+    <string name="wrap_sgb">Wrap into WSGB</string>
+    <string name="wrapunwrap_percent">100%</string>
 
 </resources>

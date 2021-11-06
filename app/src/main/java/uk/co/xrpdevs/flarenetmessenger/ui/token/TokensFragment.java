@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
+import uk.co.xrpdevs.flarenetmessenger.Convert;
 import uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
@@ -65,6 +66,7 @@ import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.contracts.WNat;
 import uk.co.xrpdevs.flarenetmessenger.ui.contacts.ContactsFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
+import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.WrapUnWrapDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
 
 /* TODO:
@@ -73,7 +75,7 @@ import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
     When adding custom tokens, automatically detect coin name, symbol, level of precision.
  */
 
-public class TokensFragment extends Fragment {
+public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment.OnResultListener {
     public SimpleAdapter TokensAdaptor;
     public SimpleAdapter simpleAdapter;
     BigInteger GAS_LIMIT = BigInteger.valueOf(670025L);
@@ -185,15 +187,15 @@ public class TokensFragment extends Fragment {
                                     deets.get("RPC"),
                                     deets.get("CHAINID")),
                             deets.get("ADDRESS"),
-                            cName);
+                            cName, position);
                 } else {
                     updateBalance = new getERC20Balance(
                             null,
                             deets.get("ADDRESS"),
-                            cName);
+                            cName, position);
                 }
                 updateBalance.start();
-                int unread = lines.size();
+                //  int unread = lines.size();
                 return view;
             }
         };
@@ -299,11 +301,19 @@ public class TokensFragment extends Fragment {
         return (rc);
     }
 
+    @Override
+    public void onResult(String pinCode, String tag) throws IOException, JSONException {
+        // TODO
+    }
+
     class getERC20Balance extends Thread {
-        public getERC20Balance(ERC20 contract, String address, TextView updateMe) {
+        private final int position;
+
+        public getERC20Balance(ERC20 contract, String address, TextView updateMe, int _position) {
             this.contract = contract;
             this.address = address;
             this.updateMe = updateMe;
+            this.position = _position;
         }
 
         ERC20 contract;
@@ -330,6 +340,7 @@ public class TokensFragment extends Fragment {
             if (contract != null) {
                 bd = new BigDecimal(balance, 18);
                 updateMe.setText(bd.stripTrailingZeros().toPlainString());
+                feedList.get(position).put("_balance", bd.stripTrailingZeros().toPlainString());
             } else {
                 Pair<BigDecimal, String> out;
                 try {
@@ -344,8 +355,10 @@ public class TokensFragment extends Fragment {
                     }
                     if (bd.equals(new BigDecimal("-1"))) {
                         updateMe.setText("Error:" + out.second);
+                        feedList.get(position).put("_balance", "0");
                     } else {
                         updateMe.setText(bd.stripTrailingZeros().toPlainString());
+                        feedList.get(position).put("_balance", bd.stripTrailingZeros().toPlainString());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -395,11 +408,11 @@ public class TokensFragment extends Fragment {
 
             String wsgb = "0x02f0826ef6aD107Cfc861152B32B52fD11BaB9ED";
             if (theItem.get("Address").equalsIgnoreCase(wsgb)) {
-                menu.add("Unwrap / Withdraw");
+                menu.add("Unwrap");
                 menu.add("Delegate");
             }
             if (theItem.get("NAME").equals("SGB") && theItem.get("primary").equals("1")) {
-                menu.add("Wrap into WSGB");
+                menu.add(R.string.wrap_sgb);
             }
             MenuInflater inflater = mAct.getMenuInflater();
             inflater.inflate(R.menu.assets_item_context, menu);
@@ -438,7 +451,7 @@ public class TokensFragment extends Fragment {
                         updateBalance = new getERC20Balance(
                                 null,
                                 deets.get("ADDRESS"),
-                                cBody);
+                                cBody, info.position);
                     } else {
                         updateBalance = new getERC20Balance(
                                 MyService.getERC20link(
@@ -446,7 +459,7 @@ public class TokensFragment extends Fragment {
                                         MyService.c,
                                         MyService.rpc),
                                 deets.get("ADDRESS"),
-                                cBody);
+                                cBody, info.position);
 
                     }
                     updateBalance.start();
@@ -494,7 +507,28 @@ public class TokensFragment extends Fragment {
 
             default:
                 // deal with wrap/unwrap/delegate here
+                if (item.toString().equals(getString(R.string.wrap_sgb))) {
 
+                    WrapUnWrapDialogFragment wud = new WrapUnWrapDialogFragment();
+
+                    wud.newInstance(this,
+                            "Wrap How Much?",
+                            "wrapsgb",
+                            Convert.toWei(theItem.get("Address"), Convert.Unit.ETHER).toBigIntegerExact());
+
+                    wud.show(mAct.getFragmentManager(), "wrapsgb");
+                }
+                if (item.toString().equals("Unwrap")) {
+
+                    WrapUnWrapDialogFragment wud = new WrapUnWrapDialogFragment();
+
+                    wud.newInstance(this,
+                            "UnWrap How Much?",
+                            "wrapsgb",
+                            Convert.toWei(feedList.get(info.position).get("_balance"), Convert.Unit.ETHER).toBigIntegerExact());
+
+                    wud.show(mAct.getFragmentManager(), "wrapsgb");
+                }
 
                 Log.d("MENUX", item.toString());
                 return super.onContextItemSelected(item);
