@@ -512,7 +512,7 @@ public class MyService extends Service {
     public void showNotification(Context context, String title, String message, Intent intent, int reqCode) {
         //SharedPreferenceManager sharedPreferenceManager = SharedPreferenceManager.getInstance(context);
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, reqCode, intent, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, reqCode, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
         String CHANNEL_ID = "channel_name";// The id of the channel.
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.mipmap.chain_xrp)

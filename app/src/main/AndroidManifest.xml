@@ -39,6 +39,8 @@
             android:label="@string/title_activity_transparent"
             android:theme="@style/Theme.FlareNetMessenger.NoActionBar" />
 
+        <receiver android:name=".NotificationsReciever"></receiver>
+
         <receiver
             android:name=".BCReceiver"
             android:enabled="true"

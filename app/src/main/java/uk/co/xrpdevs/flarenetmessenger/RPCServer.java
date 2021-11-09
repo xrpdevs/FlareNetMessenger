@@ -34,7 +34,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -45,9 +44,9 @@ public class RPCServer extends NanoHTTPD {
     public static boolean RUNNING = false;
     public static int serverPort = 8545;
 
-    int authRequestCount = 0;
+    public static int authRequestCount = 0;
 
-    public static Map<Integer, Boolean> authRequests;
+    public static HashMap<Integer, String> authRequests = new HashMap<>(); // ID , [0 = nothing, 1 = allow, 2 = deny]
 
     Context context;
 
@@ -85,6 +84,7 @@ public class RPCServer extends NanoHTTPD {
         origin = hm.getOrDefault("origin", "*");
         String postBody = "";
         String ac_ht = "";
+        String responseBody = "";
         if (Method.POST.equals(method)) {// || Method.OPTIONS.equals(method) || Method.GET.equals(method)){
             Log.d("HEADERS", "he: " + session.getHeaders().toString());
             ac_ht = hm.get("Access-Control-Request-Headers");
@@ -101,18 +101,36 @@ public class RPCServer extends NanoHTTPD {
                     if (!amethod.equals("eth_blockNumber")) {
                         Log.d("Outgoing Method: ", jo.optString("method"));
 
-                        if (amethod.equals("eth_sendTransaction")) {
-                            long start = System.currentTimeMillis();
-                            Thread.sleep(20000);
-                            System.out.println("Sleep time in ms = " + (System.currentTimeMillis() - start));
-
+                        if (amethod.equals("eth_accounts")) {
+                            String id = jo.optString("id");
+                            String myAddress = FlareNetMessenger.deets.get("ADDRESS");
+                            responseBody = "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":[\"" + myAddress + "\"]}";
                         }
 
-                        if (amethod.equals("eth_sendRawTransaction")) {
+                        if (amethod.equals("eth_sendTransaction")) { // intercept sendTransaction
+                            authRequestCount++;
+                            int arc_local = authRequestCount;
+                            //authRequests.put(authRequestCount, 0);
+                            long start = System.currentTimeMillis();
+                            decodeMessage("unsigned", jo.toString(), mcx, origin);
+                            while (authRequests.getOrDefault(arc_local, "nothing").equals("nothing")) {
+                                Thread.sleep(100);
+                                if ((System.currentTimeMillis() - start) > 15000) {
+                                    // auto cancel
+                                    authRequests.put(arc_local, "Deny");
+                                }
+                                //Log.d("DECISION: ", "Sleep time in ms = " + (System.currentTimeMillis() - start));
 
+                            }
+                            // deal with user decision here
+                            Log.d("DECISION: ", authRequests.get(arc_local));
+                        }
+
+                        if (amethod.equals("eth_sendRawTransaction")) { // intercept sendRawTransaction
+                            authRequestCount++;
                             String paramsHex = new JSONArray(jo.optString("params")).getString(0).replace("0x", "");
                             // Log.d("Outgoing Method: ", "params[0]: "+paramsHex);
-                            decodeMessage(paramsHex.replace("0x", ""), mcx);
+                            decodeMessage("signed", paramsHex.replace("0x", ""), mcx, origin);
                         }
                     }
                 }
@@ -120,45 +138,24 @@ public class RPCServer extends NanoHTTPD {
                 Log.d("JSON ERROR: ", e.getMessage());
             }
 
-            //          if(jo.optString("method", "").length() >0){
-            //              Log.d("Outgoing Method: ", jo.optString("method"));
-            //          }
+            if (responseBody.equals("")) { // pass request through unaltered if not processed above
+                responseBody = performPostCall(FlareNetMessenger.deets.get("RPC"), files.get("postData"));
+            }
 
+            Log.d("BC_ANSWE", responseBody);
 
-            // } catch (JSONException e) {
-            //     e.printStackTrace();
-            // }
-
-            // or you can access the POST request's parameters
-//            String postParameter = session.getParms().get("parameter");
-
-            postBody = performPostCall(FlareNetMessenger.deets.get("RPC"), files.get("postData"));
-
-            Log.d("BC_ANSWE", postBody);
-
-            r = newFixedLengthResponse(postBody);
-            //r = newFixedLengthResponse(null);
+            r = newFixedLengthResponse(responseBody);
             r.addHeader("Access-Control-Allow-Origin", origin);
-            //r.addHeader("Access-Control-Max-Age", "3628800");
-            // r.addHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-            //r.addHeader("Access-Control-Allow-Headers", "X-Requested-With");
-            //r.addHeader("Access-Control-Allow-Headers", "Content-Type");
             r.addHeader("Access-Control-Allow-Headers", ac_ht);
-            //r.addHeader("Access-Control-Allow-Headers", "Authorization");
 
-        } else if (Method.OPTIONS.equals(method)) {
+        } else if (Method.OPTIONS.equals(method)) { // deal with CORS OPTIONS requests
             Log.d("HEADERS", "he: " + session.getHeaders().toString());
             ac_ht = hm.get("access-control-request-headers");
             r = newFixedLengthResponse("");
             r.addHeader("Access-Control-Allow-Origin", origin);
-            Log.d("Response [" + method + "]", "Access-Control-Allow-Origin: " + origin);
-            //r.addHeader("Access-Control-Max-Age", "3628800");
-            // r.addHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-            //r.addHeader("Access-Control-Allow-Headers", "X-Requested-With");
-            //r.addHeader("Access-Control-Allow-Headers", "Content-Type");
             r.addHeader("Access-Control-Allow-Headers", ac_ht);
-            //r.addHeader("Access-Control-Allow-Headers", "Authorization");
-            Log.d("Response [" + method + "]", "Access-Control-Allow-Headers: " + ac_ht);
+            //Log.d("Response [" + method + "]", "Access-Control-Allow-Origin: " + origin);
+            //Log.d("Response [" + method + "]", "Access-Control-Allow-Headers: " + ac_ht);
         } else {
             r = newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED, MIME_PLAINTEXT, "Method not allowed");
         }
@@ -171,38 +168,74 @@ public class RPCServer extends NanoHTTPD {
         return r;
     }
 
-    private static void decodeMessage(String signedData, Context mcx) {
+    private static void decodeMessage(String type, String txData, Context mcx, String origin) {
         //样例 https://ropsten.etherscan.io/tx/0xfd8acd10d72127f29f0a01d8bcaf0165665b5598781fe01ca4bceaa6ab9f2cb0
-        try {
-            System.out.println(signedData);
-            System.out.println("Decode start " + System.currentTimeMillis());
-            RlpList rlpList = RlpDecoder.decode(Numeric.hexStringToByteArray(signedData));
-            List<RlpType> values = ((RlpList) rlpList.getValues().get(0)).getValues();
-            BigInteger nonce = Numeric.toBigInt(((RlpString) values.get(0)).getBytes());
-            BigInteger gasPrice = Numeric.toBigInt(((RlpString) values.get(1)).getBytes());
-            Log.d("DECRAW", "Gasprice: " + gasPrice.toString());
-            BigInteger gasLimit = Numeric.toBigInt(((RlpString) values.get(2)).getBytes());
-            Log.d("DECRAW", "GasLimit: " + gasLimit.toString());
-            String to = Numeric.toHexString(((RlpString) values.get(3)).getBytes());
-            Log.d("DECRAW", "To: " + to);
-            BigInteger value = Numeric.toBigInt(((RlpString) values.get(4)).getBytes());
-            Log.d("DECRAW", "Value: " + value.toString());
-            String data = Numeric.toHexString(((RlpString) values.get(5)).getBytes());
-            Log.d("DECRAW", "Data: " + data);
+        BigInteger value = new BigInteger("0");
+        String contentText = "";
+        if (type.equals("signed")) {
+            try {
+                System.out.println(txData);
+                System.out.println("Decode start " + System.currentTimeMillis());
+                RlpList rlpList = RlpDecoder.decode(Numeric.hexStringToByteArray(txData));
+                List<RlpType> values = ((RlpList) rlpList.getValues().get(0)).getValues();
+                BigInteger nonce = Numeric.toBigInt(((RlpString) values.get(0)).getBytes());
+                BigInteger gasPrice = Numeric.toBigInt(((RlpString) values.get(1)).getBytes());
+                Log.d("DECRAW", "Gasprice: " + gasPrice.toString());
+                BigInteger gasLimit = Numeric.toBigInt(((RlpString) values.get(2)).getBytes());
+                Log.d("DECRAW", "GasLimit: " + gasLimit.toString());
+                String to = Numeric.toHexString(((RlpString) values.get(3)).getBytes());
+                Log.d("DECRAW", "To: " + to);
+                value = Numeric.toBigInt(((RlpString) values.get(4)).getBytes());
+                Log.d("DECRAW", "Value: " + value.toString());
+                String data = Numeric.toHexString(((RlpString) values.get(5)).getBytes());
+                Log.d("DECRAW", "Data: " + data);
 
-            Intent i = new Intent(FlareNetMessenger.getContext(), BCReceiver.class);
+                contentText = "An app at " + origin + " is trying to access your wallet";
 
-            PendingIntent pendingIntent = PendingIntent.getActivity(mcx, 7, i, PendingIntent.FLAG_ONE_SHOT);
-            String CHANNEL_ID = "channel_name";// The id of the channel.
-            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(mcx, CHANNEL_ID)
-                    .setSmallIcon(R.mipmap.chain_xrp)
-                    .setContentTitle("Transaction Value: " + value.toString())
-                    .setContentText("Click below to allow")
-                    .setStyle(new NotificationCompat.BigTextStyle().bigText("Allow that"))
-                    .setAutoCancel(false)
-                    .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
-                    .addAction(R.mipmap.chain_xrp, "23.498372",
-                            pendingIntent)
+                //RlpString v = (RlpString) values.get(6);
+                //RlpString r = (RlpString) values.get(7);
+                //RlpString s = (RlpString) values.get(8);
+                //Sign.SignatureData signatureData = new Sign.SignatureData(
+                //        v.getBytes()[0],
+                //        Numeric.toBytesPadded(Numeric.toBigInt(r.getBytes()), 32),
+                //        Numeric.toBytesPadded(Numeric.toBigInt(s.getBytes()), 32));
+                //BigInteger pubKey = Sign.signedMessageToKey(TransactionEncoder.encode(rawTransaction), signatureData);
+                //Log.d("DECRAW", "publicKey " + pubKey.toString(16));
+                //String address = Numeric.prependHexPrefix(Keys.getAddress(pubKey));
+                //Log.d("DECRAW", "address " + address);
+                RawTransaction rawTransaction = RawTransaction.createTransaction(nonce, gasPrice, gasLimit, to, value, data);
+
+            } catch (Exception e) {
+                Log.d("DECRAW", "Error" + e.getMessage());
+                e.printStackTrace();
+            }
+        } else if (type.equals("unsigned")) {
+            contentText = "An app at " + origin + " is trying to access your wallet";
+        }
+
+        Intent i = new Intent(mcx, NotificationsReciever.class);
+        i.putExtra("id", authRequestCount);
+        Intent noReceive = new Intent(mcx, NotificationsReciever.class);
+        noReceive.setAction("Deny");
+        noReceive.putExtra("id", authRequestCount);
+        Intent yesReceive = new Intent(mcx, NotificationsReciever.class);
+        yesReceive.putExtra("id", authRequestCount);
+        yesReceive.setAction("Allow");
+        PendingIntent pendingIntentNo = PendingIntent.getBroadcast(mcx, authRequestCount, noReceive, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent pendingIntentYes = PendingIntent.getBroadcast(mcx, authRequestCount, yesReceive, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(mcx, authRequestCount, i, PendingIntent.FLAG_ONE_SHOT);
+        String CHANNEL_ID = "channel_name";// The id of the channel.
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(mcx, CHANNEL_ID)
+                .setSmallIcon(R.mipmap.chain_xrp)
+                .setContentTitle("Authorize Transaction (ID=" + authRequestCount + ")")
+                .setContentText(contentText)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText))
+                .setAutoCancel(true)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                .addAction(R.mipmap.chain_xrp, "Allow",
+                        pendingIntentYes)
+                .addAction(R.mipmap.chain_xrp, "Deny",
+                        pendingIntentNo)
                     .setGroup("group ya mum")
                     .setContentIntent(pendingIntent);
 
@@ -213,47 +246,12 @@ public class RPCServer extends NanoHTTPD {
                 NotificationChannel mChannel = new NotificationChannel(CHANNEL_ID, name, importance);
                 notificationManager.createNotificationChannel(mChannel);
             }
-            notificationManager.notify(7, notificationBuilder.build());
+        notificationManager.notify(authRequestCount, notificationBuilder.build());
 
-            RawTransaction rawTransaction = RawTransaction.createTransaction(nonce, gasPrice, gasLimit, to, value, data);
-            //RlpString v = (RlpString) values.get(6);
-            //RlpString r = (RlpString) values.get(7);
-            //RlpString s = (RlpString) values.get(8);
-            //Sign.SignatureData signatureData = new Sign.SignatureData(
-            //        v.getBytes()[0],
-            //        Numeric.toBytesPadded(Numeric.toBigInt(r.getBytes()), 32),
-            //        Numeric.toBytesPadded(Numeric.toBigInt(s.getBytes()), 32));
-            //BigInteger pubKey = Sign.signedMessageToKey(TransactionEncoder.encode(rawTransaction), signatureData);
-            //Log.d("DECRAW", "publicKey " + pubKey.toString(16));
-            //String address = Numeric.prependHexPrefix(Keys.getAddress(pubKey));
-            //Log.d("DECRAW", "address " + address);
-            Log.d("DECRAW", "Decode end " + System.currentTimeMillis());
-        } catch (Exception e) {
-            Log.d("DECRAW", "Error" + e.getMessage());
-            e.printStackTrace();
-        }
+
+        Log.d("DECRAW", "Decode end " + System.currentTimeMillis());
+
     }
-
-    /*public Response serve(IHTTPSession session) {
-        if (session.getMethod() == Method.POST) {
-            Map<String, String> files = new HashMap<String, String>();
-            try {
-                session.parseBody(files);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ResponseException e) {
-                e.printStackTrace();
-            }
-            //this prints {file=C:\path-to-java-tmp-files\NanoHTTPD-4635244586997909485}
-            //the number is always different
-            System.out.println(files.toString());
-        } else {
-            //page containing the index.html including the form
-            return page;
-        }
-    }
-*/
-
 
     public void runServer() {
 
@@ -318,12 +316,7 @@ public class RPCServer extends NanoHTTPD {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        // Log.d("POST  IN", response);
-        //  try {
-        // JSONObject ji = new JSONObject(response);
-        //  } catch (JSONException e) {
-        //      e.printStackTrace();
-        //   }
+
         return response;
     }
 
