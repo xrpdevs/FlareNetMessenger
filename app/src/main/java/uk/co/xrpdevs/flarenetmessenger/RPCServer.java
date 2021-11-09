@@ -15,10 +15,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.web3j.crypto.RawTransaction;
+import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.rlp.RlpDecoder;
 import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpString;
 import org.web3j.rlp.RlpType;
+import org.web3j.tx.RawTransactionManager;
 import org.web3j.utils.Numeric;
 
 import java.io.BufferedReader;
@@ -34,6 +38,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -123,7 +128,20 @@ public class RPCServer extends NanoHTTPD {
 
                             }
                             // deal with user decision here
-                            Log.d("DECISION: ", authRequests.get(arc_local));
+                            if (authRequests.get(arc_local).equals("Allow")) {
+                                Log.d("DECISION1: ", authRequests.get(arc_local));
+                                // get the nonce
+                                EthSendTransaction moo = signAndSend(jo);
+
+                                Log.d("TX_RECEIPT", moo.getTransactionHash());
+
+                                responseBody = "{\"id\": " + jo.optString("id") + ", \"jsonrpc\": \"2.0\"," +
+                                        "\"result\": \"" + moo.getTransactionHash() + "\"}";
+
+                                Log.d("RESP", responseBody);
+
+                            }
+                            Log.d("DECISION2: ", authRequests.get(arc_local));
                         }
 
                         if (amethod.equals("eth_sendRawTransaction")) { // intercept sendRawTransaction
@@ -328,4 +346,63 @@ public class RPCServer extends NanoHTTPD {
     public Context getContext() {
         return context;
     }
+
+    public RawTransactionManager getRawTxManager() {
+        String cid = FlareNetMessenger.deets.get("CHAINID");
+        RawTransactionManager transactionManager = new RawTransactionManager(
+                MyService.initConnection(
+                        FlareNetMessenger.deets.get("RPC"),
+                        Integer.decode(cid)),
+                Utils.getCreds(FlareNetMessenger.deets),
+                Integer.decode(cid),
+                null);
+        return transactionManager;
+    }
+
+    public EthSendTransaction signAndSend(JSONObject jo) {
+        String value = "0x0";
+        try {
+            RawTransactionManager rtxm = getRawTxManager();
+            EthGetTransactionCount ethGetTransactionCount = MyService.initConnection(
+                    FlareNetMessenger.deets.get("RPC"),
+                    Integer.decode(Objects.requireNonNull(FlareNetMessenger.deets.get("CHAINID")))).ethGetTransactionCount(
+                    FlareNetMessenger.deets.get("ADDRESS"), DefaultBlockParameterName.LATEST).sendAsync().get();
+            BigInteger nonce = ethGetTransactionCount.getTransactionCount();
+
+            if (jo.optString("value").length() > 0) {
+                value = jo.optString("value");
+            }
+            Log.e("CONTRACT CALL DATA", "D: " + jo.optString("data"));
+            JSONObject params = jo.getJSONArray("params").getJSONObject(0);
+
+
+            Log.e("PARAMS", params.toString());
+            EthSendTransaction transactionResponse = rtxm.sendTransaction(
+                    MyService.GAS_PRICE,
+                    new BigInteger("8000000"),
+                    params.optString("to"),
+                    params.optString("data"), //.encodeFunctionCall(),
+                    new BigInteger(
+                            String.valueOf(
+                                    Integer.decode(
+                                            value))));
+        /*    RawTransaction rawTransaction =
+                    RawTransaction.createTransaction(
+                            nonce,
+                            MyService.GAS_PRICE,
+                            new BigInteger("1000000"),
+                            jo.optString("to"),
+                            new BigInteger(
+                                    String.valueOf(
+                                            Integer.decode(
+                                                    value))),
+                            jo.optString("data"));*/
+            return transactionResponse; //EthSendTransaction.signAndSend(rawTransaction);
+        } catch (Exception e) {
+            Log.e("ERROR", "Error in signAndSend: " + e.getMessage() + "\n" + e.getStackTrace().toString());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }

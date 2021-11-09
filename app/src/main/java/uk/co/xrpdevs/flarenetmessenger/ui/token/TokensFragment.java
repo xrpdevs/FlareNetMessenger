@@ -468,7 +468,7 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
             String fCoin = "0x3AEcBA5b8e701ab9DF8E0812467C61479b25eE8A";
 
             String wsgb = "0x02f0826ef6aD107Cfc861152B32B52fD11BaB9ED";
-            if (theItem.get("Address").equalsIgnoreCase(wsgb)) {
+            if (theItem.getOrDefault("Address", "meh").equalsIgnoreCase(wsgb)) {
                 menu.add("Unwrap");
                 menu.add("Delegate");
             }
