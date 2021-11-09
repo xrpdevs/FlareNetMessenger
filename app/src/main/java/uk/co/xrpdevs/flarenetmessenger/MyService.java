@@ -16,6 +16,7 @@ package uk.co.xrpdevs.flarenetmessenger;
  * */
 
 import static org.web3j.crypto.Credentials.create;
+import static uk.co.xrpdevs.flarenetmessenger.Utils.hexToAscii;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 import android.annotation.SuppressLint;
@@ -52,6 +53,7 @@ import org.web3j.protocol.http.HttpService;
 import org.xrpl.xrpl4j.client.JsonRpcClient;
 import org.xrpl.xrpl4j.client.XrplClient;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -286,6 +288,8 @@ public class MyService extends Service {
 
         }
         started = false;
+        RPCThread rpct = new RPCThread();
+        rpct.start();
         return START_STICKY;
     }
 
@@ -317,14 +321,36 @@ public class MyService extends Service {
     }
 
     @SuppressLint("CheckResult")
-    public void subscribeNotifications(){
+    public void subscribeNotifications() {
         BGThread bg = new BGThread(true);
         bg.start();
 
     }
+
+    class RPCThread extends Thread {
+        Boolean isRunning = false;
+
+        RPCThread() {
+        }
+
+        public void run() {
+            try {
+                RPCServer rpcs = new RPCServer();
+                rpcs.context = mC;
+                isRunning = true;
+            } catch (IOException e) {
+                e.printStackTrace();
+                isRunning = false;
+            }
+        }
+    }
+
     class BGThread extends Thread {
         Boolean a;
-        BGThread(Boolean a){this.a = a;}
+
+        BGThread(Boolean a) {
+            this.a = a;
+        }
 
         public void run() {
             //      @ReflectionSupport(ReflectionSupport.Level.FULL);
@@ -392,7 +418,7 @@ public class MyService extends Service {
         String memo = null;
         if (!memos.isNull(0)) {
             JSONObject memoData = memos.getJSONObject(0);
-            memo = MyRecyclerView.hexToAscii(memoData.getJSONObject("Memo").optString("MemoData"));
+            memo = hexToAscii(memoData.getJSONObject("Memo").optString("MemoData"));
         }
         //if(mno._to.equals(deets.get("walletAddress"))) {
         //    mno.

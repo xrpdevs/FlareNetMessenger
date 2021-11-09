@@ -76,6 +76,9 @@ android {
             }
         }
     }
+    buildFeatures {
+        viewBinding true
+    }
 }
 
 
@@ -120,6 +123,8 @@ dependencies {
     implementation files('libs/feign-core-11.3-SNAPSHOT.jar')
     //implementation files('/home/jp/Work/AndroidStudioProjects/feignx/buildSrc/build/libs/buildSrc.jar')
     // QR
+
+    implementation "org.nanohttpd:nanohttpd:2.2.0"
 
     // exclude 'io.github.openfeign'
 

@@ -18,12 +18,19 @@ import org.jetbrains.annotations.NotNull;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-/** Ethereum unit conversion functions. */
+/**
+ * Ethereum unit conversion functions.
+ */
 public final class Convert {
-    private Convert() {}
+    private Convert() {
+    }
 
     public static BigDecimal fromWei(String number, Unit unit) {
         return fromWei(new BigDecimal(number), unit);
+    }
+
+    public static BigDecimal fromWei(BigInteger number, Unit unit) {
+        return new BigDecimal(number.divide(unit.getWeiFactor().toBigInteger()), unit.getWeiFactor().intValue());
     }
 
     public static BigDecimal fromWei(BigDecimal number, Unit unit) {

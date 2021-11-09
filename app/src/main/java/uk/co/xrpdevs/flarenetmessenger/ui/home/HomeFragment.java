@@ -35,6 +35,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.zxing.BarcodeFormat;
@@ -45,6 +46,7 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
 import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 
@@ -72,7 +74,7 @@ import uk.co.xrpdevs.flarenetmessenger.ui.token.TokensFragment;
 
 //import android.net.Credentials;
 
-public class HomeFragment extends Fragment implements SelectBlockChainDialogFragment.OnResultListener {
+public class HomeFragment extends Fragment implements SelectBlockChainDialogFragment.OnResultListener, SwipeRefreshLayout.OnRefreshListener {
 
     PleaseWaitDialog notify;
     SelectBlockChainDialogFragment sbcdf;
@@ -95,7 +97,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
     Web3j fc = MyService.initWeb3j();
     Thread qrThread;// = new QR_Thread();
     String packageName = "uk.co.xrpdevs.flarenetmessenger";
-
+    SwipeRefreshLayout mSwipeRefreshLayout;
     public HomeFragment() throws IOException {
     }
 
@@ -104,7 +106,6 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
         inflater.inflate(R.menu.fragment_menu_home, menu);
         super.onCreateOptionsMenu(menu, inflater);
     }
-
 
     @Override
     public void onStart() {
@@ -156,36 +157,9 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
             walletName.setText(deets.getOrDefault("NAME", "Wallet " + prefs.getInt("currentWallet", 0)));
 
             walletIcon.setImageResource(getDrawableId(deets.get("ICON")));
-            new Thread(new Runnable() {
-                String balance = "Balance: unknown";
-
-                @Override
-                public void run() {
-                    try {
-                        if (deets.get("TYPE").equals("XRPL")) {
-                            BigDecimal first = Utils.getMyXRPBalance(deets.get("ADDRESS"), deets.get("RPC")).first;
-                            balance = first.setScale(2, RoundingMode.FLOOR).toPlainString();
-
-                            if (balance.equals("-1")) {
-                                balance = "Not active (send 20 XRP)";
-                            }
-                        } else {
-                            balance = Utils.getMyBalance(deets.get("ADDRESS")).first.setScale(2, RoundingMode.FLOOR).toPlainString();
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    mAct.runOnUiThread(() -> {
-                        String usval = FlareNetMessenger.prices.getOrDefault(deets.get("SYMBOL") + "USDT", "0");
-                        Log.d("abcdef", usval);
-                        try {
-                            usval = new BigDecimal(usval).multiply(new BigDecimal(balance)).setScale(2, RoundingMode.FLOOR).toPlainString();
-                        } catch (Exception e) {
-                        }
-                        balanceView.setText("Balance: " + balance + " ($" + usval + ")");
-                    });
-                }
-            }).start();
+            GetBalance gb = new GetBalance();
+            gb.refreshnow = false;
+            gb.start();
             qrThread = new QR_Thread();
             qrThread.start();
         }
@@ -273,10 +247,14 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
             fragmentTransaction.replace(R.id.nav_host_fragment, f);
             fragmentTransaction.addToBackStack("home").commit();
         });
+        mSwipeRefreshLayout = root.findViewById(R.id.swipe_container_home);
+        mSwipeRefreshLayout.setOnRefreshListener(this);
+
+        mSwipeRefreshLayout.setColorSchemeResources(
+                android.R.color.holo_green_dark, android.R.color.holo_orange_dark, android.R.color.holo_blue_dark);
 
         return root;
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -295,7 +273,7 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                 //         e.printStackTrace();
                 //     }
 
-                showDialog("Version: " + BuildConfig.VERSION_NAME + "\n\nBuild: " + BuildConfig.VERSION_CODE + "\n\n" +
+                showDialog("About this App", "Version: " + BuildConfig.VERSION_NAME + "\n\nBuild: " + BuildConfig.VERSION_CODE + "\n\n" +
                         "Built: \n" + new Date(Long.parseLong(BuildConfig.BUILD_TIME)).toString() +
                         "\n\nCurrent blockchain:\n" + deets.get("BCID") + ": " + deets.get("BCNAME") +
                         "\nRPC URL:\n" + deets.get("RPC"), true);
@@ -305,13 +283,88 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
                 startActivity(aa);
                 return true;
             case R.id.pks:
-                showDialog("PubKey:\n\n" + deets.get("PUBKEY"), true);
+                showDialog("Your Public Key", "PubKey:\n\n" + deets.get("PUBKEY"), true);
+                return true;
+            case R.id.show_prices:
+                String prompt = "";
+                for (Map.Entry<String, String> entry : FlareNetMessenger.prices.get().entrySet()) {
+                    String key = entry.getKey();
+                    String value = entry.getValue();
+
+                    prompt += key + ": " + value + "\n";
+                }
+
+
+                showDialog("Current Prices", prompt, true);
                 return true;
             case R.id.select_blockchain:
                 bcDialog("Select Blockchain", true);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    public void onRefresh() {
+        mSwipeRefreshLayout.setRefreshing(false);
+        mSwipeRefreshLayout.post(new Runnable() {
+            @Override
+            public void run() {
+                //    if(mSwipeRefreshLayout != null) {
+                //      mSwipeRefreshLayout.setRefreshing(true);
+                //   }
+                try {
+                    GetBalance gb = new GetBalance();
+                    gb.refreshnow = true;
+                    gb.start();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //  Log.d("REFRESH", "SSSSS");
+
+    }
+
+    class GetBalance extends Thread {
+        String balance = "Balance: unknown";
+        boolean refreshnow = false;
+
+        @Override
+        public void run() {
+            try {
+                if (refreshnow) FlareNetMessenger.prices.updateNow(deets.get("SYMBOL"), "USDT");
+                if (deets.get("TYPE").equals("XRPL")) {
+                    BigDecimal first = Utils.getMyXRPBalance(deets.get("ADDRESS"), deets.get("RPC")).first;
+                    balance = first.setScale(2, RoundingMode.FLOOR).toPlainString();
+
+                    if (balance.equals("-1")) {
+                        balance = "Not active (send 20 XRP)";
+                    }
+                } else {
+                    balance = Utils.getMyBalance(deets.get("ADDRESS")).first.setScale(2, RoundingMode.FLOOR).toPlainString();
+                }
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+            }
+            mAct.runOnUiThread(() -> {
+                String usval = null;
+                try {
+                    usval = FlareNetMessenger.prices.get(deets.get("SYMBOL") + "USDT");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                //Log.d("abcdef", usval);
+                try {
+                    usval = new BigDecimal(usval).multiply(new BigDecimal(balance)).setScale(2, RoundingMode.FLOOR).toPlainString();
+                } catch (Exception e) {
+                }
+                balanceView.setText("Balance: " + balance + " ($" + usval + ")");
+            });
         }
     }
 
@@ -350,11 +403,11 @@ public class HomeFragment extends Fragment implements SelectBlockChainDialogFrag
         }
     }
 
-    private boolean showDialog(String prompt, Boolean cancelable) {
+    private boolean showDialog(String title, String prompt, Boolean cancelable) {
         FragmentManager manager = getParentFragmentManager();
 
         notify = new PleaseWaitDialog();
-        notify.titleText = "About this App";
+        notify.titleText = title;
         notify.prompt = prompt;
         notify.cancelable = cancelable;
 

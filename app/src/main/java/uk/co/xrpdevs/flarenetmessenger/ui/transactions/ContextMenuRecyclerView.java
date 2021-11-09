@@ -1,4 +1,4 @@
-package uk.co.xrpdevs.flarenetmessenger;
+package uk.co.xrpdevs.flarenetmessenger.ui.transactions;
 
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
@@ -11,15 +11,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import uk.co.xrpdevs.flarenetmessenger.R;
+
 public class ContextMenuRecyclerView extends RecyclerView {
 
     public RecyclerViewContextMenuInfo mContextMenuInfo;
 
-
     public ContextMenuRecyclerView(@NonNull Context context) {
         super(context, null);
     }
-
 
     public ContextMenuRecyclerView(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs, R.attr.recyclerViewStyle);
@@ -31,7 +31,6 @@ public class ContextMenuRecyclerView extends RecyclerView {
     // public ContextMenuRecyclerView(@NonNull Context context,  AttributeSet as) {
     //     super(context, as);
     // }
-
 
     @Override
     public ContextMenu.ContextMenuInfo getContextMenuInfo() {
@@ -48,18 +47,17 @@ public class ContextMenuRecyclerView extends RecyclerView {
         final int bPosition = getChildPosition(originalView);
         final int cPosition = getChildAdapterPosition(originalView);
         myLog("MENU:", "CHAD " + longPressPosition);
-        TransactionsActivity.thepos = longPressPosition;
+        TransactionsFragment.thepos = longPressPosition;
 
         if (longPressPosition >= 0) {
             final long longPressId = getAdapter().getItemId(bPosition);
-            TransactionsActivity.theID = longPressId;
+            TransactionsFragment.theID = longPressId;
             myLog("MENU:", " posa: " + longPressPosition + " posb: " + bPosition + " posc: " + cPosition + " id: " + longPressId);
             mContextMenuInfo = new RecyclerViewContextMenuInfo(longPressPosition, longPressId);
             return super.showContextMenuForChild(originalView);
         }
         return false;
     }
-
 
     public static class RecyclerViewContextMenuInfo implements ContextMenu.ContextMenuInfo {
 

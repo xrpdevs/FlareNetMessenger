@@ -13,6 +13,9 @@
         android:id="@+id/pks"
         android:title="Show PubKey" />
     <item
+        android:id="@+id/show_prices"
+        android:title="Current Prices" />
+    <item
         android:id="@+id/select_blockchain"
         android:title="Select Blockchain" />
 </menu>

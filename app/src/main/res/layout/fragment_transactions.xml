@@ -19,7 +19,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 
-        <uk.co.xrpdevs.flarenetmessenger.ContextMenuRecyclerView
+        <uk.co.xrpdevs.flarenetmessenger.ui.transactions.ContextMenuRecyclerView
             android:id="@+id/rv1"
             android:layout_width="0dp"
             android:layout_height="0dp"

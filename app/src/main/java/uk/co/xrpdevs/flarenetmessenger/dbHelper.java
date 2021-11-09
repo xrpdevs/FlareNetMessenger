@@ -190,7 +190,7 @@ public class dbHelper extends SQLiteOpenHelper {
     }
 
     @SuppressLint("Recycle")
-    HashMap<String, String> getAddrNames(@Nullable String _bcid) {
+    public HashMap<String, String> getAddrNames(@Nullable String _bcid) {
         String sql;
         Cursor res;
         HashMap<String, String> _this = new HashMap<>();

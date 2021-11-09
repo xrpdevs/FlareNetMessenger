@@ -1,118 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/swipe_container_home"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true">
-
-<androidx.constraintlayout.widget.ConstraintLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    tools:context=".ui.home.HomeFragment">
-
-    <ImageView
-        android:id="@+id/imageView4"
-        android:layout_width="65dp"
-        android:layout_height="63dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintEnd_toStartOf="@+id/textView6"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/circle" />
-
-    <TextView
-        android:id="@+id/textView6"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="24dp"
-        android:text="Balance: "
-        android:textAppearance="@style/TextAppearance.AppCompat.Small"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/textView7"
-        app:layout_constraintTop_toBottomOf="@+id/textView7" />
-
-    <TextView
-        android:id="@+id/textView7"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:fontFamily="sans-serif-black"
-        android:text="@string/my_new_wallet_1"
-        android:textAlignment="center"
-        android:textSize="30sp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toEndOf="@+id/imageView4"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:id="@+id/imageView2"
-        android:layout_width="240dp"
-        android:layout_height="240dp"
-        android:layout_marginTop="24dp"
-        android:contentDescription="@string/qr_code"
-        android:drawable="@drawable/ic_qr_white"
-        android:scaleType="centerCrop"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.512"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView6"
-        app:srcCompat="@drawable/ic_qr_white" />
-
-    <LinearLayout
-        android:id="@+id/linearLayout3"
-        style="?attr/buttonBarButtonStyle"
-        android:layout_width="291dp"
-        android:layout_height="53dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="@+id/imageView2"
-        app:layout_constraintStart_toStartOf="@+id/imageView2"
-        app:layout_constraintTop_toBottomOf="@+id/imageView2">
-
-        <Button
-            android:id="@+id/homeQR_share"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="122dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="3dp"
-            android:layout_marginEnd="4dp"
-
-            android:drawableTint="@android:color/black"
-
-            android:drawableLeft="@drawable/ic_qr_white"
-            android:text="@string/homeQR_share" />
-
-        <Button
-            android:id="@+id/homeQR_copy"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="122dp"
-            android:layout_height="50dp"
-            android:layout_gravity="center"
-            android:layout_marginTop="3dp"
-            android:layout_marginEnd="4dp"
-
-            android:drawableTint="@android:color/black"
-
-            android:drawableLeft="?attr/actionModePasteDrawable"
-            android:text="@string/homeQR_copy" />
-
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/hAssets"
-        style="?attr/buttonBarButtonStyle"
-        android:layout_width="171dp"
-        android:layout_height="43dp"
-        android:text="@string/view_assets"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linearLayout3" />
+    android:layout_height="wrap_content">
 
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
-</ScrollView>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            tools:context=".ui.home.HomeFragment">
+
+            <ImageView
+                android:id="@+id/imageView4"
+                android:layout_width="65dp"
+                android:layout_height="63dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                app:layout_constraintEnd_toStartOf="@+id/textView6"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/circle" />
+
+            <TextView
+                android:id="@+id/textView6"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="24dp"
+                android:text="Balance: "
+                android:textAppearance="@style/TextAppearance.AppCompat.Small"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="@+id/textView7"
+                app:layout_constraintTop_toBottomOf="@+id/textView7" />
+
+            <TextView
+                android:id="@+id/textView7"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:fontFamily="sans-serif-black"
+                android:text="@string/my_new_wallet_1"
+                android:textAlignment="center"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toEndOf="@+id/imageView4"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/imageView2"
+                android:layout_width="240dp"
+                android:layout_height="240dp"
+                android:layout_marginTop="24dp"
+                android:contentDescription="@string/qr_code"
+                android:drawable="@drawable/ic_qr_white"
+                android:scaleType="centerCrop"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.512"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/textView6"
+                app:srcCompat="@drawable/ic_qr_white" />
+
+            <LinearLayout
+                android:id="@+id/linearLayout3"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="291dp"
+                android:layout_height="53dp"
+                android:gravity="center"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="@+id/imageView2"
+                app:layout_constraintStart_toStartOf="@+id/imageView2"
+                app:layout_constraintTop_toBottomOf="@+id/imageView2">
+
+                <Button
+                    android:id="@+id/homeQR_share"
+                    style="?attr/buttonBarButtonStyle"
+                    android:layout_width="122dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginEnd="4dp"
+
+                    android:drawableTint="@android:color/black"
+
+                    android:drawableLeft="@drawable/ic_qr_white"
+                    android:text="@string/homeQR_share" />
+
+                <Button
+                    android:id="@+id/homeQR_copy"
+                    style="?attr/buttonBarButtonStyle"
+                    android:layout_width="122dp"
+                    android:layout_height="50dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginEnd="4dp"
+
+                    android:drawableTint="@android:color/black"
+
+                    android:drawableLeft="?attr/actionModePasteDrawable"
+                    android:text="@string/homeQR_copy" />
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/hAssets"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="171dp"
+                android:layout_height="43dp"
+                android:text="@string/view_assets"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/linearLayout3" />
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </ScrollView>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

@@ -25,20 +25,25 @@
       <map>
         <entry key="../../../../../layout/custom_preview.xml" value="0.3504823151125402" />
         <entry key="app/src/main/res/layout/activity_transactions.xml" value="0.51484375" />
+        <entry key="app/src/main/res/layout/activity_transparent.xml" value="0.25390625" />
         <entry key="app/src/main/res/layout/addrentrydialog.xml" value="0.51484375" />
+        <entry key="app/src/main/res/layout/content_tokens.xml" value="0.3580097087378641" />
         <entry key="app/src/main/res/layout/content_wallets.xml" value="0.36771844660194175" />
         <entry key="app/src/main/res/layout/dialog_pwd.xml" value="0.3580097087378641" />
         <entry key="app/src/main/res/layout/dialog_select_blockchain.xml" value="0.30078125" />
         <entry key="app/src/main/res/layout/fragment_home.xml" value="0.67" />
+        <entry key="app/src/main/res/layout/fragment_tokens.xml" value="0.3580097087378641" />
         <entry key="app/src/main/res/layout/fragment_wallets.xml" value="0.36771844660194175" />
         <entry key="app/src/main/res/layout/listitem_tokens.xml" value="0.75" />
         <entry key="app/src/main/res/layout/listitem_wallets.xml" value="0.67" />
         <entry key="app/src/main/res/layout/listitem_wallets_rename.xml" value="0.36771844660194175" />
         <entry key="app/src/main/res/layout/pin_code_entry_dialog.xml" value="0.51484375" />
         <entry key="app/src/main/res/layout/recyclerview_transactions.xml" value="0.53828125" />
+        <entry key="app/src/main/res/layout/widget_layout.xml" value="0.25" />
         <entry key="app/src/main/res/layout/wrapunwrap_dialog.xml" value="0.3580097087378641" />
         <entry key="app/src/main/res/menu/assets_item_context.xml" value="0.51484375" />
         <entry key="app/src/main/res/menu/context_wallets.xml" value="0.53828125" />
+        <entry key="app/src/main/res/menu/fragment_menu_home.xml" value="0.53828125" />
         <entry key="app/src/main/res/menu/transactions_item_context.xml" value="0.27265625" />
         <entry key="app/src/main/res/mipmap-anydpi-v26/chain_sgb_round.xml" value="0.135" />
       </map>

@@ -1,18 +1,18 @@
 {
+  "WSGB": {
+    "Symbol": "WSGB",
+    "Address": "0x02f0826ef6aD107Cfc861152B32B52fD11BaB9ED",
+    "Type": "ERC20"
+  },
   "fCoin": {
     "Symbol": "FCX",
     "Address": "0x3AEcBA5b8e701ab9DF8E0812467C61479b25eE8A",
     "Type": "ERC20",
     "Decimals": 18
   },
-  "WSGB": {
-    "Symbol": "WSGB",
-    "Address": "0x02f0826ef6aD107Cfc861152B32B52fD11BaB9ED",
-    "Type": "ERC20"
-  },
-  "YFLR": {
-    "Symbol": "dYFLR",
-    "Address": "0x3018cD9E6b892308D9e3f3429C2006996c270375",
+  "zCoin": {
+    "Symbol": "zCoin",
+    "Address": "0xF5986e7EA3edd0565dFf44da7548cAC0865211B4",
     "Type": "ERC20"
   },
   "dYFIN": {

@@ -1,7 +1,8 @@
-package uk.co.xrpdevs.flarenetmessenger;
+package uk.co.xrpdevs.flarenetmessenger.ui.transactions;
 
 import static android.content.Context.CLIPBOARD_SERVICE;
 import static uk.co.xrpdevs.flarenetmessenger.MyService.xrplClient;
+import static uk.co.xrpdevs.flarenetmessenger.Utils.hexToAscii;
 import static uk.co.xrpdevs.flarenetmessenger.Utils.myLog;
 
 import android.app.Activity;
@@ -49,7 +50,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class TransactionsActivity extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
+import uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger;
+import uk.co.xrpdevs.flarenetmessenger.MainActivity;
+import uk.co.xrpdevs.flarenetmessenger.R;
+import uk.co.xrpdevs.flarenetmessenger.Utils;
+
+public class TransactionsFragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
     public static long theID = 0;
     private static ObjectMapper mapper;
     SharedPreferences prefs;
@@ -64,7 +70,7 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
     Activity mAct;
     RecyclerView rv;
     BottomNavigationView navView;
-    TransactionsActivity mThis = this;
+    TransactionsFragment mThis = this;
     public static String myAddress = "";
     static int thepos = 0;
     public static String _bcid;
@@ -77,7 +83,7 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        View root = inflater.inflate(R.layout.activity_transactions, container, false);
+        View root = inflater.inflate(R.layout.fragment_transactions, container, false);
         navView = mThis.getActivity().findViewById(R.id.nav_view);
         navView.getMenu().findItem(R.id.navigation_wallets).setChecked(true);
         manager = mThis.getActivity().getFragmentManager();
@@ -347,7 +353,7 @@ public class TransactionsActivity extends Fragment implements SwipeRefreshLayout
                     //tmp.transaction().memos().size();
                     for (int z = 0; z < tmp.transaction().memos().size(); z++) {
                         Log.d("MEMOZ " + (z + 1), "");
-                        memos.put(MyRecyclerView.hexToAscii(tmp.transaction().memos().get(z).memo().memoData().get()));
+                        memos.put(hexToAscii(tmp.transaction().memos().get(z).memo().memoData().get()));
                     }
                     memo_st = memos.toString();
                 } catch (Exception e) {

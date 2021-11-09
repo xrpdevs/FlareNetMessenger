@@ -1,4 +1,6 @@
-package uk.co.xrpdevs.flarenetmessenger;
+package uk.co.xrpdevs.flarenetmessenger.ui.transactions;
+
+import static uk.co.xrpdevs.flarenetmessenger.Utils.hexToAscii;
 
 import android.annotation.SuppressLint;
 import android.app.FragmentManager;
@@ -19,6 +21,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Objects;
 
+import uk.co.xrpdevs.flarenetmessenger.ContactsManager;
+import uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger;
+import uk.co.xrpdevs.flarenetmessenger.R;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 
 class MyRecyclerView extends RecyclerView.Adapter<MyRecyclerView.ViewHolder> {
@@ -38,7 +43,7 @@ class MyRecyclerView extends RecyclerView.Adapter<MyRecyclerView.ViewHolder> {
      * Provide a reference to the type of views that you are using
      * (custom ViewHolder).
      */
-    public class ViewHolder extends ContextMenuRecyclerView.ViewHolder implements View.OnClickListener {
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private final TextView textView;
         private final TextView textView2;
         private final TextView textView3;
@@ -98,11 +103,11 @@ class MyRecyclerView extends RecyclerView.Adapter<MyRecyclerView.ViewHolder> {
     public MyRecyclerView(ArrayList<HashMap<String, String>> dataSet, String _myAddress, FragmentManager _fm) throws JSONException {
         localDataSet = dataSet;
         fm = _fm;
-        myAddress = TransactionsActivity.myAddress;
+        myAddress = TransactionsFragment.myAddress;
         // String bcid = TransactionsActivity.bcid;
         d = new PleaseWaitDialog();
 //        wAddrs = Utils.walletAddressesToWalletNamesOrContactsToHashMap(ctx);
-        wAddrs = FlareNetMessenger.dbH.getAddrNames(TransactionsActivity._bcid);
+        wAddrs = FlareNetMessenger.dbH.getAddrNames(TransactionsFragment._bcid);
     }
 
     // Create new views (invoked by the layout manager)
@@ -175,7 +180,7 @@ class MyRecyclerView extends RecyclerView.Adapter<MyRecyclerView.ViewHolder> {
         String finalAccount = account;
         String finalDestina = destina;
         //viewHolder.itemView.setContextClickable(true);
-        TransactionsActivity.thepos = pos;
+        TransactionsFragment.thepos = pos;
         //viewHolder.itemView.setOnLongClickListener(viewHolder);
         viewHolder.itemView.setOnLongClickListener(v -> {
             v.showContextMenu(v.getPivotX(), v.getPivotY());
@@ -215,16 +220,7 @@ class MyRecyclerView extends RecyclerView.Adapter<MyRecyclerView.ViewHolder> {
 
     }
 
-    public static String hexToAscii(String hexStr) {
-        StringBuilder output = new StringBuilder();
 
-        for (int i = 0; i < hexStr.length(); i += 2) {
-            String str = hexStr.substring(i, i + 2);
-            output.append((char) Integer.parseInt(str, 16));
-        }
-
-        return output.toString();
-    }
 
     // Return the size of your dataset (invoked by the layout manager)
     @Override

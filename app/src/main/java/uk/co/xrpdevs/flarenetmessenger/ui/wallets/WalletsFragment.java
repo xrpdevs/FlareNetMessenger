@@ -43,7 +43,7 @@ import uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.PKeyScanner;
 import uk.co.xrpdevs.flarenetmessenger.R;
-import uk.co.xrpdevs.flarenetmessenger.TransactionsActivity;
+import uk.co.xrpdevs.flarenetmessenger.ui.transactions.TransactionsFragment;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.Zipper;
 import uk.co.xrpdevs.flarenetmessenger.dbHelper;
@@ -296,7 +296,7 @@ public class WalletsFragment extends Fragment implements PinCodeDialogFragment.O
 //                        R.anim.slide_in,  // enter
 //                        R.anim.slide_out // exi
                 //fragmentTransaction.remove(currentFragment);
-                Fragment f = new TransactionsActivity();
+                Fragment f = new TransactionsFragment();
                 Bundle args = new Bundle();
                 args.putString("wAddr", theItem.get("ADDRESS"));
                 args.putString("wBcid", theItem.get("BCID"));

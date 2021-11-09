@@ -27,7 +27,9 @@ import androidx.appcompat.app.ActionBar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +52,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -60,7 +63,6 @@ import uk.co.xrpdevs.flarenetmessenger.FlareNetMessenger;
 import uk.co.xrpdevs.flarenetmessenger.MainActivity;
 import uk.co.xrpdevs.flarenetmessenger.MyService;
 import uk.co.xrpdevs.flarenetmessenger.R;
-import uk.co.xrpdevs.flarenetmessenger.TransactionsActivity;
 import uk.co.xrpdevs.flarenetmessenger.Utils;
 import uk.co.xrpdevs.flarenetmessenger.contracts.ERC20;
 import uk.co.xrpdevs.flarenetmessenger.contracts.WNat;
@@ -68,6 +70,7 @@ import uk.co.xrpdevs.flarenetmessenger.ui.contacts.ContactsFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PinCodeDialogFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.PleaseWaitDialog;
 import uk.co.xrpdevs.flarenetmessenger.ui.dialogs.WrapUnWrapDialogFragment;
+import uk.co.xrpdevs.flarenetmessenger.ui.transactions.TransactionsFragment;
 import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
 
 /* TODO:
@@ -76,7 +79,7 @@ import uk.co.xrpdevs.flarenetmessenger.ui.wallets.NotificationsViewModel;
     When adding custom tokens, automatically detect coin name, symbol, level of precision.
  */
 
-public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment.OnResultListener {
+public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment.OnResultListener, SwipeRefreshLayout.OnRefreshListener {
     public SimpleAdapter TokensAdaptor;
     public SimpleAdapter simpleAdapter;
     BigInteger GAS_LIMIT = BigInteger.valueOf(670025L);
@@ -96,6 +99,7 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
     AdapterView.AdapterContextMenuInfo subInfo;
     WrapUnWrapDialogFragment wuw;
     PleaseWaitDialog pwd;
+    SwipeRefreshLayout mSwipeRefreshLayout;
 
 
     @Override
@@ -145,6 +149,15 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
             }
 
         }
+        mSwipeRefreshLayout = root.findViewById(R.id.swipe_container_tokens);
+
+
+        mSwipeRefreshLayout.setOnRefreshListener(this);
+//        mSwipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary,
+        mSwipeRefreshLayout.setColorSchemeResources(
+                android.R.color.holo_green_dark,
+                android.R.color.holo_orange_dark,
+                android.R.color.holo_blue_dark);
         return root;
     }
 
@@ -293,9 +306,10 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
             public void run() {
                 TokensAdaptor = fillListView(feedList);
                 lv.setAdapter(TokensAdaptor);
+
             }
         });
-        TokensAdaptor = fillListView(feedList);
+        //TokensAdaptor = fillListView(feedList);
     }
 
     public String getDate(Long ts) {
@@ -324,6 +338,11 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
                     updateText[0] = pwd.getDialog().findViewById(R.id.textview_pwd);
                     updateText[0].setText(result);
                     pwd.setCancelable(true);
+                    try {
+                        getTokenList();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }, 200);
         }
@@ -337,6 +356,12 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
                     updateText[0] = pwd.getDialog().findViewById(R.id.textview_pwd);
                     updateText[0].setText(result);
                     pwd.setCancelable(true);
+                    try {
+                        getTokenList();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
                 }
             }, 200);
         }
@@ -522,7 +547,7 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
 //                        R.anim.slide_in,  // enter
 //                        R.anim.slide_out // exi
                 //fragmentTransaction.remove(currentFragment);
-                Fragment f = new TransactionsActivity();
+                Fragment f = new TransactionsFragment();
                 Bundle args = new Bundle();
                 args.putString("wAddr", deets.get("ADDRESS"));
                 args.putString("wBcid", deets.get("BCID"));
@@ -614,7 +639,12 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
                 myLog(TAG, "transactionReceipt: Error: " + transactionReceipt.getStatus());
                 return (transactionReceipt.getStatus());
             } else {
-                return ("Success!\nTx Hash: " + transactionReceipt.getTransactionHash() + "\nGas Used: " + transactionReceipt.getGasUsed());
+                BigDecimal _amount = new BigDecimal(transactionReceipt.getGasUsed(), 18);
+                String disp = _amount.setScale(14, RoundingMode.FLOOR).stripTrailingZeros().toPlainString();
+                return ("Success!\nTx Hash: " +
+                        transactionReceipt.getTransactionHash() +
+                        "\nGas: " +
+                        disp + " SGB");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -653,12 +683,95 @@ public class TokensFragment extends Fragment implements WrapUnWrapDialogFragment
                 myLog(TAG, "transactionReceipt: Error: " + transactionReceipt.getStatus());
                 return (transactionReceipt.getStatus());
             } else {
-                return ("Success!\nTx Hash: " + transactionReceipt.getTransactionHash() + "\nGas Used: " + transactionReceipt.getGasUsed());
+                BigDecimal _amount = new BigDecimal(transactionReceipt.getGasUsed(), 18);
+                String disp = _amount.setScale(14, RoundingMode.FLOOR).stripTrailingZeros().toPlainString();
+                return ("Success!\nTx Hash: " +
+                        transactionReceipt.getTransactionHash() +
+                        "\nGas: " +
+                        disp + " SGB");
             }
         } catch (Exception e) {
             e.printStackTrace();
             return (e.getMessage());
         }
+    }
+
+    private String DelegateSGB(String cAddr, BigInteger amount, String delegationAddress) {
+        TransactionReceipt transactionReceipt;
+        WNat wsgb = MyService.getWNatlink(cAddr, MyService.c, deets.get("RPC"));
+        try {
+            Web3j web3j = Web3j.build(
+                    new HttpService(deets.get("RPC")));
+            web3j.ethChainId().setId(Integer.parseInt(deets.get("CHAINID")));
+            TransactionManager txManager = new RawTransactionManager(web3j, MyService.c, Integer.decode(deets.get("CHAINID")));
+            EthSendTransaction transactionResponse = txManager.sendTransaction(
+                    getNetworkGasPrice(web3j),
+                    new BigInteger("8000000"),
+                    cAddr,
+                    wsgb.delegateExplicit(delegationAddress, amount).encodeFunctionCall(),
+                    BigInteger.ZERO);
+            String txHash = transactionResponse.getTransactionHash();
+            myLog("TXHASH1", txHash);
+            if (transactionResponse.hasError()) {
+                myLog("TXHASH1", transactionResponse.getError().getMessage());
+                myLog("TXHASH1", transactionResponse.getError().getData());
+                return (transactionResponse.getError().getMessage());
+            }
+            TransactionReceiptProcessor receiptProcessor = new PollingTransactionReceiptProcessor(
+                    web3j,
+                    TransactionManager.DEFAULT_POLLING_FREQUENCY,
+                    TransactionManager.DEFAULT_POLLING_ATTEMPTS_PER_TX_HASH);
+            transactionReceipt = receiptProcessor.waitForTransactionReceipt(txHash);
+            String TAG = "RECEIPT";
+            if (!transactionReceipt.isStatusOK()) {
+                myLog(TAG, "transactionReceipt: Error: " + transactionReceipt.getStatus());
+                return (transactionReceipt.getStatus());
+            } else {
+                BigDecimal _amount = new BigDecimal(transactionReceipt.getGasUsed(), 18);
+                String disp = _amount.setScale(14, RoundingMode.FLOOR).stripTrailingZeros().toPlainString();
+                return ("Success!\nTx Hash: " +
+                        transactionReceipt.getTransactionHash() +
+                        "\nGas: " +
+                        disp + " SGB");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return (e.getMessage());
+        }
+    }
+
+    @Override
+    public void onRefresh() {
+        mSwipeRefreshLayout.setRefreshing(false);
+        mSwipeRefreshLayout.post(new Runnable() {
+
+            @Override
+            public void run() {
+
+                //    if(mSwipeRefreshLayout != null) {
+                //      mSwipeRefreshLayout.setRefreshing(true);
+                //   }
+                try {
+                    getTokenList();
+                } catch (JsonProcessingException e) {
+                    e.printStackTrace();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                mAct.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        TokensAdaptor.notifyDataSetChanged();
+                        simpleAdapter.notifyDataSetChanged();
+                        mSwipeRefreshLayout.setRefreshing(false);
+                    }
+                });
+            }
+        });
+
+        //  Log.d("REFRESH", "SSSSS");
+
     }
 
 }
