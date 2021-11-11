@@ -1,5 +1,7 @@
 package uk.co.xrpdevs.flarenetmessenger;
 
+import static org.web3j.crypto.Sign.recoverFromSignature;
+
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -14,7 +16,12 @@ import androidx.core.app.NotificationCompat;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.spongycastle.util.encoders.Hex;
+import org.web3j.crypto.ECDSASignature;
+import org.web3j.crypto.ECKeyPair;
+import org.web3j.crypto.Hash;
 import org.web3j.crypto.RawTransaction;
+import org.web3j.crypto.Sign;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthGetTransactionCount;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
@@ -27,6 +34,7 @@ import org.web3j.utils.Numeric;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -35,6 +43,7 @@ import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.ServerSocket;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -111,22 +120,13 @@ public class RPCServer extends NanoHTTPD {
                             String myAddress = FlareNetMessenger.deets.get("ADDRESS");
                             responseBody = "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":[\"" + myAddress + "\"]}";
                         }
-
                         if (amethod.equals("eth_sendTransaction")) { // intercept sendTransaction
                             authRequestCount++;
                             int arc_local = authRequestCount;
                             //authRequests.put(authRequestCount, 0);
-                            long start = System.currentTimeMillis();
-                            decodeMessage("unsigned", jo.toString(), mcx, origin);
-                            while (authRequests.getOrDefault(arc_local, "nothing").equals("nothing")) {
-                                Thread.sleep(100);
-                                if ((System.currentTimeMillis() - start) > 15000) {
-                                    // auto cancel
-                                    authRequests.put(arc_local, "Deny");
-                                }
-                                //Log.d("DECISION: ", "Sleep time in ms = " + (System.currentTimeMillis() - start));
 
-                            }
+                            decodeMessage("unsigned", jo.toString(), mcx, origin);
+                            waitForAuth(arc_local);
                             // deal with user decision here
                             if (authRequests.get(arc_local).equals("Allow")) {
                                 Log.d("DECISION1: ", authRequests.get(arc_local));
@@ -143,19 +143,41 @@ public class RPCServer extends NanoHTTPD {
                             }
                             Log.d("DECISION2: ", authRequests.get(arc_local));
                         }
-
                         if (amethod.equals("eth_sendRawTransaction")) { // intercept sendRawTransaction
                             authRequestCount++;
                             String paramsHex = new JSONArray(jo.optString("params")).getString(0).replace("0x", "");
                             // Log.d("Outgoing Method: ", "params[0]: "+paramsHex);
                             decodeMessage("signed", paramsHex.replace("0x", ""), mcx, origin);
                         }
+                        if (amethod.equals("personal_sign")) {
+                            authRequestCount++;
+                            String toSign = jo.getJSONArray("params").getString(0).replace("0x", "");
+                            decodeMessage("personal_sign", jo.toString(), mcx, origin);
+                            int arc_local = authRequestCount;
+                            waitForAuth(arc_local);
+                            // deal with user decision here
+                            if (authRequests.get(arc_local).equals("Allow")) {
+                                Sign.SignatureData sig = Sign.signPrefixedMessage(Utils.toByte(toSign), MyService.c.getEcKeyPair());
+
+                                ByteBuffer sigBuffer = ByteBuffer.allocate(sig.getR().length + sig.getS().length + 1);
+                                sigBuffer.put(sig.getR());
+                                sigBuffer.put(sig.getS());
+                                sigBuffer.put(sig.getV());
+
+                                String hexSig = Numeric.toHexString(sigBuffer.array());
+
+                                responseBody = "{\"id\": " + jo.optString("id") + ", \"jsonrpc\": \"2.0\"," +
+                                        "\"result\": \"" + hexSig + "\"}";
+                            } else {
+                                responseBody = "{\"id\": " + jo.optString("id") + ", \"jsonrpc\": \"2.0\"," +
+                                        "\"result\": \"0x0\"}";
+                            }
+                        }
                     }
                 }
             } catch (JSONException | InterruptedException e) {
                 Log.d("JSON ERROR: ", e.getMessage());
             }
-
             if (responseBody.equals("")) { // pass request through unaltered if not processed above
                 responseBody = performPostCall(FlareNetMessenger.deets.get("RPC"), files.get("postData"));
             }
@@ -174,6 +196,8 @@ public class RPCServer extends NanoHTTPD {
             r.addHeader("Access-Control-Allow-Headers", ac_ht);
             //Log.d("Response [" + method + "]", "Access-Control-Allow-Origin: " + origin);
             //Log.d("Response [" + method + "]", "Access-Control-Allow-Headers: " + ac_ht);
+        } else if (Method.GET.equals(method) && session.getUri().contains("version")) {
+            r = newFixedLengthResponse(Response.Status.OK, MIME_PLAINTEXT, "FNM/" + BuildConfig.VERSION_NAME + " Build " + BuildConfig.VERSION_CODE);
         } else {
             r = newFixedLengthResponse(Response.Status.METHOD_NOT_ALLOWED, MIME_PLAINTEXT, "Method not allowed");
         }
@@ -229,6 +253,15 @@ public class RPCServer extends NanoHTTPD {
             }
         } else if (type.equals("unsigned")) {
             contentText = "An app at " + origin + " is trying to access your wallet";
+        } else if (type.equals("personal_sign")) {
+            try {
+                contentText = "Your signature is being requested by " + origin + "\nData to sign:\n" +
+                        new String(Hex.decode(
+                                String.valueOf(new JSONObject(txData).optJSONArray("params").get(0)).replace("0x", "")));
+            } catch (Exception e) {
+                contentText = e.getMessage();
+                e.printStackTrace();
+            }
         }
 
         Intent i = new Intent(mcx, NotificationsReciever.class);
@@ -403,6 +436,88 @@ public class RPCServer extends NanoHTTPD {
             e.printStackTrace();
             return null;
         }
+    }
+
+    void waitForAuth(int arc_local) throws InterruptedException {
+        long start = System.currentTimeMillis();
+        while (authRequests.getOrDefault(arc_local, "nothing").equals("nothing")) {
+            Thread.sleep(100);
+            if ((System.currentTimeMillis() - start) > 15000) {
+                // auto cancel
+                authRequests.put(arc_local, "Deny");
+            }
+            //Log.d("DECISION: ", "Sleep time in ms = " + (System.currentTimeMillis() - start));
+
+        }
+
+    }
+
+    public static Sign.SignatureData signMessage(byte[] message, ECKeyPair keyPair, boolean needToHash) {
+        BigInteger publicKey = keyPair.getPublicKey();
+        byte[] messageHash;
+        if (needToHash) {
+            messageHash = Hash.sha3(message);
+        } else {
+            messageHash = message;
+        }
+        ECDSASignature sig = keyPair.sign(messageHash);
+        // Now we have to work backwards to figure out the recId needed to recover the signature.
+        int recId = -1;
+        for (int i = 0; i < 4; i++) {
+            BigInteger k = recoverFromSignature(i, sig, messageHash);
+            if (k != null && k.equals(publicKey)) {
+                recId = i;
+                break;
+            }
+        }
+        if (recId == -1) {
+            throw new RuntimeException(
+                    "Could not construct a recoverable key. Are your credentials valid?");
+        }
+        int headerByte = recId + 27;
+        // 1 header + 32 bytes for R + 32 bytes for S
+        byte v = (byte) headerByte;
+        byte[] r = Numeric.toBytesPadded(sig.r, 32);
+        byte[] s = Numeric.toBytesPadded(sig.s, 32);
+        return new Sign.SignatureData(v, r, s);
+    }
+
+    public static String signMessageHex(byte[] message, ECKeyPair keyPair, boolean needToHash) throws IOException {
+        BigInteger publicKey = keyPair.getPublicKey();
+        byte[] messageHash;
+        if (needToHash) {
+            messageHash = Hash.sha3(message);
+        } else {
+            messageHash = message;
+        }
+        ECDSASignature sig = keyPair.sign(messageHash);
+        // Now we have to work backwards to figure out the recId needed to recover the signature.
+        int recId = -1;
+        for (int i = 0; i < 4; i++) {
+            BigInteger k = recoverFromSignature(i, sig, messageHash);
+            if (k != null && k.equals(publicKey)) {
+                recId = i;
+                break;
+            }
+        }
+        if (recId == -1) {
+            throw new RuntimeException(
+                    "Could not construct a recoverable key. Are your credentials valid?");
+        }
+        int headerByte = recId + 27;
+        // 1 header + 32 bytes for R + 32 bytes for S
+        byte v = (byte) headerByte;
+        byte[] r = Numeric.toBytesPadded(sig.r, 32);
+        byte[] s = Numeric.toBytesPadded(sig.s, 32);
+        String ret = "0x";
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        outputStream.write(v);
+        outputStream.write(r);
+        outputStream.write(s);
+
+        byte[] c = outputStream.toByteArray();
+        Log.e("PRVKEY:", keyPair.getPrivateKey().toString(16));
+        return Numeric.toHexString(c);
     }
 
 }
